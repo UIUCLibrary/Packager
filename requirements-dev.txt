@@ -1,0 +1,7 @@
+mypy
+lxml
+wheel
+sphinx
+pytest
+pytest-runner
+tox
