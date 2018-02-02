@@ -3,7 +3,10 @@ import os
 
 
 setup(
-    packages=['packager'],
+    packages=[
+        'packager',
+        'packager.packages',
+    ],
     test_suite="tests",
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
