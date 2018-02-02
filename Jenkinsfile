@@ -60,7 +60,7 @@ pipeline {
                         "Documentation": {
                             node(label: "Windows") {
                                 checkout scm
-                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  {distdir}/html"
+                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
                                 dir('.tox/dist') {
                                     zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
                                     dir("html"){
@@ -75,8 +75,8 @@ pipeline {
                         node(label: "Windows") {
                             checkout scm
                             bat "call make.bat install-dev"
-                            bat "venv\\Scripts\\mypy.exe -p MedusaPackager --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
-                            // bat "${tool 'Python3.6.3_Win64'} -m mypy -p MedusaPackager --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
+                            bat "venv\\Scripts\\mypy.exe -p packager --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
+
                             junit "junit-${env.NODE_NAME}-mypy.xml"
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
                          }
