@@ -85,7 +85,9 @@ pipeline {
             }
             post {
               success {
-                  unstash "HTML Documentation"
+                  dir(html) {
+                    unstash "HTML Documentation"
+                  }
                   zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
               }
             }
