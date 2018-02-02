@@ -26,6 +26,9 @@ include tox.ini
 include pytest.ini
 recursive-include tests *.py
 
+# Behave tests
+recursive-include features *.py *.feature
+
 # Documentation
 include docs/Makefile
 include docs/make.bat
