@@ -153,3 +153,4 @@ ENV/
 .ropeproject
 
 /.mypy_cache/
+/.idea/vagrant.xml
