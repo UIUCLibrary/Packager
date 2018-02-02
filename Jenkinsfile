@@ -35,7 +35,7 @@ pipeline {
                     "Behave": {
                         node(label: "Windows") {
                             checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e bdd --  --junit --junit-directory reports" 
+                            bat "${tool 'Python3.6.3_Win64'} -m tox -e behave --  --junit --junit-directory reports"
                             junit "reports/*.xml"
                         }
                     },
