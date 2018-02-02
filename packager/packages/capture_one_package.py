@@ -10,5 +10,5 @@ class CaptureOnePackage(AbsPackageBuilder):
         for package in collection_builder.build_capture_one_batch(batch_path):
             yield package
 
-    def copy(self, package, dest) -> None:
+    def transform(self, package: Package, dest: str) -> None:
         pass

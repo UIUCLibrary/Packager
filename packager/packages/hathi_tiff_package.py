@@ -1,3 +1,6 @@
+import logging
+import os
+import shutil
 import typing
 
 from packager.packages import collection_builder
@@ -10,5 +13,23 @@ class HathiTiff(AbsPackageBuilder):
         for package in collection_builder.build_hathi_tiff_batch(batch_path):
             yield package
 
-    def copy(self, package, dest) -> None:
-        pass
+    def transform(self, package: Package, dest: str) -> None:
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+
+        for item in package:
+            item_name = item.metadata['item_name']
+            object_name = item.metadata['id']
+            new_item_path = os.path.join(dest, object_name)
+            if not os.path.exists(new_item_path):
+                os.makedirs(new_item_path)
+
+            for inst in item:
+                assert len(inst.files) == 1
+                for file_ in inst.files:
+                    _, ext = os.path.splitext(file_)
+
+                    new_file_name = item_name + ext
+                    new_file_path = os.path.join(new_item_path, new_file_name)
+                    logger.info("Copying {} to {}".format(file_, new_file_path))
+                    shutil.copy(file_, new_file_path)

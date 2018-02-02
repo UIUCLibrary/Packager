@@ -10,5 +10,5 @@ class AbsPackageBuilder(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def copy(self, package, dest) -> None:
+    def transform(self, package: Package, dest: str) -> None:
         pass
