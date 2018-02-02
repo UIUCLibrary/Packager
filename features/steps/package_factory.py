@@ -154,7 +154,7 @@ def step_impl(context):
 
     assert len(object_000001) == 3
 
-    # Every file here should start with 000001
+    # Every file here should have 8 digits in it
     checker = re.compile("^\d{8}\.tif$")
 
 
@@ -176,7 +176,7 @@ def step_impl(context):
 
     assert len(object_000002) == 2
 
-    # Every file here should start with 000001
+    # Every file here should have 8 digits in it
     checker = re.compile("^\d{8}\.tif$")
 
 
@@ -185,3 +185,34 @@ def step_impl(context):
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
+
+
+@step("we transform all the packages found into Hathi tiff packages")
+def step_impl(context):
+    """
+    :type context: behave.runner.Context
+    """
+
+    dest = os.path.join(context.temp_dir ,DESTINATION_NAME)
+
+    hathi_tiff_package_factory = packager.PackageFactory(packager.packages.HathiTiff())
+
+    for capture_one_package in context.packages:
+        hathi_tiff_package_factory.transform(capture_one_package, dest=dest)
+
+
+@then("the newly transformed package should contain the same files but in the format for Hathi Trust")
+def step_impl(context):
+    """
+    :type context: behave.runner.Context
+    """
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+
+    assert os.path.exists(os.path.join(dest, "000001", "00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000001", "00000002.tif"))
+    assert os.path.exists(os.path.join(dest, "000001", "00000003.tif"))
+
+    # some_root/000002/00000001.tif
+    # some_root/000002/00000002.tif
+    assert os.path.exists(os.path.join(dest, "000002", "00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000002", "00000002.tif"))
