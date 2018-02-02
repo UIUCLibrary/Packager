@@ -23,7 +23,6 @@ pipeline {
                 deleteDir()
                 checkout scm
                 stash includes: '**', name: "Source", useDefaultExcludes: false
-                stash includes: 'deployment.yml', name: "Deployment"
             }
 
         }
@@ -201,17 +200,6 @@ pipeline {
                     deployStash("msi", "${env.SCCM_STAGING_FOLDER}/${params.PROJECT_NAME}/")
                     input("Deploy to production?")
                     deployStash("msi", "${env.SCCM_UPLOAD_FOLDER}")
-                }
-            }
-
-            post {
-                success {
-                    script{
-                        def  deployment_request = requestDeploy this, "deployment.yml"
-                        echo deployment_request
-                        writeFile file: "deployment_request.txt", text: deployment_request
-                        archiveArtifacts artifacts: "deployment_request.txt"
-                    }
                 }
             }
         }
