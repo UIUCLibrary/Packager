@@ -1,1 +1,1 @@
-from packager.packages.package_factory import PackageFactory
+from .package import PackageFactory
