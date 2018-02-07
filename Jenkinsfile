@@ -75,8 +75,6 @@ pipeline {
                                         stash includes: '**', name: "HTML Documentation"
                                     }
                                 }
-
-                                }
                                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             }
                         },
