@@ -25,7 +25,12 @@ pipeline {
         stage("Cloning Source") {
             steps {
                 deleteDir()
-                echo "Starting ${env.JOB_NAME}"
+                script{
+                    def alljob = env.JOB_NAME.tokenize("/") as String[]
+                    def project_name = alljob[0]
+                    echo "Starting ${project_name}"
+                }
+                
                 checkout scm
                 stash includes: '**', name: "Source", useDefaultExcludes: false
             }
