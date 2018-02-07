@@ -6,6 +6,10 @@ pipeline {
     agent {
         label "Windows&&DevPi"
     }
+    options {
+        disableConcurrentBuilds()  //each branch has 1 job running at a time
+    }
+
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
