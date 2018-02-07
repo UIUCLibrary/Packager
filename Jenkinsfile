@@ -62,7 +62,7 @@ pipeline {
                                 checkout scm
                                 bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
                                 dir('.tox/dist') {
-                                    zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "sphinx_html_docs_${env.GIT_COMMIT.substring(0,6)}.zip"
                                     dir("html"){
                                         stash includes: '**', name: "HTML Documentation"
                                     }
@@ -83,15 +83,15 @@ pipeline {
                     },
                 )
             }
-            post {
-              success {
-                  dir("html") {
-                    unstash "HTML Documentation"
-                  }
-                  zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
-              }
-            }
-        }
+        //     post {
+        //       success {
+        //           dir("html") {
+        //             unstash "HTML Documentation"
+        //           }
+        //           zip archive: true, dir: 'html', glob: '', zipFile: "sphinx_html_docs_${env.GIT_COMMIT.substring(0,6)}.zip"
+        //       }
+        //     }
+        // }
         stage("Packaging") {
             when {
                 expression { params.PACKAGE == true }
