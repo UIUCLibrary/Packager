@@ -25,6 +25,7 @@ pipeline {
         stage("Cloning Source") {
             steps {
                 deleteDir()
+                echo "Starting ${env.JOB_NAME}"
                 checkout scm
                 stash includes: '**', name: "Source", useDefaultExcludes: false
             }
