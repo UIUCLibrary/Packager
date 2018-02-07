@@ -42,7 +42,7 @@ pipeline {
                     "Pytest": {
                         node(label: "Windows") {
                             checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/coverage/ --cov=packager" //  --basetemp={envtmpdir}"
+                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest --cov-report html:reports/coverage/ --cov=packager"
                             junit "reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml"
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                          }
@@ -62,7 +62,7 @@ pipeline {
                                 checkout scm
                                 bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
                                 dir('.tox/dist') {
-                                    zip archive: true, dir: 'html', glob: '', zipFile: "${JOB_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "${JOB_NAME}-${BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
                                     dir("html"){
                                         stash includes: '**', name: "HTML Documentation"
                                     }
