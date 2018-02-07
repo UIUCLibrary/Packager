@@ -66,7 +66,7 @@ pipeline {
                                 checkout scm
                                 bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
                                 dir('.tox/dist') {
-                                    zip archive: true, dir: 'html', glob: '', zipFile: "${env.JOB_BASE_NAME}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "${env.JOB_NAME}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
                                     dir("html"){
                                         stash includes: '**', name: "HTML Documentation"
                                     }
