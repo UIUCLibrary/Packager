@@ -91,7 +91,7 @@ pipeline {
         //           zip archive: true, dir: 'html', glob: '', zipFile: "sphinx_html_docs_${env.GIT_COMMIT.substring(0,6)}.zip"
         //       }
         //     }
-        // }
+        }
         stage("Packaging") {
             when {
                 expression { params.PACKAGE == true }
