@@ -25,12 +25,6 @@ pipeline {
         stage("Cloning Source") {
             steps {
                 deleteDir()
-                script{
-                    def alljob = env.JOB_NAME.tokenize("/") as String[]
-                    def project_name = alljob[0]
-                    echo "Starting ${project_name}"
-                }
-                
                 checkout scm
                 stash includes: '**', name: "Source", useDefaultExcludes: false
             }
@@ -71,11 +65,17 @@ pipeline {
                             node(label: "Windows") {
                                 checkout scm
                                 bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
-                                dir('.tox/dist') {
-                                    zip archive: true, dir: 'html', glob: '', zipFile: "${env.JOB_NAME}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
+                                script{
+                                    // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+                                    def alljob = env.JOB_NAME.tokenize("/") as String[]
+                                    def project_name = alljob[0]
+                                    dir('.tox/dist') {
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
                                     dir("html"){
                                         stash includes: '**', name: "HTML Documentation"
                                     }
+                                }
+
                                 }
                                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             }
