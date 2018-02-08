@@ -74,7 +74,7 @@ def build_bb_batch(root) -> Package:
 
 
 def build_capture_one_instance(new_item, name, path):
-    new_instantiation = Instantiation(category="unknown", parent=new_item)
+    new_instantiation = Instantiation(category="preservation", parent=new_item)
     group_id = new_item.metadata["id"]
 
     def is_it_an_instance(item: os.DirEntry):
@@ -181,5 +181,60 @@ def build_hathi_tiff_batch(root):
         build_hathi_tiff_package(new_object, path=dir_.path)
         # new_object.metadata
 
+    return new_batch
 
+
+def build_digital_library_compound_item(new_item, path, item_name):
+
+    access_file = os.path.join(path, "access", item_name + ".jp2")
+    preservation_file = os.path.join(path, "preservation", item_name + ".tif")
+
+    assert os.path.exists(access_file)
+    assert os.path.exists(preservation_file)
+
+    access_instance = Instantiation(category="access", parent=new_item)
+    access_instance.files.append(access_file)
+
+    preservation_instance = Instantiation(category="preservation", parent=new_item)
+    preservation_instance .files.append(preservation_file)
+
+
+def build_digital_library_compound_package(new_object, path):
+    def file_type_filter(item: os.DirEntry, file_extension):
+        if not item.is_file():
+            return False
+        _, ext = os.path.splitext(item.name)
+        if ext.lower() != file_extension:
+            return False
+
+        return True
+
+    access_path = os.path.join(path, "access")
+    preservation_path = os.path.join(path, "preservation")
+
+    assert os.path.exists(access_path)
+    assert os.path.exists(preservation_path)
+
+    access_files = sorted(filter(lambda i: file_type_filter(i, ".jp2"), os.scandir(access_path)), key=lambda f: f.name)
+    preservation_files = sorted(filter(lambda i: file_type_filter(i, ".tif"), os.scandir(preservation_path)),
+                                key=lambda f: f.name)
+    assert len(access_files) == len(preservation_files)
+
+    for access_file, preservation_file in zip(access_files, preservation_files):
+        assert os.path.splitext(access_file.name)[0] == os.path.splitext(preservation_file.name)[0]
+        item_id = os.path.splitext(access_file.name)[0]
+        new_item = Item(parent=new_object)
+        build_digital_library_compound_item(new_item, path=path, item_name=item_id)
+
+
+def build_digital_library_compound_batch(root):
+    new_batch = Package(root)
+    new_batch.component_metadata['path'] = root
+
+    for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
+        new_object = PackageObject(parent=new_batch)
+        new_object.component_metadata['id'] = dir_.name
+        new_object.metadata['path'] = dir_.path
+        new_object.component_metadata['package_type'] = "Digital Library Compound Object"
+        build_digital_library_compound_package(new_object, path=dir_.path)
     return new_batch
