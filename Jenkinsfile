@@ -74,6 +74,9 @@ pipeline {
                                         dir("html"){
                                             stash includes: '**', name: "HTML Documentation"
                                         }
+                                        dir("doctest"){
+                                            archiveArtifacts artifacts: "output.txt", allowEmptyArchive: true
+                                        }
                                     }
                                 }
                                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
