@@ -5,6 +5,8 @@ import re
 import packager
 import packager.packages
 
+DL_COMPOUND_NAME = "digital_library_compound"
+
 use_step_matcher("re")
 CAPTURE_ONE_BATCH_NAME = "capture_one_batch"
 HATHI_TIFF_BATCH_NAME = "hathi_tiff_batch"
@@ -19,7 +21,6 @@ def step_impl(context):
     test_dir = context.temp_dir
 
     os.makedirs(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME))
-    os.makedirs(os.path.join(test_dir, DESTINATION_NAME))
     # Create a bunch of empty files that represent a capture one batch session
 
     with open(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME, "000001_00000001.tif"), "w"):
@@ -74,7 +75,6 @@ def step_impl(context):
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
-
 
 
 @step("the second Capture One object should contain everything from the second group")
@@ -157,7 +157,6 @@ def step_impl(context):
     # Every file here should have 8 digits in it
     checker = re.compile("^\d{8}\.tif$")
 
-
     for item in object_000001:
         for instance_type, instance in item.instantiations.items():
             for file_ in instance.files:
@@ -179,7 +178,6 @@ def step_impl(context):
     # Every file here should have 8 digits in it
     checker = re.compile("^\d{8}\.tif$")
 
-
     for item in object_000002:
         for instance_type, instance in item.instantiations.items():
             for file_ in instance.files:
@@ -193,7 +191,8 @@ def step_impl(context):
     :type context: behave.runner.Context
     """
 
-    dest = os.path.join(context.temp_dir ,DESTINATION_NAME)
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+    os.makedirs(dest)
 
     hathi_tiff_package_factory = packager.PackageFactory(packager.packages.HathiTiff())
 
@@ -216,3 +215,185 @@ def step_impl(context):
     # some_root/000002/00000002.tif
     assert os.path.exists(os.path.join(dest, "000002", "00000001.tif"))
     assert os.path.exists(os.path.join(dest, "000002", "00000002.tif"))
+
+
+@step("we transform all the packages found into Capture One packages")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+    os.makedirs(dest)
+
+    capture_one_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+
+    for hathi_tiff_package in context.packages:
+        capture_one_factory.transform(hathi_tiff_package, dest=dest)
+
+
+@then("the newly transformed package should contain the same files but in the format for Capture One")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+
+    assert os.path.exists(os.path.join(dest, "000001_00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000001_00000002.tif"))
+    assert os.path.exists(os.path.join(dest, "000001_00000003.tif"))
+
+    # some_root/000002/00000001.tif
+    # some_root/000002/00000002.tif
+    assert os.path.exists(os.path.join(dest, "000002_00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000002_00000002.tif"))
+
+
+@step("we transform all the packages found into Digital Library Compound Objects packages")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+    os.makedirs(dest)
+
+    digital_factory = packager.PackageFactory(packager.packages.DigitalLibraryCompound())
+
+    for hathi_tiff_package in context.packages:
+        digital_factory.transform(hathi_tiff_package, dest=dest)
+
+
+@then(
+    "the newly transformed package should contain the same files but in the format for Digital Library Compound Objects")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    dest = os.path.join(context.temp_dir, DESTINATION_NAME)
+
+    assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+
+    assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000002.tif"))
+    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+
+    assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000003.tif"))
+    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+
+    assert os.path.exists(os.path.join(dest, "000002", "preservation", "000002_00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000002", "access"))
+
+    assert os.path.exists(os.path.join(dest, "000002", "preservation", "000002_00000001.tif"))
+    assert os.path.exists(os.path.join(dest, "000002", "access"))
+
+
+@given("We have a folder contains two Digital Library Compound objects")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    test_dir = context.temp_dir
+
+    os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME))
+
+    # Create a folder structure that represent a digital library compound object batch
+    os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation"))
+    os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "access"))
+    os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "preservation"))
+    os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "access"))
+
+    # Create a bunch of empty files that represent a digital library compound object batch
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation", "000001_00000001.tif"), "w"):
+        pass
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "access", "000001_00000001.jp2"), "w"):
+        pass
+
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation", "000001_00000002.tif"), "w"):
+        pass
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "access", "000001_00000002.jp2"), "w"):
+        pass
+
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation", "000001_00000003.tif"), "w"):
+        pass
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "access", "000001_00000003.jp2"), "w"):
+        pass
+
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "preservation", "000002_00000001.tif"), "w"):
+        pass
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "access", "000002_00000001.jp2"), "w"):
+        pass
+
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "preservation", "000002_00000002.tif"), "w"):
+        pass
+    with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "access", "000002_00000002.jp2"), "w"):
+        pass
+
+
+@when("we create a Digital Library Compound object factory and use it to identify packages at the root folder")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    source = os.path.join(context.temp_dir, DL_COMPOUND_NAME)
+
+    digital_library_compount_factory = packager.PackageFactory(packager.packages.DigitalLibraryCompound())
+
+    # find all Digital library Compount objects
+    context.packages = list(digital_library_compount_factory.locate_packages(path=source))
+
+
+@step("the first Digital Library Compound object should contain everything from the first group")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    object_000001 = package_objects[0]
+    assert object_000001.metadata['id'] == "000001"
+
+    assert len(object_000001) == 3
+
+    # Every file here should have 6 digits, underscore, 8 digits in it
+    checker = re.compile("^\d{6}_\d{8}$")
+
+    for item in object_000001:
+
+        access = item.instantiations["access"]
+        for file_ in access.files:
+            file_name, ext = os.path.splitext(os.path.basename(file_))
+            assert ext == ".jp2"
+            assert checker.match(file_name)
+
+        preservation = item.instantiations["preservation"]
+        for file_ in preservation.files:
+            file_name, ext = os.path.splitext(os.path.basename(file_))
+            assert ext == ".tif"
+            assert checker.match(file_name)
+
+
+@step("the second Digital Library Compound object should contain everything from the second group")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    object_000002 = package_objects[1]
+    assert object_000002.metadata['id'] == "000002"
+
+    assert len(object_000002) == 2
+
+    # Every file here should have 6 digits, underscore, 8 digits in it
+    checker = re.compile("^\d{6}_\d{8}\.((tif)|(jp2))$")
+
+    for item in object_000002:
+        for instance_type, instance in item.instantiations.items():
+            for file_ in instance.files:
+                basename = os.path.basename(file_)
+                assert checker.match(basename)

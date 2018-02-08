@@ -6,6 +6,10 @@ pipeline {
     agent {
         label "Windows&&DevPi"
     }
+    options {
+        disableConcurrentBuilds()  //each branch has 1 job running at a time
+    }
+
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
@@ -42,8 +46,8 @@ pipeline {
                     "Pytest": {
                         node(label: "Windows") {
                             checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/coverage/ --cov=packager" //  --basetemp={envtmpdir}"
-                            junit "reports/junit-${env.NODE_NAME}-pytest.xml"
+                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest --cov-report html:reports/coverage/ --cov=packager"
+                            junit "reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml"
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                          }
                     }
@@ -60,11 +64,20 @@ pipeline {
                         "Documentation": {
                             node(label: "Windows") {
                                 checkout scm
-                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
-                                dir('.tox/dist') {
-                                    zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
-                                    dir("html"){
-                                        stash includes: '**', name: "HTML Documentation"
+                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
+                                script{
+                                    // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+                                    def alljob = env.JOB_NAME.tokenize("/") as String[]
+                                    def project_name = alljob[0]
+                                    dir('.tox/dist') {
+                                        zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
+                                        dir("html"){
+                                            stash includes: '**', name: "HTML Documentation"
+                                        }
+                                        dir("doctest"){
+                                            bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
+                                            archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
+                                        }
                                     }
                                 }
                                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
@@ -82,14 +95,6 @@ pipeline {
                          }
                     },
                 )
-            }
-            post {
-              success {
-                  dir("html") {
-                    unstash "HTML Documentation"
-                  }
-                  zip archive: true, dir: 'html', glob: '', zipFile: 'sphinx_html_docs.zip'
-              }
             }
         }
         stage("Packaging") {
@@ -117,7 +122,7 @@ pipeline {
 
         stage("Deploying to Devpi") {
             when {
-                expression { params.DEPLOY_DEVPI == true }
+                expression { params.DEPLOY_DEVPI == true && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev") }
             }
             steps {
                 bat "${tool 'Python3.6.3_Win64'} -m devpi use http://devpy.library.illinois.edu"
@@ -138,7 +143,7 @@ pipeline {
         }
         stage("Test Devpi packages") {
             when {
-                expression { params.DEPLOY_DEVPI == true }
+                expression { params.DEPLOY_DEVPI == true  && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev")}
             }
             steps {
                 parallel(
@@ -198,12 +203,14 @@ pipeline {
 
             steps {
                 script {
-                    def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                    def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                    withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
+                    if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
+                        def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                        def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                            bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                            bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                            bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
+                        }
                     }
 
                 }
