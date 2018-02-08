@@ -88,7 +88,7 @@ pipeline {
                         node(label: "Windows") {
                             checkout scm
                             bat "call make.bat install-dev"
-                            bat "venv\\Scripts\\mypy.exe -p packager --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
+                            bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
 
                             junit "junit-${env.NODE_NAME}-mypy.xml"
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
