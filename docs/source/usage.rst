@@ -3,15 +3,10 @@
 Usage
 =====
 
-Example
--------
 
 .. testsetup:: *
 
     import packager
-
-
-.. testsetup:: capture_one_factory
 
     import tempfile
     import os
@@ -46,8 +41,24 @@ Example
     source = CAPTURE_ONE_PATH
     dest = DESTINATION_PATH
 
+* Load an existing package batch with the PackageFactory class
 
-.. testcode:: capture_one_factory
+.. doctest::
+
+    >>> cap_one_pkg_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+    >>> cap_one_packages = cap_one_pkg_factory.locate_packages(path=source)
+    >>> for capture_one_package in cap_one_packages:
+    ...     print(capture_one_package.metadata['id'])
+    000001
+    000002
+
+
+
+
+
+* To create new packages in another style, use the transform method from the desired package factory class.
+
+.. testcode:: [capture_one_transform]
 
     cap_one_pkg_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
 
@@ -59,7 +70,7 @@ Example
         # copy the packages into the new destination as a hathi tiff package
         ht_tiff_pkg_factory.transform(capture_one_package, dest)
 
-.. testcode:: capture_one_factory
+.. testcode:: [capture_one_transform]
     :hide:
 
     assert os.path.exists(os.path.join(dest, "000001", "00000001.tif"))
