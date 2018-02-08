@@ -75,7 +75,8 @@ pipeline {
                                             stash includes: '**', name: "HTML Documentation"
                                         }
                                         dir("doctest"){
-                                            archiveArtifacts artifacts: "output.txt", allowEmptyArchive: true
+                                            bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
+                                            archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
                                         }
                                     }
                                 }
