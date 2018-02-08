@@ -64,7 +64,7 @@ pipeline {
                         "Documentation": {
                             node(label: "Windows") {
                                 checkout scm
-                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs -- -W -b html -d {envtmpdir}/doctrees docs/source  .tox/dist/html"
+                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
                                 script{
                                     // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
                                     def alljob = env.JOB_NAME.tokenize("/") as String[]
