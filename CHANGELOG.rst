@@ -13,3 +13,5 @@ Change Log
 
 Dev
 +++
+
+  * Now a namespace package
