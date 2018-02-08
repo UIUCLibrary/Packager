@@ -2,8 +2,8 @@ import os
 
 from behave import *
 import re
-import packager
-import packager.packages
+import uiucprescon.packager
+import uiucprescon.packager.packages
 
 DL_COMPOUND_NAME = "digital_library_compound"
 
@@ -42,7 +42,7 @@ def step_impl(context):
     """
     source = os.path.join(context.temp_dir, CAPTURE_ONE_BATCH_NAME)
 
-    capture_one_packages_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+    capture_one_packages_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
     # find all Capture One organized packages
     context.packages = list(capture_one_packages_factory.locate_packages(path=source))
 
@@ -137,7 +137,7 @@ def step_impl(context):
     :type context: behave.runner.Context
     """
     package_batch_path = os.path.join(context.temp_dir, HATHI_TIFF_BATCH_NAME)
-    hathi_tiff_packages_factory = packager.PackageFactory(packager.packages.HathiTiff())
+    hathi_tiff_packages_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.HathiTiff())
 
     # find all Capture One organized packages
     context.packages = list(hathi_tiff_packages_factory.locate_packages(path=package_batch_path))
@@ -194,7 +194,7 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    hathi_tiff_package_factory = packager.PackageFactory(packager.packages.HathiTiff())
+    hathi_tiff_package_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.HathiTiff())
 
     for capture_one_package in context.packages:
         hathi_tiff_package_factory.transform(capture_one_package, dest=dest)
@@ -226,7 +226,7 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    capture_one_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+    capture_one_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
 
     for hathi_tiff_package in context.packages:
         capture_one_factory.transform(hathi_tiff_package, dest=dest)
@@ -259,7 +259,7 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    digital_factory = packager.PackageFactory(packager.packages.DigitalLibraryCompound())
+    digital_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.DigitalLibraryCompound())
 
     for hathi_tiff_package in context.packages:
         digital_factory.transform(hathi_tiff_package, dest=dest)
@@ -341,7 +341,7 @@ def step_impl(context):
     """
     source = os.path.join(context.temp_dir, DL_COMPOUND_NAME)
 
-    digital_library_compount_factory = packager.PackageFactory(packager.packages.DigitalLibraryCompound())
+    digital_library_compount_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.DigitalLibraryCompound())
 
     # find all Digital library Compount objects
     context.packages = list(digital_library_compount_factory.locate_packages(path=source))

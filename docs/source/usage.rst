@@ -6,7 +6,7 @@ Usage
 
 .. testsetup:: *
 
-    import packager
+    import uiucprescon.packager
 
     import tempfile
     import os
@@ -45,7 +45,7 @@ Usage
 
 .. doctest::
 
-    >>> cap_one_pkg_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+    >>> cap_one_pkg_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
     >>> cap_one_packages = cap_one_pkg_factory.locate_packages(path=source)
     >>> for capture_one_package in cap_one_packages:
     ...     print(capture_one_package.metadata['id'])
@@ -60,12 +60,12 @@ Usage
 
 .. testcode:: [capture_one_transform]
 
-    cap_one_pkg_factory = packager.PackageFactory(packager.packages.CaptureOnePackage())
+    cap_one_pkg_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
 
     # find all Capture One organized packages
     cap_one_packages = cap_one_pkg_factory.locate_packages(path=source)
 
-    ht_tiff_pkg_factory = packager.PackageFactory(packager.packages.HathiTiff())
+    ht_tiff_pkg_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.HathiTiff())
     for capture_one_package in cap_one_packages:
         # copy the packages into the new destination as a hathi tiff package
         ht_tiff_pkg_factory.transform(capture_one_package, dest)

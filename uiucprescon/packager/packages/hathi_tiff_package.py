@@ -3,8 +3,8 @@ import os
 import shutil
 import typing
 
-from packager.packages import collection_builder
-from packager.packages.collection import Package
+from uiucprescon.packager.packages import collection_builder
+from uiucprescon.packager.packages.collection import Package
 from .abs_package_builder import AbsPackageBuilder
 
 

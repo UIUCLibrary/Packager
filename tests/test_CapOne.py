@@ -1,6 +1,6 @@
 import os
-import packager
-import packager.packages
+from uiucprescon import packager
+from uiucprescon.packager import packages
 import pytest
 
 CAPTURE_ONE_BATCH_NAME = "capture_one_batch"

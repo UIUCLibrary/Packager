@@ -1,26 +1,26 @@
-packager
-========
+uiucprescon.packager
+====================
 
-packager
---------
-
-.. automodule:: packager
+.. automodule:: uiucprescon.packager
     :members:
     :undoc-members:
 
-.. autoclass:: packager.PackageFactory
+.. autoclass:: uiucprescon.packager.PackageFactory
     :members:
     :undoc-members:
 
 
-packager.packages
------------------
+uiucprescon.packager.packages
+-----------------------------
 
-.. automodule:: packager.packages
+.. automodule:: uiucprescon.packager.packages
     :members:
 
-.. autoclass:: packager.packages.CaptureOnePackage
+.. autoclass:: uiucprescon.packager.packages.CaptureOnePackage
     :members:
 
-.. autoclass:: packager.packages.HathiTiff
+.. autoclass:: uiucprescon.packager.packages.HathiTiff
+    :members:
+
+.. autoclass:: uiucprescon.packager.packages.DigitalLibraryCompound
     :members:

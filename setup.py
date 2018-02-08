@@ -4,9 +4,10 @@ import os
 
 setup(
     packages=[
-        'packager',
-        'packager.packages',
+        'uiucprescon.packager',
+        'uiucprescon.packager.packages',
     ],
+    namespace_packages=["uiucprescon"],
     test_suite="tests",
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

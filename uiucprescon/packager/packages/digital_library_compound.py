@@ -4,7 +4,7 @@ import shutil
 import typing
 
 from . import collection_builder
-from packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import Package
 from .abs_package_builder import AbsPackageBuilder
 
 
