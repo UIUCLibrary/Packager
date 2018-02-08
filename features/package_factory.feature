@@ -21,3 +21,9 @@ Feature: Build package objects
     When we create a CaptureOne object factory and use it to identify packages at the root folder
     And we transform all the packages found into Hathi tiff packages
     Then the newly transformed package should contain the same files but in the format for Hathi Trust
+
+  Scenario: HathiTrust Tiff package containing 2 objects and want to transform them into a Capture One session
+    Given We have hathi tiff package containing a folder made up of 2 objects
+    When we create a HathiTiff object factory and use it to identify packages at the root folder
+    And we transform all the packages found into Capture One packages
+    Then the newly transformed package should contain the same files but in the format for Capture One
