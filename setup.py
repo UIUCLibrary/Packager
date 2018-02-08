@@ -11,4 +11,5 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     zip_safe=False,
+    python_requires='>=3.5',
 )
