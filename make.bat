@@ -142,7 +142,7 @@ goto :eof
 :mypy
     call:install-dev
     setlocal
-    venv\Scripts\mypy.exe -p packager %*
+    venv\Scripts\mypy.exe -p uiucprescon %*
     endlocal
 goto :eof
 ::=============================================================================
@@ -171,7 +171,7 @@ goto :eof
 	if exist .mypy_cache rd /q /s .mypy_cache       && echo Removed .mypy_cache
 	if exist .eggs rd /q /s .eggs                   && echo Removed .eggs
 	if exist .tox rd /q /s .tox                     && echo Removed .tox
-	if exist packager.egg-info rd /q /s packager.egg-info && echo Removed packager.egg-info
+	if exist uiucprescon_packager.egg-info rd /q /s uiucprescon_packager.egg-info && echo uiucprescon_packager.egg-info
 	endlocal
 goto :eof
 
