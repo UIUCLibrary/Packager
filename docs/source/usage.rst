@@ -22,11 +22,10 @@ Usage
     CAPTURE_ONE_PATH = os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME)
     DESTINATION_PATH = os.path.join(test_dir, DESTINATION_NAME)
 
-
     os.makedirs(CAPTURE_ONE_PATH)
     os.makedirs(DESTINATION_PATH)
-    # Create a bunch of empty files that represent a capture one batch session
 
+    # Create a bunch of empty files that represent a capture one batch session
     with open(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME, "000001_00000001.tif"), "w"):
         pass
     with open(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME, "000001_00000002.tif"), "w"):
