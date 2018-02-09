@@ -7,7 +7,7 @@ Usage
 .. testsetup:: *
 
     import uiucprescon.packager
-    from from uiucprescon.packager.packages import collection
+    from uiucprescon.packager.packages import collection
 
     import tempfile
     import os
