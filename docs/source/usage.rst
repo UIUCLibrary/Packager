@@ -7,6 +7,7 @@ Usage
 .. testsetup:: *
 
     import uiucprescon.packager
+    from from uiucprescon.packager.packages import collection
 
     import tempfile
     import os
@@ -48,7 +49,7 @@ Usage
     >>> cap_one_pkg_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
     >>> cap_one_packages = cap_one_pkg_factory.locate_packages(path=source)
     >>> for capture_one_package in cap_one_packages:
-    ...     print(capture_one_package.metadata['id'])
+    ...     print(capture_one_package.metadata[collection.Metadata.ID])
     000001
     000002
 
