@@ -37,6 +37,7 @@ Feature: Build package objects
   Scenario: Digital Library Compound session containing 2 objects
     Given We have a folder contains two Digital Library Compound objects
     When we create a Digital Library Compound object factory and use it to identify packages at the root folder
-    Then resulting packages should be 2
+    Then the resulting package should be a Digital Library Compound Object type
+    And resulting packages should be 2
     And the first Digital Library Compound object should contain everything from the first group
     And the second Digital Library Compound object should contain everything from the second group
