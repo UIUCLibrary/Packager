@@ -7,6 +7,7 @@ Usage
 .. testsetup:: *
 
     import uiucprescon.packager
+    from uiucprescon.packager.packages import collection
 
     import tempfile
     import os
@@ -21,11 +22,10 @@ Usage
     CAPTURE_ONE_PATH = os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME)
     DESTINATION_PATH = os.path.join(test_dir, DESTINATION_NAME)
 
-
     os.makedirs(CAPTURE_ONE_PATH)
     os.makedirs(DESTINATION_PATH)
-    # Create a bunch of empty files that represent a capture one batch session
 
+    # Create a bunch of empty files that represent a capture one batch session
     with open(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME, "000001_00000001.tif"), "w"):
         pass
     with open(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME, "000001_00000002.tif"), "w"):
@@ -48,7 +48,7 @@ Usage
     >>> cap_one_pkg_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
     >>> cap_one_packages = cap_one_pkg_factory.locate_packages(path=source)
     >>> for capture_one_package in cap_one_packages:
-    ...     print(capture_one_package.metadata['id'])
+    ...     print(capture_one_package.metadata[collection.Metadata.ID])
     000001
     000002
 

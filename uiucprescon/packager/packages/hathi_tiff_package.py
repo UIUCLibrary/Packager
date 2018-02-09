@@ -4,7 +4,7 @@ import shutil
 import typing
 
 from uiucprescon.packager.packages import collection_builder
-from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import Package, Metadata
 from .abs_package_builder import AbsPackageBuilder
 
 
@@ -18,8 +18,8 @@ class HathiTiff(AbsPackageBuilder):
         logger.setLevel(logging.DEBUG)
 
         for item in package:
-            item_name = item.metadata['item_name']
-            object_name = item.metadata['id']
+            item_name = item.metadata[Metadata.ITEM_NAME]
+            object_name = item.metadata[Metadata.ID]
             new_item_path = os.path.join(dest, object_name)
             if not os.path.exists(new_item_path):
                 os.makedirs(new_item_path)

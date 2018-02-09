@@ -3,7 +3,7 @@ import os
 import shutil
 import typing
 from . import collection_builder
-from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import Package, Metadata
 from .abs_package_builder import AbsPackageBuilder
 
 
@@ -18,8 +18,8 @@ class CaptureOnePackage(AbsPackageBuilder):
         logger.setLevel(logging.DEBUG)
 
         for item in package:
-            item_name = item.metadata['item_name']
-            object_name = item.metadata['id']
+            item_name = item.metadata[Metadata.ITEM_NAME]
+            object_name = item.metadata[Metadata.ID]
             for inst in item:
                 assert len(inst.files) == 1
                 for file_ in inst.files:

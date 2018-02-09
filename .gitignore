@@ -8,6 +8,7 @@
 .idea/**/tasks.xml
 .idea/dictionaries
 
+
 # Sensitive or high-churn files:
 .idea/**/dataSources/
 .idea/**/dataSources.ids
@@ -154,3 +155,5 @@ ENV/
 
 /.mypy_cache/
 /.idea/vagrant.xml
+.idea/deployment.xml
+.idea/*

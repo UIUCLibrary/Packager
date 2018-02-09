@@ -1,6 +1,35 @@
 import abc
 import collections
+import enum
 import typing
+
+
+class CollectionEnums(enum.Enum):
+    pass
+
+
+class Metadata(enum.Enum):
+    ITEM_NAME = "item_name"
+    ID = "id"
+    PATH = "path"
+    PACKAGE_TYPE = "package_type"
+    CATEGORY = "category"
+    TITLE_PAGE = "title_page"
+
+
+class PackageTypes(CollectionEnums):
+    DIGITAL_LIBRARY_COMPOUND = "Digital Library Compound Object"
+    CAPTURE_ONE_SESSION = "Capture One Session Package"
+    BRITTLE_BOOKS_HATHI_TRUST_SUBMISSION = "Brittle Books HathiTrust Submission Package"
+    DS_HATHI_TRUST_SUBMISSION = "DS HathiTrust Submission Package"
+    HATHI_TRUST_TIFF_SUBMISSION = "HathiTrust Tiff"
+
+
+class InstantiationTypes(CollectionEnums):
+    ACCESS = "access"
+    PRESERVATION = "preservation"
+    UNKNOWN = "unknown"
+    GENERIC = "generic"
 
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
@@ -9,9 +38,13 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
         if parent is not None:
             self.add_to_parent(child=self)
 
-        self.component_metadata = self.init_local_metadata()
+        self.component_metadata: typing.Dict[Metadata, typing.Union[str, CollectionEnums]] = self.init_local_metadata()
         metadata = self._gen_combined_metadata()
-        self.metadata: typing.ChainMap[str, str] = metadata
+        self._metadata: typing.ChainMap[Metadata, typing.Union[str, CollectionEnums]] = metadata
+
+    @property
+    def metadata(self) -> typing.Dict[Metadata, typing.Union[str, CollectionEnums]]:
+        return dict(self._metadata)
 
     def add_to_parent(self, child):
         self.parent.children.append(child)
@@ -33,7 +66,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
     def children(self) -> typing.List[typing.Type["AbsPackageComponent"]]:
         pass
 
-    def _gen_combined_metadata(self) -> typing.ChainMap[str, str]:
+    def _gen_combined_metadata(self) -> typing.ChainMap[Metadata, typing.Union[str, CollectionEnums]]:
         if self.parent:
             metadata = collections.ChainMap(self.component_metadata, self.parent.metadata)
         else:
@@ -78,10 +111,11 @@ class Item(AbsPackageComponent):
 
 
 class Instantiation(AbsPackageComponent):
-    def __init__(self, category="generic", parent: typing.Optional[Item] = None) -> None:
+    def __init__(self, category: InstantiationTypes = InstantiationTypes.GENERIC,
+                 parent: typing.Optional[Item] = None) -> None:
         self.category = category
         super().__init__(parent)
-        self.component_metadata['category'] = category
+        self.component_metadata[Metadata.CATEGORY] = category
         self.files: typing.List[str] = []
 
     @property

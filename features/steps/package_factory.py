@@ -4,6 +4,7 @@ from behave import *
 import re
 import uiucprescon.packager
 import uiucprescon.packager.packages
+from uiucprescon.packager.packages.collection import Metadata, PackageTypes, InstantiationTypes
 
 DL_COMPOUND_NAME = "digital_library_compound"
 
@@ -42,7 +43,8 @@ def step_impl(context):
     """
     source = os.path.join(context.temp_dir, CAPTURE_ONE_BATCH_NAME)
 
-    capture_one_packages_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.CaptureOnePackage())
+    capture_one_packages_factory = uiucprescon.packager.PackageFactory(
+        uiucprescon.packager.packages.CaptureOnePackage())
     # find all Capture One organized packages
     context.packages = list(capture_one_packages_factory.locate_packages(path=source))
 
@@ -60,10 +62,10 @@ def step_impl(context):
     """
     :type context: behave.runner.Context
     """
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000001 = package_objects[0]
 
-    assert object_000001.metadata['id'] == "000001"
+    assert object_000001.metadata[Metadata.ID] == "000001"
 
     assert len(object_000001) == 3
 
@@ -83,9 +85,9 @@ def step_impl(context):
     :type context: behave.runner.Context
     """
     pass
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000002 = package_objects[1]
-    assert object_000002.metadata['id'] == "000002"
+    assert object_000002.metadata[Metadata.ID] == "000002"
 
     assert len(object_000002) == 2
 
@@ -148,9 +150,9 @@ def step_impl(context):
     """
     :type context: behave.runner.Context
     """
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000001 = package_objects[0]
-    assert object_000001.metadata['id'] == "000001"
+    assert object_000001.metadata[Metadata.ID] == "000001"
 
     assert len(object_000001) == 3
 
@@ -169,9 +171,9 @@ def step_impl(context):
     """
     :type context: behave.runner.Context
     """
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000002 = package_objects[1]
-    assert object_000002.metadata['id'] == "000002"
+    assert object_000002.metadata[Metadata.ID] == "000002"
 
     assert len(object_000002) == 2
 
@@ -341,10 +343,21 @@ def step_impl(context):
     """
     source = os.path.join(context.temp_dir, DL_COMPOUND_NAME)
 
-    digital_library_compount_factory = uiucprescon.packager.PackageFactory(uiucprescon.packager.packages.DigitalLibraryCompound())
+    digital_library_compound_factory = uiucprescon.packager.PackageFactory(
+        uiucprescon.packager.packages.DigitalLibraryCompound())
 
     # find all Digital library Compount objects
-    context.packages = list(digital_library_compount_factory.locate_packages(path=source))
+    context.packages = list(digital_library_compound_factory.locate_packages(path=source))
+
+
+@then("the resulting package should be a Digital Library Compound Object type")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    for package in context.packages:
+        assert package.metadata[Metadata.PACKAGE_TYPE] == PackageTypes.DIGITAL_LIBRARY_COMPOUND
 
 
 @step("the first Digital Library Compound object should contain everything from the first group")
@@ -353,9 +366,9 @@ def step_impl(context):
     Args:
         context (behave.runner.Context):
     """
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000001 = package_objects[0]
-    assert object_000001.metadata['id'] == "000001"
+    assert object_000001.metadata[Metadata.ID] == "000001"
 
     assert len(object_000001) == 3
 
@@ -364,13 +377,13 @@ def step_impl(context):
 
     for item in object_000001:
 
-        access = item.instantiations["access"]
+        access = item.instantiations[InstantiationTypes.ACCESS]
         for file_ in access.files:
             file_name, ext = os.path.splitext(os.path.basename(file_))
             assert ext == ".jp2"
             assert checker.match(file_name)
 
-        preservation = item.instantiations["preservation"]
+        preservation = item.instantiations[InstantiationTypes.PRESERVATION]
         for file_ in preservation.files:
             file_name, ext = os.path.splitext(os.path.basename(file_))
             assert ext == ".tif"
@@ -383,9 +396,9 @@ def step_impl(context):
     Args:
         context (behave.runner.Context):
     """
-    package_objects = sorted(context.packages, key=lambda p: p.metadata['id'])
+    package_objects = sorted(context.packages, key=lambda p: p.metadata[Metadata.ID])
     object_000002 = package_objects[1]
-    assert object_000002.metadata['id'] == "000002"
+    assert object_000002.metadata[Metadata.ID] == "000002"
 
     assert len(object_000002) == 2
 

@@ -4,7 +4,7 @@ import shutil
 import typing
 
 from . import collection_builder
-from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import Package, Metadata
 from .abs_package_builder import AbsPackageBuilder
 
 
@@ -19,8 +19,8 @@ class DigitalLibraryCompound(AbsPackageBuilder):
         logger.setLevel(logging.DEBUG)
 
         for item in package:
-            item_name = item.metadata['item_name']
-            object_name = item.metadata['id']
+            item_name = item.metadata[Metadata.ITEM_NAME]
+            object_name = item.metadata[Metadata.ID]
 
             access_path = os.path.join(dest, object_name, "access")
             preservation_path = os.path.join(dest, object_name, "preservation")
@@ -37,6 +37,6 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                     _, ext = os.path.splitext(file_)
                     category = inst.category
                     new_file_name = "{}_{}{}".format(object_name, item_name, ext)
-                    new_file_path = os.path.join(dest, object_name, category, new_file_name)
+                    new_file_path = os.path.join(dest, object_name, category.value, new_file_name)
                     logger.info("Copying {} to {}".format(file_, new_file_path))
                     shutil.copy(file_, new_file_path)
