@@ -1,17 +1,18 @@
 .PHONY: clean docs build
 PYTHON := python3
 build: venv
-	@source venv/bin/activate && python setup.py sdist
+	venv/bin/python setup.py sdist
 
 wheel: venv
-	@source venv/bin/activate && python setup.py bdist_wheel
+	venv/bin/python && python setup.py bdist_wheel
 
 venv:
 	$(PYTHON) -m venv venv
-	@source venv/bin/activate && pip install -r requirements-dev.txt
+	venv/bin/pip install -r requirements.txt
+	venv/bin/pip install -r requirements-dev.txt
 
 clean:
-	@$(PYTHON) setup.py clean
+	venv/bin/python setup.py clean
 	@cd docs && $(MAKE) clean
 
 	@echo "removing '.tox'"
