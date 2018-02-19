@@ -86,7 +86,7 @@ def build_capture_one_instance(new_item, name, path):
             return False
         return True
 
-    for file in filter(is_it_an_instance, os.scandir(path)):
+    for file in filter(is_it_an_instance, filter(filter_none_system_files_only, os.scandir(path))):
         new_instantiation.files.append(file.path)
 
 
@@ -101,7 +101,7 @@ def build_capture_one_package(new_package, path):
 
         return True
 
-    for file_ in filter(get_group_items, filter(lambda i: i.is_file(), os.scandir(path))):
+    for file_ in filter(get_group_items, filter(filter_none_system_files_only, os.scandir(path))):
         group_part, item_part = file_.name.split("_")
         item_part, _ = os.path.splitext(item_part)
         new_item = Item(parent=new_package)
@@ -109,12 +109,26 @@ def build_capture_one_package(new_package, path):
         build_capture_one_instance(new_item, name=item_part, path=path)
 
 
+def filter_none_system_files_only(item: os.DirEntry):
+    system_files = [
+        "Thumbs.db",
+        "desktop.ini",
+        ".DS_Store"
+    ]
+
+    if not item.is_file():
+        return False
+    if item.name in system_files:
+        return False
+    return True
+
+
 def build_capture_one_batch(root) -> Package:
     new_batch = Package(root)
     new_batch.component_metadata[Metadata.PATH] = root
     files = []
 
-    for file_ in filter(lambda i: i.is_file(), os.scandir(root)):
+    for file_ in filter(filter_none_system_files_only, os.scandir(root)):
         files.append(file_)
 
     files.sort(key=lambda f: f.name)

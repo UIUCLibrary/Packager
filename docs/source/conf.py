@@ -30,7 +30,6 @@ def get_project_metadata():
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../setup.cfg"))
     return read_configuration(path)["metadata"]
 
-metadata = get_project_metadata()
 cwd = os.getcwd()
 project_root = os.path.join(os.path.dirname(cwd), "../..")
 
@@ -165,6 +164,8 @@ latex_elements = {
     #
     # 'figure_align': 'htbp',
 }
+
+latex_logo = '_static/full_mark_horz_bw.png'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

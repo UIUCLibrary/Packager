@@ -410,3 +410,26 @@ def step_impl(context):
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
+
+
+@step("the folder flat folder has a Thumbs\.db file in it")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    source_dir = os.path.join(context.temp_dir, CAPTURE_ONE_BATCH_NAME)
+    with open(os.path.join(source_dir, "Thumbs.db"), "w") as wf:
+        pass
+
+
+@step("the folder flat folder has a \.DS_Store file in it")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    source_dir = os.path.join(context.temp_dir, CAPTURE_ONE_BATCH_NAME)
+
+    with open(os.path.join(source_dir, ".DS_Store"), "w") as wf:
+        pass
