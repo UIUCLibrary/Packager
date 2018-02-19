@@ -111,7 +111,7 @@ def build_capture_one_package(new_package, path):
 
 def filter_none_system_files_only(item: os.DirEntry):
     system_files = [
-        "thumbs.db",
+        "Thumbs.db",
         "desktop.ini",
         ".DS_Store"
     ]
