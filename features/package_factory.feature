@@ -41,3 +41,11 @@ Feature: Build package objects
     And resulting packages should be 2
     And the first Digital Library Compound object should contain everything from the first group
     And the second Digital Library Compound object should contain everything from the second group
+
+
+  Scenario: Capture One session containing 2 objects with system files and want to transform them into a HathiTrust Tiff package
+    Given We have a flat folder contains files that belong to two groups, grouped by the number left of an underscore
+    And the folder flat folder has a Thumbs.db file in it
+    When we create a CaptureOne object factory and use it to identify packages at the root folder
+    And we transform all the packages found into Hathi tiff packages
+    Then the newly transformed package should contain the same files but in the format for Hathi Trust
