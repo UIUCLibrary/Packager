@@ -20,3 +20,5 @@ Change Log
 
 Dev
 +++
+  * Instantiations now have a sidecar property
+  * Hathi Trust Tiff package factory adds files with the same name as the Instantiation as a sidecar file
