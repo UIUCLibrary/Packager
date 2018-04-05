@@ -1,3 +1,4 @@
+import itertools
 import logging
 import os
 
@@ -151,25 +152,55 @@ def build_capture_one_batch(root) -> Package:
 def build_hathi_tiff_instance(new_item, filename, path):
     new_instantiation = Instantiation(category=InstantiationTypes.ACCESS, parent=new_item)
 
-    def is_it_an_instance(item: os.DirEntry):
+    def filter_same_name_files(item: os.DirEntry):
+
         if not item.is_file():
             return False
 
-        filename_, ext = os.path.splitext(item.name)
-        if ext.lower() != ".tif":
-            return False
+        base, _ = os.path.splitext(item.name)
 
-        if filename_ != filename:
+        if base != filename:
             return False
-
         return True
 
-    for file_ in filter(is_it_an_instance, os.scandir(path)):
+
+    def _organize_files(item: os.DirEntry) -> str:
+        base, ext = os.path.splitext(item.name)
+        if ext.lower() == ".tif":
+            return "main_files"
+        else:
+            return "sidecar"
+
+    matching_files = filter(filter_same_name_files, os.scandir(path))
+
+    sidecar_files = []
+    main_files = []
+    for k, v in itertools.groupby(matching_files, key=_organize_files):
+        if k == "sidecar":
+            for file_ in v:
+                sidecar_files.append(file_)
+        elif k == "main_files":
+            for file_ in v:
+                main_files.append(file_)
+
+    for file_ in main_files:
         new_instantiation.files.append(file_.path)
+
+    for file_ in sidecar_files:
+        new_instantiation.sidecar_files.append(file_.path)
 
 
 def build_hathi_tiff_package(new_object, path):
-    for file_ in filter(lambda i: i.is_file(), os.scandir(path)):
+    def filter_tiff_files(item: os.DirEntry)->bool:
+        if not item.is_file():
+            return False
+
+        base, ext = os.path.splitext(item.name)
+        if ext.lower() != ".tif":
+            return False
+        return True
+
+    for file_ in filter(filter_tiff_files, os.scandir(path)):
         new_item = Item(parent=new_object)
         item_part, _ = os.path.splitext(file_.name)
         new_item.component_metadata[Metadata.ITEM_NAME] = item_part
@@ -187,7 +218,7 @@ def build_hathi_tiff_batch(root):
     for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
         new_object = PackageObject(parent=new_batch)
         new_object.component_metadata[Metadata.ID] = dir_.name
-        new_object.metadata[Metadata.PATH] = dir_.path
+        new_object.component_metadata[Metadata.PATH] = dir_.path
         new_object.component_metadata[Metadata.PACKAGE_TYPE] = PackageTypes.HATHI_TRUST_TIFF_SUBMISSION
         build_hathi_tiff_package(new_object, path=dir_.path)
         # new_object.metadata

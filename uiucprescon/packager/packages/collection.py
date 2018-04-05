@@ -117,6 +117,7 @@ class Instantiation(AbsPackageComponent):
         super().__init__(parent)
         self.component_metadata[Metadata.CATEGORY] = category
         self.files: typing.List[str] = []
+        self.sidecar_files: typing.List[str] = []
 
     @property
     def children(self):

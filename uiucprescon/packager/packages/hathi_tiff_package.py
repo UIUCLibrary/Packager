@@ -10,7 +10,8 @@ from .abs_package_builder import AbsPackageBuilder
 
 class HathiTiff(AbsPackageBuilder):
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
-        for package in collection_builder.build_hathi_tiff_batch(batch_path):
+        batch = collection_builder.build_hathi_tiff_batch(batch_path)
+        for package in batch:
             yield package
 
     def transform(self, package: Package, dest: str) -> None:

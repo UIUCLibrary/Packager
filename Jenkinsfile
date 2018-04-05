@@ -37,14 +37,14 @@ pipeline {
             steps {
                 parallel(
                     "Behave": {
-                        node(label: "Windows") {
+                        node(label: "Windows&&DevPi") {
                             checkout scm
                             bat "${tool 'Python3.6.3_Win64'} -m tox -e behave --  --junit --junit-directory reports"
                             junit "reports/*.xml"
                         }
                     },
                     "Pytest": {
-                        node(label: "Windows") {
+                        node(label: "Windows&&DevPi") {
                             checkout scm
                             bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest --cov-report html:reports/coverage/ --cov=uiucprescon/packager"
                             junit "reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml"
@@ -62,7 +62,7 @@ pipeline {
             steps {
                 parallel(
                         "Documentation": {
-                            node(label: "Windows") {
+                            node(label: "Windows&&DevPi") {
                                 checkout scm
                                 bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
                                 script{
@@ -85,7 +85,7 @@ pipeline {
                         },
                         "MyPy": {
                      
-                        node(label: "Windows") {
+                        node(label: "Windows&&DevPi") {
                             checkout scm
                             bat "call make.bat install-dev"
                             bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
@@ -151,7 +151,7 @@ pipeline {
                             script {
                                 def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
                                 def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                                node("Windows") {
+                                node("Windows&&DevPi") {
                                     withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
                                         bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
                                         bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
@@ -166,7 +166,7 @@ pipeline {
                             script {
                                 def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
                                 def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                                node("Windows") {
+                                node("Windows&&DevPi") {
                                     withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
                                         bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
                                         bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
