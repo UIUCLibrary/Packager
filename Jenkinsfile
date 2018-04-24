@@ -30,8 +30,6 @@ pipeline {
             steps {
                 bat "${tool 'CPython-3.6'} -m venv venv"
                 bat 'venv\\Scripts\\python.exe -m pip install devpi-client'
-                bat 'venv\\Scripts\\python.exe -m pip install mypy'
-                bat 'venv\\Scripts\\python.exe -m pip install flake8'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                 dir("reports/behave"){
@@ -49,49 +47,49 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
-                environment {
-                    PATH = "${tool 'cmake_3.11.1'};$PATH"
-                }
-                steps {
-                    tee('build.log') {
-                    bat "venv\\Scripts\\python.exe setup.py build"
+                    environment {
+                        PATH = "${tool 'cmake_3.11.1'};$PATH"
                     }
-                }
-                post{
-                    always{
-                    warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
-                    archiveArtifacts artifacts: 'build.log'
+                    steps {
+                        tee('build.log') {
+                            bat "venv\\Scripts\\python.exe setup.py build"
+                        }
                     }
-                }
+                    post{
+                        always{
+                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
+                            archiveArtifacts artifacts: 'build.log'
+                        }
+                    }
                 }
                 stage("Sphinx documentation"){
-                when {
-                    equals expected: true, actual: params.BUILD_DOCS
-                }
-                steps {
-                    tee('build_sphinx.log') {
-                    bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+                    when {
+                        equals expected: true, actual: params.BUILD_DOCS
                     }
-                }
-                post{
-                    always {
-                    warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build_sphinx.log']]
-                    }
-                    success{
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
-                    script{
-                        // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
-                        def alljob = env.JOB_NAME.tokenize("/") as String[]
-                        def project_name = alljob[0]
-                        dir('build/docs/') {
-                        zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,7)}.zip"
-                        dir("html"){
-                            stash includes: '**', name: "HTML Documentation"
-                        }
+                    steps {
+                        tee('build_sphinx.log') {
+                            bat "venv\\Scripts\\python.exe setup.py build_sphinx"
                         }
                     }
+                    post{
+                        always {
+                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build_sphinx.log']]
+                        }
+                        success{
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
+                            script{
+                                // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+                                def alljob = env.JOB_NAME.tokenize("/") as String[]
+                                def project_name = alljob[0]
+                                dir('build/docs/') {
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,7)}.zip"
+                                    dir("html"){
+                                        stash includes: '**', name: "HTML Documentation"
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
                 }
             }
         }
@@ -156,7 +154,7 @@ pipeline {
                         script{
                             try{
                                 tee('mypy.log') {
-                                    bat "venv\\Scripts\\mypy.exe -p pykdu_compress --html-report reports\\mypy\\html\\"
+                                    bat "venv\\Scripts\\mypy.exe -p uiucprescon --html-report reports\\mypy\\html\\"
                                 }
                             } catch (exc) {
                                 echo "MyPy found some warnings"
@@ -179,7 +177,7 @@ pipeline {
                         script{
                             try{
                                 tee('flake8.log') {
-                                    bat "venv\\Scripts\\flake8.exe pykdu_compress --format=pylint"
+                                    bat "venv\\Scripts\\flake8.exe uiucprescon --format=pylint"
                                 }
                             } catch (exc) {
                                 echo "flake8 found some warnings"
