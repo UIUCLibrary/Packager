@@ -16,15 +16,11 @@ pipeline {
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
-        // booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
         booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
         booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
-        // booleanParam(name: "ADDITIONAL_TESTS", defaultValue: true, description: "Run additional tests")
-        // booleanParam(name: "PACKAGE", defaultValue: true, description: "Create a package")
-        booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpy.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
-        // choice(choices: 'None\nRelease_to_devpi_only', description: "Release the build to production. Only available in the Master branch", name: 'RELEASE')
+        booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
@@ -195,49 +191,7 @@ pipeline {
                 }
             }
         }
-        // stage("Additional tests") {
-        //     when {
-        //         expression { params.ADDITIONAL_TESTS == true }
-        //     }
 
-        //     steps {
-        //         parallel(
-        //                 "Documentation": {
-        //                     node(label: "Windows&&DevPi") {
-        //                         checkout scm
-        //                         bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
-        //                         script{
-        //                             // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
-        //                             def alljob = env.JOB_NAME.tokenize("/") as String[]
-        //                             def project_name = alljob[0]
-        //                             dir('.tox/dist') {
-        //                                 zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
-        //                                 dir("html"){
-        //                                     stash includes: '**', name: "HTML Documentation"
-        //                                 }
-        //                                 dir("doctest"){
-        //                                     bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
-        //                                     archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
-        //                                 }
-        //                             }
-        //                         }
-        //                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
-        //                     }
-        //                 },
-        //                 "MyPy": {
-                     
-        //                 node(label: "Windows&&DevPi") {
-        //                     checkout scm
-        //                     bat "call make.bat install-dev"
-        //                     bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
-
-        //                     junit "junit-${env.NODE_NAME}-mypy.xml"
-        //                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
-        //                  }
-        //             },
-        //         )
-        //     }
-        // }
         stage("Packaging") {
 
             steps {
@@ -279,7 +233,6 @@ pipeline {
             when {
                 expression { params.DEPLOY_DEVPI == true  && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev")}
             }
-            // steps {
             parallel {
                 stage("Test Source Distribution: .tar.gz") {
                     steps {
@@ -355,7 +308,6 @@ pipeline {
                     equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
                     branch "master"
                 }
-                // expression { params.RELEASE != "None" && env.BRANCH_NAME == "master" }
             }
 
             steps {
@@ -411,17 +363,5 @@ pipeline {
             }
           }
         }
-        // stage("Update online documentation") {
-        //     agent {
-        //         label "Linux"
-        //     }
-        //     when {
-        //       expression {params.UPDATE_DOCS == true }
-        //     }
-
-        //     steps {
-        //         updateOnlineDocs url_subdomain: params.URL_SUBFOLDER, stash_name: "HTML Documentation"
-        //     }
-        // }
     }
 }
