@@ -241,9 +241,7 @@ pipeline {
             }
 
             steps {
-                steps {
-                    bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
-                }
+                bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
                 // parallel(
                 //         "Source and Wheel formats": {
                 //             bat "call make.bat"
