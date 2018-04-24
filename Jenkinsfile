@@ -16,13 +16,18 @@ pipeline {
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
-        booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
-        booleanParam(name: "ADDITIONAL_TESTS", defaultValue: true, description: "Run additional tests")
-        booleanParam(name: "PACKAGE", defaultValue: true, description: "Create a package")
+        // booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
+        booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
+        booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
+        booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
+        booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
+        // booleanParam(name: "ADDITIONAL_TESTS", defaultValue: true, description: "Run additional tests")
+        // booleanParam(name: "PACKAGE", defaultValue: true, description: "Create a package")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpy.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
-        choice(choices: 'None\nRelease_to_devpi_only', description: "Release the build to production. Only available in the Master branch", name: 'RELEASE')
-        booleanParam(name: "UPDATE_DOCS", defaultValue: false, description: "Update online documentation")
-        string(name: 'URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
+        // choice(choices: 'None\nRelease_to_devpi_only', description: "Release the build to production. Only available in the Master branch", name: 'RELEASE')
+        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
+        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
+        string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
 
@@ -100,7 +105,7 @@ pipeline {
                         label 'Windows && DevPi'
                     }
                     when {
-                       expression { params.UNIT_TESTS == true }
+                       equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
                     steps {
                         bat "${tool 'CPython-3.6'} -m venv venv"
@@ -115,7 +120,7 @@ pipeline {
                         label 'Windows && DevPi'
                     }
                     when {
-                       expression { params.UNIT_TESTS == true }
+                       equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
                     steps{
                         script {
@@ -134,7 +139,7 @@ pipeline {
                         label 'Windows && DevPi'
                     }
                     when {
-                       expression { params.ADDITIONAL_TESTS == true }
+                       equals expected: true, actual: params.TEST_DOCTEST
                     }
                     steps {
                         script{
@@ -147,8 +152,7 @@ pipeline {
                 }
                 stage("MyPy") {
                     when {
-                        expression { params.ADDITIONAL_TESTS == true }
-                        // equals expected: true, actual: params.TEST_RUN_MYPY
+                        equals expected: true, actual: params.TEST_RUN_MYPY
                     }
                     steps{
                         script{
@@ -170,8 +174,7 @@ pipeline {
                 }
                 stage("Flake8") {
                     when {
-                        expression { params.ADDITIONAL_TESTS == true }
-                        // equals expected: true, actual: params.TEST_RUN_FLAKE8
+                        equals expected: true, actual: params.TEST_RUN_FLAKE8
                     }
                     steps{
                         script{
@@ -236,9 +239,6 @@ pipeline {
         //     }
         // }
         stage("Packaging") {
-            when {
-                expression { params.PACKAGE == true }
-            }
 
             steps {
                 bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
@@ -297,6 +297,22 @@ pipeline {
                         }
                     }
                 }
+                stage("Test Source Distribution: .zip") {
+                    steps {
+                        script {
+                            def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                            def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                            node("Windows && DevPi") {
+                                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                                    echo "Testing Source package in devpi"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s zip"
+                                }
+                            }
+                        }
+                    }
+                }
                 stage("Test Built Distribution: .whl") {
                     steps {
                         script {
@@ -316,24 +332,6 @@ pipeline {
                         }
                     }
                 }
-                // }
-                        // "Wheel": {
-                        //     script {
-                        //         def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                        //         def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                        //         node("Windows&&DevPi") {
-                        //             withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                        //                 bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                        //                 bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                        //                 echo "Testing Whl package in devpi"
-                        //                 bat " ${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s whl"
-                        //             }
-                        //         }
-
-                        //     }
-                        // }
-                // )
-
             }
             post {
                 success {
@@ -353,7 +351,11 @@ pipeline {
         }
         stage("Release to DevPi production") {
             when {
-                expression { params.RELEASE != "None" && env.BRANCH_NAME == "master" }
+                allOf{
+                    equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
+                    branch "master"
+                }
+                // expression { params.RELEASE != "None" && env.BRANCH_NAME == "master" }
             }
 
             steps {
@@ -374,17 +376,52 @@ pipeline {
                 }
             }
         }
-        stage("Update online documentation") {
-            agent {
-                label "Linux"
+        stage("Deploy online documentation") {
+          when {
+            allOf{
+              equals expected: true, actual: params.DEPLOY_DOCS
+              branch "master"
             }
-            when {
-              expression {params.UPDATE_DOCS == true }
+          }
+          steps {
+            bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+            dir("build/docs/html/"){
+              sshPublisher(
+                publishers: [
+                  sshPublisherDesc(
+                    configName: 'apache-ns - lib-dccuser-updater', 
+                    sshLabel: [label: 'Linux'], 
+                    transfers: [sshTransfer(excludes: '', 
+                    execCommand: '', 
+                    execTimeout: 120000, 
+                    flatten: false, 
+                    makeEmptyDirs: false, 
+                    noDefaultExcludes: false, 
+                    patternSeparator: '[, ]+', 
+                    remoteDirectory: "${params.DEPLOY_DOCS_URL_SUBFOLDER}", 
+                    remoteDirectorySDF: false, 
+                    removePrefix: '', 
+                    sourceFiles: '**')], 
+                  usePromotionTimestamp: false, 
+                  useWorkspaceInPromotion: false, 
+                  verbose: true
+                  )
+                ]
+              )
             }
-
-            steps {
-                updateOnlineDocs url_subdomain: params.URL_SUBFOLDER, stash_name: "HTML Documentation"
-            }
+          }
         }
+        // stage("Update online documentation") {
+        //     agent {
+        //         label "Linux"
+        //     }
+        //     when {
+        //       expression {params.UPDATE_DOCS == true }
+        //     }
+
+        //     steps {
+        //         updateOnlineDocs url_subdomain: params.URL_SUBFOLDER, stash_name: "HTML Documentation"
+        //     }
+        // }
     }
 }
