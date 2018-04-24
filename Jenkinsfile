@@ -6,6 +6,9 @@ pipeline {
     agent {
         label "Windows&&DevPi"
     }
+    triggers {
+        cron('@daily')
+    }
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
     }
@@ -22,11 +25,16 @@ pipeline {
     }
     stages {
 
-        stage("Cloning Source") {
+        stage("Configure Environment") {
             steps {
-                deleteDir()
-                checkout scm
-                stash includes: '**', name: "Source", useDefaultExcludes: false
+                bat "${tool 'CPython-3.6'} -m venv venv"
+                bat 'venv\\Scripts\\python.exe -m pip install devpi-client'
+                bat 'venv\\Scripts\\python.exe -m pip install tox'
+                bat 'venv\\Scripts\\python.exe -m pip install lxml'
+                bat 'venv\\Scripts\\python.exe -m pip install mypy'
+                bat 'venv\\Scripts\\python.exe -m pip install flake8'
+                bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
             }
 
         }
