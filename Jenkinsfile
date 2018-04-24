@@ -84,6 +84,22 @@ pipeline {
                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                     }
                 }
+                stage("Doctest"){
+                    agent {
+                        label 'Windows && DevPi'
+                    }
+                    when {
+                       expression { params.ADDITIONAL_TESTS == true }
+                    }
+                    steps {
+                        script{
+                            bat "${tool 'CPython-3.6'} -m venv venv"
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                            bat "venv\\Scripts\\tox.exe -e docs"
+                        }
+                    }
+                }
             }
         }
         stage("Additional tests") {
