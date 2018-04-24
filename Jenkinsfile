@@ -192,61 +192,64 @@ pipeline {
                 }
             }
         }
-        stage("Additional tests") {
-            when {
-                expression { params.ADDITIONAL_TESTS == true }
-            }
+        // stage("Additional tests") {
+        //     when {
+        //         expression { params.ADDITIONAL_TESTS == true }
+        //     }
 
-            steps {
-                parallel(
-                        "Documentation": {
-                            node(label: "Windows&&DevPi") {
-                                checkout scm
-                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
-                                script{
-                                    // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
-                                    def alljob = env.JOB_NAME.tokenize("/") as String[]
-                                    def project_name = alljob[0]
-                                    dir('.tox/dist') {
-                                        zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
-                                        dir("html"){
-                                            stash includes: '**', name: "HTML Documentation"
-                                        }
-                                        dir("doctest"){
-                                            bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
-                                            archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
-                                        }
-                                    }
-                                }
-                                publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
-                            }
-                        },
-                        "MyPy": {
+        //     steps {
+        //         parallel(
+        //                 "Documentation": {
+        //                     node(label: "Windows&&DevPi") {
+        //                         checkout scm
+        //                         bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
+        //                         script{
+        //                             // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+        //                             def alljob = env.JOB_NAME.tokenize("/") as String[]
+        //                             def project_name = alljob[0]
+        //                             dir('.tox/dist') {
+        //                                 zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
+        //                                 dir("html"){
+        //                                     stash includes: '**', name: "HTML Documentation"
+        //                                 }
+        //                                 dir("doctest"){
+        //                                     bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
+        //                                     archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
+        //                                 }
+        //                             }
+        //                         }
+        //                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
+        //                     }
+        //                 },
+        //                 "MyPy": {
                      
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "call make.bat install-dev"
-                            bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
+        //                 node(label: "Windows&&DevPi") {
+        //                     checkout scm
+        //                     bat "call make.bat install-dev"
+        //                     bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
 
-                            junit "junit-${env.NODE_NAME}-mypy.xml"
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
-                         }
-                    },
-                )
-            }
-        }
+        //                     junit "junit-${env.NODE_NAME}-mypy.xml"
+        //                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
+        //                  }
+        //             },
+        //         )
+        //     }
+        // }
         stage("Packaging") {
             when {
                 expression { params.PACKAGE == true }
             }
 
             steps {
-                parallel(
-                        "Source and Wheel formats": {
-                            bat "call make.bat"
-                        },
-                )
-            }
+                steps {
+                 bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
+                }
+                // parallel(
+                //         "Source and Wheel formats": {
+                //             bat "call make.bat"
+                //         },
+                // )
+            // }
             post {
               success {
                   dir("dist"){
