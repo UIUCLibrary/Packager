@@ -48,10 +48,15 @@ pipeline {
         stage("Test") {
             parallel {
                 stage("Behave") {
+                    agent {
+                        label 'Windows && DevPi'
+                    }
                     when {
                        expression { params.UNIT_TESTS == true }
                     }
                     steps {
+                        checkout scm
+                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                         bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
                         junit "reports/behave/*.xml"
                     }
