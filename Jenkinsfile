@@ -6,108 +6,196 @@ pipeline {
     agent {
         label "Windows&&DevPi"
     }
+    triggers {
+        cron('@daily')
+    }
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
     }
 
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
-        booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
-        booleanParam(name: "ADDITIONAL_TESTS", defaultValue: true, description: "Run additional tests")
-        booleanParam(name: "PACKAGE", defaultValue: true, description: "Create a package")
-        booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpy.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
-        choice(choices: 'None\nRelease_to_devpi_only', description: "Release the build to production. Only available in the Master branch", name: 'RELEASE')
-        booleanParam(name: "UPDATE_DOCS", defaultValue: false, description: "Update online documentation")
-        string(name: 'URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
+        booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
+        booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
+        booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
+        booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
+        booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
+        booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
+        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
+        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
+        string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
 
-        stage("Cloning Source") {
+        stage("Configure Environment") {
             steps {
-                deleteDir()
-                checkout scm
-                stash includes: '**', name: "Source", useDefaultExcludes: false
+                bat "${tool 'CPython-3.6'} -m venv venv"
+                bat 'venv\\Scripts\\python.exe -m pip install devpi-client'
+                bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                dir("reports/behave"){
+                    echo "build reports/behave"
+                }
+                dir("reports/pytestcoverage"){
+                    echo "build reports/pytestcoverage"
+                }
+                dir("reports/pytest"){
+                    echo "build reports/pytest"
+                }
             }
 
         }
-        stage("Unit tests") {
-            when {
-                expression { params.UNIT_TESTS == true }
-            }
-            steps {
-                parallel(
-                    "Behave": {
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e behave --  --junit --junit-directory reports"
-                            junit "reports/*.xml"
-                        }
-                    },
-                    "Pytest": {
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest --cov-report html:reports/coverage/ --cov=uiucprescon/packager"
-                            junit "reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml"
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
-                         }
+        stage('Build') {
+            parallel {
+                stage("Python Package"){
+                    environment {
+                        PATH = "${tool 'cmake_3.11.1'};$PATH"
                     }
-                )
-            }
-        }
-        stage("Additional tests") {
-            when {
-                expression { params.ADDITIONAL_TESTS == true }
-            }
-
-            steps {
-                parallel(
-                        "Documentation": {
-                            node(label: "Windows&&DevPi") {
-                                checkout scm
-                                bat "${tool 'Python3.6.3_Win64'} -m tox -e docs"
-                                script{
-                                    // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
-                                    def alljob = env.JOB_NAME.tokenize("/") as String[]
-                                    def project_name = alljob[0]
-                                    dir('.tox/dist') {
-                                        zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,6)}.zip"
-                                        dir("html"){
-                                            stash includes: '**', name: "HTML Documentation"
-                                        }
-                                        dir("doctest"){
-                                            bat "copy output.txt sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt"
-                                            archiveArtifacts artifacts: "sphinx-doctest-results-${env.GIT_COMMIT.substring(0,6)}.txt", allowEmptyArchive: true
-                                        }
+                    steps {
+                        tee('build.log') {
+                            bat "venv\\Scripts\\python.exe setup.py build"
+                        }
+                    }
+                    post{
+                        always{
+                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
+                            archiveArtifacts artifacts: 'build.log'
+                        }
+                    }
+                }
+                stage("Sphinx documentation"){
+                    when {
+                        equals expected: true, actual: params.BUILD_DOCS
+                    }
+                    steps {
+                        tee('build_sphinx.log') {
+                            bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+                        }
+                    }
+                    post{
+                        always {
+                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build_sphinx.log']]
+                        }
+                        success{
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
+                            script{
+                                // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+                                def alljob = env.JOB_NAME.tokenize("/") as String[]
+                                def project_name = alljob[0]
+                                dir('build/docs/') {
+                                    zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,7)}.zip"
+                                    dir("html"){
+                                        stash includes: '**', name: "HTML Documentation"
                                     }
                                 }
-                                publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '.tox/dist/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             }
-                        },
-                        "MyPy": {
-                     
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "call make.bat install-dev"
-                            bat "venv\\Scripts\\mypy.exe -p uiucprescon --junit-xml=junit-${env.NODE_NAME}-mypy.xml --html-report reports/mypy_html"
-
-                            junit "junit-${env.NODE_NAME}-mypy.xml"
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy_html', reportFiles: 'index.html', reportName: 'MyPy', reportTitles: ''])
-                         }
-                    },
-                )
+                        }
+                    }
+                }
             }
         }
-        stage("Packaging") {
-            when {
-                expression { params.PACKAGE == true }
+        stage("Test") {
+            parallel {
+                stage("Behave") {
+                    agent {
+                        label 'Windows && DevPi'
+                    }
+                    when {
+                       equals expected: true, actual: params.TEST_UNIT_TESTS
+                    }
+                    steps {
+                        bat "${tool 'CPython-3.6'} -m venv venv"
+                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                        bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
+                        junit "reports/behave/*.xml"
+                    }
+                }
+                stage("Pytest"){
+                    agent {
+                        label 'Windows && DevPi'
+                    }
+                    when {
+                       equals expected: true, actual: params.TEST_UNIT_TESTS
+                    }
+                    steps{
+                        script {
+                            def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                            bat "${tool 'CPython-3.6'} -m venv venv"
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                            bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
+                            junit "reports/pytest/${junit_filename}"
+                        }
+                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                    }
+                }
+                stage("Doctest"){
+                    agent {
+                        label 'Windows && DevPi'
+                    }
+                    when {
+                       equals expected: true, actual: params.TEST_DOCTEST
+                    }
+                    steps {
+                        script{
+                            bat "${tool 'CPython-3.6'} -m venv venv"
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                            bat "venv\\Scripts\\tox.exe -e docs"
+                        }
+                    }
+                }
+                stage("MyPy") {
+                    when {
+                        equals expected: true, actual: params.TEST_RUN_MYPY
+                    }
+                    steps{
+                        script{
+                            try{
+                                tee('mypy.log') {
+                                    bat "venv\\Scripts\\mypy.exe -p uiucprescon --html-report reports\\mypy\\html\\"
+                                }
+                            } catch (exc) {
+                                echo "MyPy found some warnings"
+                            }      
+                        }
+                    }
+                    post {
+                        always {
+                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: 'mypy.log']], unHealthy: ''
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
+                        }
+                    }
+                }
+                stage("Flake8") {
+                    when {
+                        equals expected: true, actual: params.TEST_RUN_FLAKE8
+                    }
+                    steps{
+                        script{
+                            try{
+                                tee('flake8.log') {
+                                    bat "venv\\Scripts\\flake8.exe uiucprescon --format=pylint"
+                                }
+                            } catch (exc) {
+                                echo "flake8 found some warnings"
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            warnings parserConfigurations: [[parserName: 'PyLint', pattern: 'flake8.log']], unHealthy: ''
+                        }
+                    }
+                }
             }
+        }
+
+        stage("Packaging") {
 
             steps {
-                parallel(
-                        "Source and Wheel formats": {
-                            bat "call make.bat"
-                        },
-                )
+                bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
             }
             post {
               success {
@@ -145,40 +233,58 @@ pipeline {
             when {
                 expression { params.DEPLOY_DEVPI == true  && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev")}
             }
-            steps {
-                parallel(
-                        "Source": {
-                            script {
-                                def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                                def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                                node("Windows&&DevPi") {
-                                    withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                                        bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                                        bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                                        echo "Testing Source package in devpi"
-                                        bat "${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s tar.gz"
-                                    }
+            parallel {
+                stage("Test Source Distribution: .tar.gz") {
+                    steps {
+                        script {
+                            def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                            def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                            node("Windows && DevPi") {
+                                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                                    echo "Testing Source package in devpi"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s tar.gz"
                                 }
-
-                            }
-                        },
-                        "Wheel": {
-                            script {
-                                def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                                def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                                node("Windows&&DevPi") {
-                                    withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                                        bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                                        bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                                        echo "Testing Whl package in devpi"
-                                        bat " ${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s whl"
-                                    }
-                                }
-
                             }
                         }
-                )
-
+                    }
+                }
+                stage("Test Source Distribution: .zip") {
+                    steps {
+                        script {
+                            def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                            def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                            node("Windows && DevPi") {
+                                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                                    echo "Testing Source package in devpi"
+                                    bat "${tool 'Python3.6.3_Win64'} -m devpi test --index http://devpy.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s zip"
+                                }
+                            }
+                        }
+                    }
+                }
+                stage("Test Built Distribution: .whl") {
+                    steps {
+                        script {
+                            def name = bat(returnStdout: true, script: "@${tool 'CPython-3.6'} setup.py --name").trim()
+                            def version = bat(returnStdout: true, script: "@${tool 'CPython-3.6'} setup.py --version").trim()
+                            node("Windows") {
+                                bat "${tool 'CPython-3.6'} -m venv venv"
+                                bat "venv\\Scripts\\pip.exe install tox devpi-client"
+                                bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu"
+                                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                                bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                                bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                                echo "Testing Whl package in devpi"
+                                bat "venv\\Scripts\\devpi.exe test --index https://devpi.library.illinois.edu/${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${name} -s whl"
+                                }
+                            }
+                        }
+                    }
+                }
             }
             post {
                 success {
@@ -198,7 +304,10 @@ pipeline {
         }
         stage("Release to DevPi production") {
             when {
-                expression { params.RELEASE != "None" && env.BRANCH_NAME == "master" }
+                allOf{
+                    equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
+                    branch "master"
+                }
             }
 
             steps {
@@ -219,17 +328,40 @@ pipeline {
                 }
             }
         }
-        stage("Update online documentation") {
-            agent {
-                label "Linux"
+        stage("Deploy online documentation") {
+          when {
+            allOf{
+              equals expected: true, actual: params.DEPLOY_DOCS
+              branch "master"
             }
-            when {
-              expression {params.UPDATE_DOCS == true }
+          }
+          steps {
+            bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+            dir("build/docs/html/"){
+              sshPublisher(
+                publishers: [
+                  sshPublisherDesc(
+                    configName: 'apache-ns - lib-dccuser-updater', 
+                    sshLabel: [label: 'Linux'], 
+                    transfers: [sshTransfer(excludes: '', 
+                    execCommand: '', 
+                    execTimeout: 120000, 
+                    flatten: false, 
+                    makeEmptyDirs: false, 
+                    noDefaultExcludes: false, 
+                    patternSeparator: '[, ]+', 
+                    remoteDirectory: "${params.DEPLOY_DOCS_URL_SUBFOLDER}", 
+                    remoteDirectorySDF: false, 
+                    removePrefix: '', 
+                    sourceFiles: '**')], 
+                  usePromotionTimestamp: false, 
+                  useWorkspaceInPromotion: false, 
+                  verbose: true
+                  )
+                ]
+              )
             }
-
-            steps {
-                updateOnlineDocs url_subdomain: params.URL_SUBFOLDER, stash_name: "HTML Documentation"
-            }
+          }
         }
     }
 }
