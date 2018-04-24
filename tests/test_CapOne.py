@@ -67,7 +67,14 @@ def test_capture_one_tiff_package_size(capture_one_fixture):
     assert len(capture_one_packages) == 2
 
 
-def test_capture_one_tiff_to_digital_library(capture_one_fixture):
+
+def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
+    def make_access_jp2_replace(source_file_path, output_file_name):
+        with open(output_file_name, "w") as f:
+            pass
+        pass
+
+    monkeypatch.setattr(packager.packages.digital_library_compound, 'make_access_jp2', make_access_jp2_replace)
     source = os.path.join(capture_one_fixture, CAPTURE_ONE_BATCH_NAME)
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
 
@@ -87,22 +94,22 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture):
     #  some_root/000001/preservation/00000001.tif
     assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000001.tif"))
     #  some_root/000001/access/
-    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+    assert os.path.exists(os.path.join(dest, "000001", 'access', "000001_00000001.jp2"))
 
     #  some_root/000001/preservation/00000002.tif
     assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000002.tif"))
     #  some_root/000001/access/
-    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+    assert os.path.exists(os.path.join(dest, "000001", 'access', "000001_00000002.jp2"))
 
     #  some_root/000001/preservation/00000003.tif
     assert os.path.exists(os.path.join(dest, "000001", 'preservation', "000001_00000003.tif"))
     #  some_root/000001/access/
-    assert os.path.exists(os.path.join(dest, "000001", 'access'))
+    assert os.path.exists(os.path.join(dest, "000001", 'access', "000001_00000003.jp2"))
 
     #  some_root/000002/preservation/00000001.tif
     assert os.path.exists(os.path.join(dest, "000002", "preservation", "000002_00000001.tif"))
     #  some_root/000002/access/
-    assert os.path.exists(os.path.join(dest, "000002", "access"))
+    assert os.path.exists(os.path.join(dest, "000002", "access", "000002_00000001.jp2"))
 
     #  some_root/000002/preservation/00000001.tif
     assert os.path.exists(os.path.join(dest, "000002", "preservation", "000002_00000001.tif"))
