@@ -35,31 +35,38 @@ pipeline {
                 bat 'venv\\Scripts\\python.exe -m pip install flake8'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                dir("reports/behave"){
+                    echo "build reports/behave"
+                }
             }
 
         }
-        stage("Unit tests") {
-            when {
-                expression { params.UNIT_TESTS == true }
-            }
-            steps {
-                parallel(
-                    "Behave": {
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e behave --  --junit --junit-directory reports"
-                            junit "reports/*.xml"
-                        }
-                    },
-                    "Pytest": {
-                        node(label: "Windows&&DevPi") {
-                            checkout scm
-                            bat "${tool 'Python3.6.3_Win64'} -m tox -e pytest -- --junitxml=reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml --junit-prefix=${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest --cov-report html:reports/coverage/ --cov=uiucprescon/packager"
-                            junit "reports/junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,6)}-pytest.xml"
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
-                         }
+        stage("Test") {
+            parallel {
+                stage("Behave") {
+                    when {
+                       expression { params.UNIT_TESTS == true }
                     }
-                )
+                    steps {
+                        bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
+                        junit "reports/behave/*.xml"
+                    }
+                    
+                }
+                stage("Pytest"){
+                    when {
+                       expression { params.UNIT_TESTS == true }
+                    }
+                    steps{
+                        script {
+                            def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                            bat "mkdir reports"
+                            bat "venv\\Scripts\\python.exe -m tox -- --junitxml=reports/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/coverage/ --cov=uiucprescon/packager"
+                            junit "reports/${junit_filename}"
+                        }
+                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                    }
+                }
             }
         }
         stage("Additional tests") {
