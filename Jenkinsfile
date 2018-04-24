@@ -57,6 +57,7 @@ pipeline {
                     steps {
                         checkout scm
                         bat "${tool 'CPython-3.6'} -m venv venv"
+                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                         bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                         bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
                         junit "reports/behave/*.xml"
@@ -75,6 +76,7 @@ pipeline {
                             checkout scm
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                             bat "${tool 'CPython-3.6'} -m venv venv"
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                             bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                             bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
                             junit "reports/pytest/${junit_filename}"
