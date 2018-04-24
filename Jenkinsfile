@@ -105,14 +105,12 @@ pipeline {
                        expression { params.UNIT_TESTS == true }
                     }
                     steps {
-                        checkout scm
                         bat "${tool 'CPython-3.6'} -m venv venv"
                         bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                         bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                         bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
                         junit "reports/behave/*.xml"
                     }
-                    
                 }
                 stage("Pytest"){
                     agent {
@@ -123,7 +121,6 @@ pipeline {
                     }
                     steps{
                         script {
-                            checkout scm
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                             bat "${tool 'CPython-3.6'} -m venv venv"
                             bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
@@ -147,6 +144,51 @@ pipeline {
                             bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                             bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                             bat "venv\\Scripts\\tox.exe -e docs"
+                        }
+                    }
+                }
+                stage("MyPy") {
+                    when {
+                        expression { params.ADDITIONAL_TESTS == true }
+                        // equals expected: true, actual: params.TEST_RUN_MYPY
+                    }
+                    steps{
+                        script{
+                            try{
+                                tee('mypy.log') {
+                                    bat "venv\\Scripts\\mypy.exe -p pykdu_compress --html-report reports\\mypy\\html\\"
+                                }
+                            } catch (exc) {
+                                echo "MyPy found some warnings"
+                            }      
+                        }
+                    }
+                    post {
+                        always {
+                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: 'mypy.log']], unHealthy: ''
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
+                        }
+                    }
+                }
+                stage("Flake8") {
+                    when {
+                        expression { params.ADDITIONAL_TESTS == true }
+                        // equals expected: true, actual: params.TEST_RUN_FLAKE8
+                    }
+                    steps{
+                        script{
+                            try{
+                                tee('flake8.log') {
+                                    bat "venv\\Scripts\\flake8.exe pykdu_compress --format=pylint"
+                                }
+                            } catch (exc) {
+                                echo "flake8 found some warnings"
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            warnings parserConfigurations: [[parserName: 'PyLint', pattern: 'flake8.log']], unHealthy: ''
                         }
                     }
                 }
