@@ -15,6 +15,7 @@ pipeline {
 
     parameters {
         string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
+        booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "ADDITIONAL_TESTS", defaultValue: true, description: "Run additional tests")
         booleanParam(name: "PACKAGE", defaultValue: true, description: "Create a package")
@@ -44,6 +45,55 @@ pipeline {
                 }
             }
 
+        }
+        stage('Build') {
+            parallel {
+                stage("Python Package"){
+                environment {
+                    PATH = "${tool 'cmake_3.11.1'};$PATH"
+                }
+                steps {
+                    tee('build.log') {
+                    bat "venv\\Scripts\\python.exe setup.py build"
+                    }
+                }
+                post{
+                    always{
+                    warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
+                    archiveArtifacts artifacts: 'build.log'
+                    }
+                }
+                }
+                stage("Sphinx documentation"){
+                when {
+                    equals expected: true, actual: params.BUILD_DOCS
+                }
+                steps {
+                    tee('build_sphinx.log') {
+                    bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+                    }
+                }
+                post{
+                    always {
+                    warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build_sphinx.log']]
+                    }
+                    success{
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
+                    script{
+                        // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
+                        def alljob = env.JOB_NAME.tokenize("/") as String[]
+                        def project_name = alljob[0]
+                        dir('build/docs/') {
+                        zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,7)}.zip"
+                        dir("html"){
+                            stash includes: '**', name: "HTML Documentation"
+                        }
+                        }
+                    }
+                    }
+                }
+                }
+            }
         }
         stage("Test") {
             parallel {
