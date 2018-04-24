@@ -56,6 +56,7 @@ pipeline {
                     }
                     steps {
                         checkout scm
+                        bat "${tool 'CPython-3.6'} -m venv venv"
                         bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                         bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
                         junit "reports/behave/*.xml"
@@ -63,15 +64,19 @@ pipeline {
                     
                 }
                 stage("Pytest"){
+                    agent {
+                        label 'Windows && DevPi'
+                    }
                     when {
                        expression { params.UNIT_TESTS == true }
                     }
                     steps{
                         script {
+                            checkout scm
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            retry(3) {
-                                bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
-                            }
+                            bat "${tool 'CPython-3.6'} -m venv venv"
+                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                            bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
                             junit "reports/pytest/${junit_filename}"
                         }
                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
