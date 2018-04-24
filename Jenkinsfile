@@ -64,7 +64,9 @@ pipeline {
                     steps{
                         script {
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
+                            retry(3) {
+                                bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
+                            }
                             junit "reports/pytest/${junit_filename}"
                         }
                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
