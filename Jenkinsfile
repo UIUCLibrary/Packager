@@ -38,6 +38,12 @@ pipeline {
                 dir("reports/behave"){
                     echo "build reports/behave"
                 }
+                dir("reports/pytestcoverage"){
+                    echo "build reports/pytestcoverage"
+                }
+                dir("reports/pytest"){
+                    echo "build reports/pytest"
+                }
             }
 
         }
@@ -60,11 +66,10 @@ pipeline {
                     steps{
                         script {
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            bat "mkdir reports"
-                            bat "venv\\Scripts\\python.exe -m tox -- --junitxml=reports/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/coverage/ --cov=uiucprescon/packager"
-                            junit "reports/${junit_filename}"
+                            bat "venv\\Scripts\\python.exe -m tox -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
+                            junit "reports/pytest/${junit_filename}"
                         }
-                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/coverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                     }
                 }
             }
