@@ -28,7 +28,10 @@ class CaptureOnePackage(AbsPackageBuilder):
                                                      ext)
                     new_file_path = os.path.join(dest, new_file_name)
 
-                    logger.info("Copying {} to {}".format(file_,
-                                                          new_file_path))
+                    logger.debug(
+                        "Copying {} to {}".format(file_, new_file_path)
+                    )
 
                     shutil.copy(file_, new_file_path)
+
+                    logger.info("Added {}".format(new_file_name))

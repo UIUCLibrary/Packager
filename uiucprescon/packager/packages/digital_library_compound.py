@@ -54,11 +54,13 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                               category.value,
                                                               new_file_name)
 
-                    logger.info("Copying {} to {}".format(
-                        file_, new_preservation_file_path)
+                    logger.debug(
+                        "Copying {} to {}".format(file_,
+                                                  new_preservation_file_path)
                     )
 
                     shutil.copy(file_, new_preservation_file_path)
+                    logger.info("Added {}".format(file_))
 
                     # Convert
                     access_file = "{}.jp2".format(base_name)
@@ -66,7 +68,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                     make_access_jp2(file_, os.path.join(access_path,
                                                         access_file))
 
-                    logger.info("Created {}".format(access_file))
+                    logger.info("Generated {}".format(access_file))
 
 
 def make_access_jp2(source_file_path, output_file_name):
