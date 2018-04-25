@@ -61,7 +61,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                     )
 
                     shutil.copy(file_, new_preservation_file_path)
-                    logger.info("Added {}".format(file_))
+                    logger.info("Added {}".format(new_file_name))
 
                     # Convert
                     access_file = "{}.jp2".format(base_name)
