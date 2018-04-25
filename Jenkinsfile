@@ -14,7 +14,7 @@ pipeline {
     }
 
     parameters {
-        string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
+        // string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
