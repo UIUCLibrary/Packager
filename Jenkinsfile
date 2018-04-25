@@ -1,6 +1,6 @@
 #!groovy
-@Library("ds-utils@v0.2.0") // Uses library from https://github.com/UIUCLibrary/Jenkins_utils
-import org.ds.*
+// @Library("ds-utils@v0.2.0") // Uses library from https://github.com/UIUCLibrary/Jenkins_utils
+// import org.ds.*
 
 pipeline {
     agent {
@@ -99,7 +99,7 @@ pipeline {
         }
         stage("Test") {
             parallel {
-                stage("Behave") {
+                stage("Run Behave BDD Tests") {
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
@@ -112,7 +112,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Pytest"){
+                stage("Run Pytest Unit Tests"){
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
@@ -129,7 +129,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Doctest"){
+                stage("Run Doctest Tests"){
                     when {
                        equals expected: true, actual: params.TEST_DOCTEST
                     }
@@ -142,7 +142,7 @@ pipeline {
                         }
                     }
                 }
-                stage("MyPy") {
+                stage("Run MyPy Static Analysis") {
                     when {
                         equals expected: true, actual: params.TEST_RUN_MYPY
                     }
@@ -164,7 +164,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Tox") {
+                stage("Run Tox test") {
                     when{
                         equals expected: true, actual: params.TEST_RUN_TOX
                     }
@@ -177,7 +177,7 @@ pipeline {
                         bat "venv\\Scripts\\tox.exe"
                     }
                 }
-                stage("Flake8") {
+                stage("Run Flake8 Static Analysis") {
                     when {
                         equals expected: true, actual: params.TEST_RUN_FLAKE8
                     }
@@ -201,7 +201,7 @@ pipeline {
             }
         }
 
-        stage("Packaging") {
+        stage("Package") {
 
             steps {
                 bat "venv\\Scripts\\python.exe setup.py bdist_wheel sdist"
@@ -217,7 +217,7 @@ pipeline {
 
         }
 
-        stage("Deploying to Devpi") {
+        stage("Deploy to Devpi Staging") {
             when {
                 allOf{
                     equals expected: true, actual: params.DEPLOY_DEVPI
@@ -340,10 +340,6 @@ pipeline {
                         bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
                         bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
                     }
-
-                }
-                node("Linux"){
-                    updateOnlineDocs url_subdomain: params.URL_SUBFOLDER, stash_name: "HTML Documentation"
                 }
             }
             post{
@@ -370,7 +366,7 @@ pipeline {
                 }
             }
         }
-        stage("Deploy online documentation") {
+        stage("Deploy Online Documentation") {
           when {
             allOf{
               equals expected: true, actual: params.DEPLOY_DOCS
