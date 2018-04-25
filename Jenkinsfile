@@ -131,18 +131,12 @@ pipeline {
                     }
                 }
                 stage("Doctest"){
-                    agent {
-                        label 'Windows && DevPi'
-                    }
                     when {
                        equals expected: true, actual: params.TEST_DOCTEST
                     }
                     steps {
                         script{
-                            bat "${tool 'CPython-3.6'} -m venv venv"
-                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
-                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
-                            bat "venv\\Scripts\\tox.exe -e docs"
+                            bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source tests/doctest"
                         }
                     }
                 }
