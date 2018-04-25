@@ -1,6 +1,4 @@
 #!groovy
-// @Library("ds-utils@v0.2.0") // Uses library from https://github.com/UIUCLibrary/Jenkins_utils
-// import org.ds.*
 
 pipeline {
     agent {
@@ -14,7 +12,6 @@ pipeline {
     }
 
     parameters {
-        // string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
@@ -22,8 +19,8 @@ pipeline {
         booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
-        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
-        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
+        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
+        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
@@ -323,83 +320,88 @@ pipeline {
                 }
             }
         }
-        stage("Release to DevPi production") {
+        stage("Deploy"){
             when {
-                allOf{
-                    equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
-                    branch "master"
-                }
+              branch "master"
             }
+            parallel {
+                stage("Deploy Online Documentation") {
+                    when{
+                        equals expected: true, actual: params.DEPLOY_DOCS
+                    }
+                    steps{
+                        bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+                        dir("build/docs/html/"){
+                            input 'Update project documentation?'
+                            sshPublisher(
+                                publishers: [
+                                    sshPublisherDesc(
+                                        configName: 'apache-ns - lib-dccuser-updater', 
+                                        sshLabel: [label: 'Linux'], 
+                                        transfers: [sshTransfer(excludes: '', 
+                                        execCommand: '', 
+                                        execTimeout: 120000, 
+                                        flatten: false, 
+                                        makeEmptyDirs: false, 
+                                        noDefaultExcludes: false, 
+                                        patternSeparator: '[, ]+', 
+                                        remoteDirectory: "${params.DEPLOY_DOCS_URL_SUBFOLDER}", 
+                                        remoteDirectorySDF: false, 
+                                        removePrefix: '', 
+                                        sourceFiles: '**')], 
+                                    usePromotionTimestamp: false, 
+                                    useWorkspaceInPromotion: false, 
+                                    verbose: true
+                                    )
+                                ]
+                            )
+                        }
+                    }
+                }
+                stage("Deploy to DevPi Production") {
+                    when {
+                        allOf{
+                            equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
+                            branch "master"
+                        }
+                    }
+                    steps {
+                        script {
+                            def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                            def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                            input "Release ${name} ${version} to DevPi Production?"
+                            withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                                bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                                bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                                bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
+                            }
+                        }
+                    }
+                    post{
+                        success{
+                            build job: 'Speedwagon/master', 
+                                parameters: [
+                                    string(name: 'PROJECT_NAME', value: 'Speedwagon'), 
+                                    booleanParam(name: 'UPDATE_JIRA_EPIC', value: false), 
+                                    string(name: 'JIRA_ISSUE', value: 'PSR-83'), 
+                                    booleanParam(name: 'TEST_RUN_PYTEST', value: true), 
+                                    booleanParam(name: 'TEST_RUN_BEHAVE', value: true), 
+                                    booleanParam(name: 'TEST_RUN_DOCTEST', value: true), 
+                                    booleanParam(name: 'TEST_RUN_FLAKE8', value: true), 
+                                    booleanParam(name: 'TEST_RUN_MYPY', value: true), 
+                                    booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true), 
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE', value: true), 
+                                    booleanParam(name: 'DEPLOY_DEVPI', value: true), 
+                                    string(name: 'RELEASE', value: 'None'), 
+                                    booleanParam(name: 'UPDATE_DOCS', value: false), 
+                                    string(name: 'URL_SUBFOLDER', value: 'speedwagon')
+                                ], 
+                                wait: false
 
-            steps {
-                script {
-                    def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                    def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                    withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                        bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
+                        }
                     }
                 }
             }
-            post{
-                success{
-                    build job: 'Speedwagon/master', 
-                        parameters: [
-                            string(name: 'PROJECT_NAME', value: 'Speedwagon'), 
-                            booleanParam(name: 'UPDATE_JIRA_EPIC', value: false), 
-                            string(name: 'JIRA_ISSUE', value: 'PSR-83'), 
-                            booleanParam(name: 'TEST_RUN_PYTEST', value: true), 
-                            booleanParam(name: 'TEST_RUN_BEHAVE', value: true), 
-                            booleanParam(name: 'TEST_RUN_DOCTEST', value: true), 
-                            booleanParam(name: 'TEST_RUN_FLAKE8', value: true), 
-                            booleanParam(name: 'TEST_RUN_MYPY', value: true), 
-                            booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true), 
-                            booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE', value: true), 
-                            booleanParam(name: 'DEPLOY_DEVPI', value: true), 
-                            string(name: 'RELEASE', value: 'None'), 
-                            booleanParam(name: 'UPDATE_DOCS', value: false), 
-                            string(name: 'URL_SUBFOLDER', value: 'speedwagon')
-                        ], 
-                        wait: false
-
-                }
-            }
-        }
-        stage("Deploy Online Documentation") {
-          when {
-            allOf{
-              equals expected: true, actual: params.DEPLOY_DOCS
-              branch "master"
-            }
-          }
-          steps {
-            bat "venv\\Scripts\\python.exe setup.py build_sphinx"
-            dir("build/docs/html/"){
-              sshPublisher(
-                publishers: [
-                  sshPublisherDesc(
-                    configName: 'apache-ns - lib-dccuser-updater', 
-                    sshLabel: [label: 'Linux'], 
-                    transfers: [sshTransfer(excludes: '', 
-                    execCommand: '', 
-                    execTimeout: 120000, 
-                    flatten: false, 
-                    makeEmptyDirs: false, 
-                    noDefaultExcludes: false, 
-                    patternSeparator: '[, ]+', 
-                    remoteDirectory: "${params.DEPLOY_DOCS_URL_SUBFOLDER}", 
-                    remoteDirectorySDF: false, 
-                    removePrefix: '', 
-                    sourceFiles: '**')], 
-                  usePromotionTimestamp: false, 
-                  useWorkspaceInPromotion: false, 
-                  verbose: true
-                  )
-                ]
-              )
-            }
-          }
         }
     }
     post {
