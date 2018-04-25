@@ -4,6 +4,7 @@ wheel
 sphinx
 pytest
 pytest-runner
+pytest-cov
 tox
 behave
 flake8
