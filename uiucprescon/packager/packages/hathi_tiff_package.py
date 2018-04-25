@@ -33,7 +33,11 @@ class HathiTiff(AbsPackageBuilder):
                     new_file_name = item_name + ext
                     new_file_path = os.path.join(new_item_path, new_file_name)
 
-                    logger.info("Copying {} to {}".format(file_,
-                                                          new_file_path))
+                    logger.debug(
+                        "Copying {} to {}".format(os.path.abspath(file_),
+                                                  new_file_path)
+                    )
 
                     shutil.copy(file_, new_file_path)
+
+                    logger.info("Added {}".format(new_file_name))
