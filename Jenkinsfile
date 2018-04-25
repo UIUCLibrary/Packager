@@ -119,13 +119,11 @@ pipeline {
                         junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                     }
                     steps{
-                        script {
-                            bat "venv\\Scripts\\py.test.exe --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
-                        }
-                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                        bat "venv\\Scripts\\py.test.exe --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
                     }
                     post {
                         always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             junit "reports/pytest/${junit_filename}"
                         }
                     }
@@ -135,9 +133,7 @@ pipeline {
                        equals expected: true, actual: params.TEST_DOCTEST
                     }
                     steps {
-                        script{
-                            bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest"
-                        }
+                        bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest"
                     }
                     post{
                         always {
@@ -209,7 +205,13 @@ pipeline {
 
         stage("Deploying to Devpi") {
             when {
-                expression { params.DEPLOY_DEVPI == true && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev") }
+                allOf{
+                    equals expected: true, actual: params.DEPLOY_DEVPI
+                    anyOf {
+                        equals expected: "master", actual: env.BRANCH_NAME
+                        equals expected: "dev", actual: env.BRANCH_NAME
+                    }
+                }
             }
             steps {
                 bat "${tool 'Python3.6.3_Win64'} -m devpi use http://devpi.library.illinois.edu"
