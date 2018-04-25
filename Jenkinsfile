@@ -20,6 +20,7 @@ pipeline {
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
         booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
         booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
+        booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
@@ -164,14 +165,15 @@ pipeline {
                     }
                 }
                 stage("Tox") {
+                    when{
+                        equals expected: true, actual: params.TEST_RUN_TOX
+                    }
                     agent{
                         label "Windows&&DevPi"
                     }
                     steps {
                         bat "${tool 'CPython-3.6'} -m venv venv"
                         bat 'venv\\Scripts\\python.exe -m pip install tox'
-                        // bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
-                        // bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
                         bat "venv\\Scripts\\tox.exe"
                     }
                 }
@@ -243,8 +245,14 @@ pipeline {
             }
         }
         stage("Test Devpi packages") {
-            when {
-                expression { params.DEPLOY_DEVPI == true  && (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev")}
+             when {
+                allOf{
+                    equals expected: true, actual: params.DEPLOY_DEVPI
+                    anyOf {
+                        equals expected: "master", actual: env.BRANCH_NAME
+                        equals expected: "dev", actual: env.BRANCH_NAME
+                    }
+                }
             }
             parallel {
                 stage("Test Source Distribution: .tar.gz") {
@@ -325,14 +333,12 @@ pipeline {
 
             steps {
                 script {
-                    if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-                        def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
-                        def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
-                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                            bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                            bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                            bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
-                        }
+                    def name = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --name").trim()
+                    def version = bat(returnStdout: true, script: "@${tool 'Python3.6.3_Win64'} setup.py --version").trim()
+                    withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                        bat "${tool 'Python3.6.3_Win64'} -m devpi login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                        bat "${tool 'Python3.6.3_Win64'} -m devpi use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                        bat "${tool 'Python3.6.3_Win64'} -m devpi push ${name}==${version} production/release"
                     }
 
                 }
