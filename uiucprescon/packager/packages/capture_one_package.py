@@ -34,4 +34,5 @@ class CaptureOnePackage(AbsPackageBuilder):
 
                     shutil.copy(file_, new_file_path)
 
-                    logger.info("Added {}".format(new_file_name))
+                    logger.info("Added {} to {}".format(
+                        new_file_name, new_file_path))
