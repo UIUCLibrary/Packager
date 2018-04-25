@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+0.2.0
++++++
+  * Instantiations now have a sidecar property
+  * Hathi Trust Tiff package factory adds files with the same name as the Instantiation as a sidecar file
+
+
 0.0.10
 ++++++
   * Now a namespace package
@@ -18,7 +24,3 @@ Change Log
     + Hathi Trust Tiff package
     + Digital Library Compound Objects
 
-Dev
-+++
-  * Instantiations now have a sidecar property
-  * Hathi Trust Tiff package factory adds files with the same name as the Instantiation as a sidecar file

@@ -24,7 +24,11 @@ class CaptureOnePackage(AbsPackageBuilder):
                 assert len(inst.files) == 1
                 for file_ in inst.files:
                     _, ext = os.path.splitext(file_)
-                    new_file_name = "{}_{}{}".format(object_name, item_name, ext)
+                    new_file_name = "{}_{}{}".format(object_name, item_name,
+                                                     ext)
                     new_file_path = os.path.join(dest, new_file_name)
-                    logger.info("Copying {} to {}".format(file_, new_file_path ))
+
+                    logger.info("Copying {} to {}".format(file_,
+                                                          new_file_path))
+
                     shutil.copy(file_, new_file_path)
