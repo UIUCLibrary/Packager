@@ -24,7 +24,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
     def transform(self, package: Package, dest: str) -> None:
         logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(AbsPackageBuilder.log_level)
 
         for item in package:
             item_name = item.metadata[Metadata.ITEM_NAME]
@@ -55,8 +55,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                               new_file_name)
 
                     logger.debug(
-                        "Copying {} to {}".format(file_,
-                                                  new_preservation_file_path)
+                        "Copying {} to {}".format(
+                            file_,new_preservation_file_path
+                        )
                     )
 
                     shutil.copy(file_, new_preservation_file_path)
