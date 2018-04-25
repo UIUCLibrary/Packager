@@ -113,19 +113,13 @@ pipeline {
                     }
                 }
                 stage("Pytest"){
-                    agent {
-                        label 'Windows && DevPi'
-                    }
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
                     steps{
                         script {
                             def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            bat "${tool 'CPython-3.6'} -m venv venv"
-                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
-                            bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
-                            bat "venv\\Scripts\\python.exe -m tox -e pytest -- --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
+                            bat "venv\\Scripts\\py.test.exe --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
                             junit "reports/pytest/${junit_filename}"
                         }
                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
@@ -137,7 +131,12 @@ pipeline {
                     }
                     steps {
                         script{
-                            bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source tests/doctest"
+                            bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest"
+                        }
+                    }
+                    post{
+                        always {
+                            archiveArtifacts artifacts: 'reports/doctest/output.txt'
                         }
                     }
                 }
