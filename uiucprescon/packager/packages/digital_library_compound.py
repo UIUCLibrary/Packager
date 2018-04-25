@@ -16,7 +16,10 @@ from .abs_package_builder import AbsPackageBuilder
 class DigitalLibraryCompound(AbsPackageBuilder):
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
-        for package in collection_builder.build_digital_library_compound_batch(path):
+
+        for package in \
+                collection_builder.build_digital_library_compound_batch(path):
+
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
@@ -41,20 +44,31 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                 for file_ in inst.files:
                     base_name, ext = os.path.splitext(os.path.basename(file_))
                     category = inst.category
-                    new_file_name = "{}_{}{}".format(object_name, item_name, ext)
-                    new_preservation_file_path = os.path.join(dest, object_name, category.value, new_file_name)
-                    logger.info("Copying {} to {}".format(file_, new_preservation_file_path))
+
+                    new_file_name = "{}_{}{}".format(object_name,
+                                                     item_name,
+                                                     ext)
+
+                    new_preservation_file_path = os.path.join(dest,
+                                                              object_name,
+                                                              category.value,
+                                                              new_file_name)
+
+                    logger.info("Copying {} to {}".format(
+                        file_, new_preservation_file_path)
+                    )
+
                     shutil.copy(file_, new_preservation_file_path)
 
                     # Convert
                     access_file = "{}.jp2".format(base_name)
 
-                    make_access_jp2(file_, os.path.join(access_path, access_file))
+                    make_access_jp2(file_, os.path.join(access_path,
+                                                        access_file))
+
                     logger.info("Created {}".format(access_file))
 
 
 def make_access_jp2(source_file_path, output_file_name):
     pykdu_compress.kdu_compress_cli(
         "-i {} -o {}".format(source_file_path, output_file_name))
-
-
