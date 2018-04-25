@@ -99,31 +99,35 @@ pipeline {
         stage("Test") {
             parallel {
                 stage("Behave") {
-                    agent {
-                        label 'Windows && DevPi'
-                    }
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
                     steps {
-                        bat "${tool 'CPython-3.6'} -m venv venv"
-                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
-                        bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
-                        bat "venv\\Scripts\\python.exe -m tox -e behave -- --junit --junit-directory reports/behave"
-                        junit "reports/behave/*.xml"
+                        bat "venv\\Scripts\\behave.exe --junit --junit-directory reports/behave"
+                    }
+                    post {
+                        always {
+                            junit "reports/behave/*.xml"
+                        }
                     }
                 }
                 stage("Pytest"){
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
+                    environment{
+                        junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                    }
                     steps{
                         script {
-                            def junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                             bat "venv\\Scripts\\py.test.exe --junitxml=reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:reports/pytestcoverage/ --cov=uiucprescon/packager"
-                            junit "reports/pytest/${junit_filename}"
                         }
                         publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                    }
+                    post {
+                        always {
+                            junit "reports/pytest/${junit_filename}"
+                        }
                     }
                 }
                 stage("Doctest"){
