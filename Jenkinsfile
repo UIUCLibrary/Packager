@@ -48,9 +48,6 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
-                    environment {
-                        PATH = "${tool 'cmake_3.11.1'};$PATH"
-                    }
                     steps {
                         tee('build.log') {
                             bat "venv\\Scripts\\python.exe setup.py build"
