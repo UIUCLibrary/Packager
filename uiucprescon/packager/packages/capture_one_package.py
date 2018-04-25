@@ -15,7 +15,7 @@ class CaptureOnePackage(AbsPackageBuilder):
 
     def transform(self, package: Package, dest: str) -> None:
         logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(AbsPackageBuilder.log_level)
 
         for item in package:
             item_name = item.metadata[Metadata.ITEM_NAME]
