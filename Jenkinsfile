@@ -163,6 +163,18 @@ pipeline {
                         }
                     }
                 }
+                stage("Tox") {
+                    agent{
+                        label "Windows&&DevPi"
+                    }
+                    steps {
+                        bat "${tool 'CPython-3.6'} -m venv venv"
+                        bat 'venv\\Scripts\\python.exe -m pip install tox'
+                        // bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                        // bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                        bat "venv\\Scripts\\tox.exe"
+                    }
+                }
                 stage("Flake8") {
                     when {
                         equals expected: true, actual: params.TEST_RUN_FLAKE8
