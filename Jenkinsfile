@@ -1,6 +1,4 @@
 #!groovy
-// @Library("ds-utils@v0.2.0") // Uses library from https://github.com/UIUCLibrary/Jenkins_utils
-// import org.ds.*
 
 pipeline {
     agent {
@@ -14,7 +12,6 @@ pipeline {
     }
 
     parameters {
-        // string(name: "PROJECT_NAME", defaultValue: "Packager", description: "Name given to the project")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
@@ -22,8 +19,8 @@ pipeline {
         booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: true, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
-        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Release Branch Only")
-        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Release Branch Only")
+        booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
+        booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
