@@ -56,7 +56,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
                     logger.debug(
                         "Copying {} to {}".format(
-                            file_,new_preservation_file_path
+                            file_, new_preservation_file_path
                         )
                     )
 
