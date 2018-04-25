@@ -33,6 +33,7 @@ pipeline {
                 bat 'venv\\Scripts\\python.exe -m pip install devpi-client'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
+                bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress'
                 dir("reports/behave"){
                     echo "build reports/behave"
                 }
