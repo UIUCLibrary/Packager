@@ -10,6 +10,7 @@ setup(
     namespace_packages=["uiucprescon"],
     test_suite="tests",
     setup_requires=['pytest-runner'],
+    extras_require={"kdu": ['pykdu-compress>=0.0.4']},
     tests_require=['pytest'],
     zip_safe=False,
     python_requires='>=3.5',
