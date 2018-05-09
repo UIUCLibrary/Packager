@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label "Windows && DevPi"
+        label "Windows"
     }
     triggers {
         cron('@daily')
