@@ -2,9 +2,11 @@ import os
 
 from behave import *
 import re
-import uiucprescon.packager
-import uiucprescon.packager.packages
-from uiucprescon.packager.packages.collection import Metadata, PackageTypes, \
+
+from uiucprescon import packager
+
+
+from uiucprescon.packager import Metadata, PackageTypes, \
     InstantiationTypes
 
 DL_COMPOUND_NAME = "digital_library_compound"
@@ -12,11 +14,12 @@ DL_COMPOUND_NAME = "digital_library_compound"
 use_step_matcher("re")
 CAPTURE_ONE_BATCH_NAME = "capture_one_batch"
 HATHI_TIFF_BATCH_NAME = "hathi_tiff_batch"
+HATHI_JP2_BATCH_NAME = "hathi_jp2_batch"
 DESTINATION_NAME = "out"
 
 
-@given(
-    "We have a flat folder contains files that belong to two groups, grouped by the number left of an underscore")
+@given("We have a flat folder contains files that belong to two groups, "
+       "grouped by the number left of an underscore")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -43,16 +46,17 @@ def step_impl(context):
         pass
 
 
-@when(
-    "we create a CaptureOne object factory and use it to identify packages at the root folder")
+@when("we create a CaptureOne object factory and use it to identify "
+      "packages at the root folder")
 def step_impl(context):
     """
     :type context: behave.runner.Context
     """
     source = os.path.join(context.temp_dir, CAPTURE_ONE_BATCH_NAME)
 
-    capture_one_packages_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.CaptureOnePackage())
+    capture_one_packages_factory = \
+        packager.PackageFactory(packager.packages.CaptureOnePackage())
+
     # find all Capture One organized packages
     context.packages = list(
         capture_one_packages_factory.locate_packages(path=source))
@@ -66,8 +70,8 @@ def step_impl(context):
     assert len(context.packages) == 2
 
 
-@step(
-    "the first Capture One object should contain everything from the first group")
+@step("the first Capture One object should contain everything from "
+      "the first group")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -90,8 +94,8 @@ def step_impl(context):
                 assert checker.match(basename)
 
 
-@step(
-    "the second Capture One object should contain everything from the second group")
+@step("the second Capture One object should contain everything from "
+      "the second group")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -146,23 +150,23 @@ def step_impl(context):
         pass
 
 
-@when(
-    "we create a HathiTiff object factory and use it to identify packages at the root folder")
+@when("we create a HathiTiff object factory and use it to identify "
+      "packages at the root folder")
 def step_impl(context):
     """
     :type context: behave.runner.Context
     """
     package_batch_path = os.path.join(context.temp_dir, HATHI_TIFF_BATCH_NAME)
-    hathi_tiff_packages_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.HathiTiff())
+    hathi_tiff_packages_factory = packager.PackageFactory(
+        packager.packages.HathiTiff())
 
     # find all Capture One organized packages
     context.packages = list(
         hathi_tiff_packages_factory.locate_packages(path=package_batch_path))
 
 
-@step(
-    "the first Hathi TIFF object should contain everything from the first group")
+@step("the first Hathi TIFF object should contain everything from the "
+      "first group")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -179,13 +183,14 @@ def step_impl(context):
 
     for item in object_000001:
         for instance_type, instance in item.instantiations.items():
+            assert len(instance.files) == 1
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
 
 
-@step(
-    "the second Hathi TIFF object should contain everything from the second group")
+@step("the second Hathi TIFF object should contain everything from the "
+      "second group")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -202,6 +207,7 @@ def step_impl(context):
 
     for item in object_000002:
         for instance_type, instance in item.instantiations.items():
+            assert len(instance.files) == 1
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
@@ -216,15 +222,15 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    hathi_tiff_package_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.HathiTiff())
+    hathi_tiff_package_factory = packager.PackageFactory(
+        packager.packages.HathiTiff())
 
     for capture_one_package in context.packages:
         hathi_tiff_package_factory.transform(capture_one_package, dest=dest)
 
 
-@then(
-    "the newly transformed package should contain the same files but in the format for Hathi Trust")
+@then("the newly transformed package should contain the same files but "
+      "in the format for Hathi Trust")
 def step_impl(context):
     """
     :type context: behave.runner.Context
@@ -250,15 +256,15 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    capture_one_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.CaptureOnePackage())
+    capture_one_factory = packager.PackageFactory(
+        packager.packages.CaptureOnePackage())
 
     for hathi_tiff_package in context.packages:
         capture_one_factory.transform(hathi_tiff_package, dest=dest)
 
 
-@then(
-    "the newly transformed package should contain the same files but in the format for Capture One")
+@then("the newly transformed package should contain the same files but in "
+      "the format for Capture One")
 def step_impl(context):
     """
     Args:
@@ -276,8 +282,8 @@ def step_impl(context):
     assert os.path.exists(os.path.join(dest, "000002_00000002.tif"))
 
 
-@step(
-    "we transform all the packages found into Digital Library Compound Objects packages")
+@step("we transform all the packages found into Digital Library Compound "
+      "Objects packages")
 def step_impl(context):
     """
     Args:
@@ -286,15 +292,15 @@ def step_impl(context):
     dest = os.path.join(context.temp_dir, DESTINATION_NAME)
     os.makedirs(dest)
 
-    digital_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.DigitalLibraryCompound())
+    digital_factory = packager.PackageFactory(
+        packager.packages.DigitalLibraryCompound())
 
     for hathi_tiff_package in context.packages:
         digital_factory.transform(hathi_tiff_package, dest=dest)
 
 
-@then(
-    "the newly transformed package should contain the same files but in the format for Digital Library Compound Objects")
+@then("the newly transformed package should contain the same files but in "
+      "the format for Digital Library Compound Objects")
 def step_impl(context):
     """
     Args:
@@ -333,7 +339,8 @@ def step_impl(context):
 
     os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME))
 
-    # Create a folder structure that represent a digital library compound object batch
+    # Create a folder structure that represent a digital library
+    # compound object batch
     os.makedirs(
         os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation"))
     os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "access"))
@@ -341,7 +348,8 @@ def step_impl(context):
         os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "preservation"))
     os.makedirs(os.path.join(test_dir, DL_COMPOUND_NAME, "000002", "access"))
 
-    # Create a bunch of empty files that represent a digital library compound object batch
+    # Create a bunch of empty files that represent a digital library
+    # compound object batch
     with open(os.path.join(test_dir, DL_COMPOUND_NAME, "000001", "preservation",
                            "000001_00000001.tif"), "w"):
         pass
@@ -378,8 +386,8 @@ def step_impl(context):
         pass
 
 
-@when(
-    "we create a Digital Library Compound object factory and use it to identify packages at the root folder")
+@when("we create a Digital Library Compound object factory and use it "
+      "to identify packages at the root folder")
 def step_impl(context):
     """
     Args:
@@ -387,8 +395,8 @@ def step_impl(context):
     """
     source = os.path.join(context.temp_dir, DL_COMPOUND_NAME)
 
-    digital_library_compound_factory = uiucprescon.packager.PackageFactory(
-        uiucprescon.packager.packages.DigitalLibraryCompound())
+    digital_library_compound_factory = packager.PackageFactory(
+        packager.packages.DigitalLibraryCompound())
 
     # find all Digital library Compount objects
     context.packages = list(
@@ -403,11 +411,12 @@ def step_impl(context):
     """
     for package in context.packages:
         assert package.metadata[
-                   Metadata.PACKAGE_TYPE] == PackageTypes.DIGITAL_LIBRARY_COMPOUND
+                   Metadata.PACKAGE_TYPE] == \
+                    PackageTypes.DIGITAL_LIBRARY_COMPOUND
 
 
-@step(
-    "the first Digital Library Compound object should contain everything from the first group")
+@step("the first Digital Library Compound object should contain everything "
+      "from the first group")
 def step_impl(context):
     """
     Args:
@@ -438,8 +447,8 @@ def step_impl(context):
             assert checker.match(file_name)
 
 
-@step(
-    "the second Digital Library Compound object should contain everything from the second group")
+@step("the second Digital Library Compound object should contain everything "
+      "from the second group")
 def step_impl(context):
     """
     Args:
@@ -457,6 +466,7 @@ def step_impl(context):
 
     for item in object_000002:
         for instance_type, instance in item.instantiations.items():
+            assert len(instance.files) == 1
             for file_ in instance.files:
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
@@ -485,7 +495,8 @@ def step_impl(context):
         pass
 
 
-@given("We have hathi tiff package containing a folder made up of 2 objects with text sidecar files")
+@given("We have hathi tiff package containing a folder made up of 2 "
+       "objects with text sidecar files")
 def step_impl(context):
     """
     Args:
@@ -528,7 +539,8 @@ def step_impl(context):
         pass
 
 
-@step("each instance in the first Hathi TIFF object should contain a text sidecar file")
+@step("each instance in the first Hathi object should contain a text "
+      "sidecar file")
 def step_impl(context):
     """
     Args:
@@ -546,7 +558,8 @@ def step_impl(context):
         assert required_text_file in access.sidecar_files
 
 
-@step("each instance in the second Hathi TIFF object should contain a text sidecar file")
+@step("each instance in the second Hathi object should contain a "
+      "text sidecar file")
 def step_impl(context):
     """
     Args:
@@ -563,3 +576,114 @@ def step_impl(context):
 
         required_text_file = os.path.join(access_path, "{}.txt".format(item_name))
         assert required_text_file in access.sidecar_files
+
+
+@given("We have hathi jp2 package containing a folder made up of 2 "
+       "objects with text sidecar files")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    test_dir = context.temp_dir
+    hathi_batch = os.path.join(test_dir, HATHI_JP2_BATCH_NAME)
+    hathi_package_one_path = os.path.join(hathi_batch, "000001")
+    hathi_package_two_path = os.path.join(hathi_batch, "000002")
+
+    # Create the directory for the batch
+    os.makedirs(hathi_batch)
+
+    # Create the directories for the packages
+    os.makedirs(hathi_package_one_path)
+    os.makedirs(hathi_package_two_path)
+
+    # Create a bunch of empty files that represent the files
+
+    with open(os.path.join(hathi_package_one_path, "00000001.jp2"), "w"):
+        pass
+    with open(os.path.join(hathi_package_one_path, "00000001.txt"), "w"):
+        pass
+    with open(os.path.join(hathi_package_one_path, "00000002.jp2"), "w"):
+        pass
+    with open(os.path.join(hathi_package_one_path, "00000002.txt"), "w"):
+        pass
+    with open(os.path.join(hathi_package_one_path, "00000003.jp2"), "w"):
+        pass
+    with open(os.path.join(hathi_package_one_path, "00000003.txt"), "w"):
+        pass
+
+    with open(os.path.join(hathi_package_two_path, "00000001.jp2"), "w"):
+        pass
+    with open(os.path.join(hathi_package_two_path, "00000001.txt"), "w"):
+        pass
+    with open(os.path.join(hathi_package_two_path, "00000002.jp2"), "w"):
+        pass
+    with open(os.path.join(hathi_package_two_path, "00000002.txt"), "w"):
+        pass
+
+
+@when("we create a HathiJp2 object factory and use it to identify packages "
+      "at the root folder")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    package_batch_path = os.path.join(context.temp_dir, HATHI_JP2_BATCH_NAME)
+    hathi_tiff_packages_factory = packager.PackageFactory(
+        packager.packages.HathiJp2())
+
+    # find all Capture One organized packages
+    context.packages = list(
+        hathi_tiff_packages_factory.locate_packages(path=package_batch_path))
+
+
+@step("the first Hathi Jp2 object should contain everything "
+      "from the first group")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    package_objects = sorted(context.packages,
+                             key=lambda p: p.metadata[Metadata.ID])
+
+    object_000001 = package_objects[0]
+    assert object_000001.metadata[Metadata.ID] == "000001"
+
+    assert len(object_000001) == 3
+
+    # Every file here should have 8 digits in it
+    checker = re.compile("^\d{8}\.jp2$")
+
+    for item in object_000001:
+        for instance_type, instance in item.instantiations.items():
+            assert len(instance.files) == 1
+            for file_ in instance.files:
+                basename = os.path.basename(file_)
+                assert checker.match(basename)
+
+
+@step("the second Hathi Jp2 object should contain everything from "
+      "the second group")
+def step_impl(context):
+    """
+    Args:
+        context (behave.runner.Context):
+    """
+    package_objects = sorted(context.packages,
+                             key=lambda p: p.metadata[Metadata.ID])
+    object_000002 = package_objects[1]
+    assert object_000002.metadata[Metadata.ID] == "000002"
+
+    assert len(object_000002) == 2
+
+    # Every file here should have 8 digits in it
+    checker = re.compile("^\d{8}\.jp2$")
+
+    for item in object_000002:
+        for instance_type, instance in item.instantiations.items():
+            assert len(instance.files) == 1
+            for file_ in instance.files:
+                basename = os.path.basename(file_)
+                assert checker.match(basename)

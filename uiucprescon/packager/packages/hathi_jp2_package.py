@@ -4,14 +4,14 @@ import typing
 
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.common import Metadata
 from .abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager import transformations
-from uiucprescon.packager.common import Metadata
 
 
-class HathiTiff(AbsPackageBuilder):
+class HathiJp2(AbsPackageBuilder):
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
-        batch = collection_builder.build_hathi_tiff_batch(batch_path)
+        batch = collection_builder.build_hathi_jp2_batch(batch_path)
         for package in batch:
             yield package
 
@@ -34,9 +34,19 @@ class HathiTiff(AbsPackageBuilder):
                     new_file_name = item_name + ext
                     new_file_path = os.path.join(new_item_path, new_file_name)
 
-                    copy = transformations.Transformers(
-                        strategy=transformations.CopyFile(),
-                        logger=logger
-                    )
+                    if ext.lower() == ".jp2":
 
-                    copy.transform(source=file_, destination=new_file_path)
+                        # If the item is already a jp2 then copy
+                        file_transformer = transformations.Transformers(
+                            strategy=transformations.CopyFile(),
+                            logger=logger
+                        )
+                    else:
+                        # If it's not the same extension, convert it to jp2
+                        file_transformer = transformations.Transformers(
+                            strategy=transformations.ConvertJp2Hathi(),
+                            logger=logger
+                        )
+
+                    file_transformer.transform(source=file_,
+                                               destination=new_file_path)

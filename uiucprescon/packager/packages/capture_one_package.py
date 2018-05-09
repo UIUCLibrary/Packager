@@ -1,10 +1,12 @@
 import logging
 import os
-import shutil
 import typing
 from . import collection_builder
-from uiucprescon.packager.packages.collection import Package, Metadata
+from uiucprescon.packager.packages.collection import Package
 from .abs_package_builder import AbsPackageBuilder
+
+from uiucprescon.packager import transformations
+from uiucprescon.packager.common import Metadata
 
 
 class CaptureOnePackage(AbsPackageBuilder):
@@ -26,13 +28,10 @@ class CaptureOnePackage(AbsPackageBuilder):
                     _, ext = os.path.splitext(file_)
                     new_file_name = "{}_{}{}".format(object_name, item_name,
                                                      ext)
-                    new_file_path = os.path.join(dest, new_file_name)
 
-                    logger.debug(
-                        "Copying {} to {}".format(file_, new_file_path)
+                    copy = transformations.Transformers(
+                        strategy=transformations.CopyFile(),
+                        logger=logger
                     )
-
-                    shutil.copy(file_, new_file_path)
-
-                    logger.info("Added {} to {}".format(
-                        new_file_name, new_file_path))
+                    new_file_path = os.path.join(dest, new_file_name)
+                    copy.transform(source=file_, destination=new_file_path)
