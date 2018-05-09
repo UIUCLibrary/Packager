@@ -24,3 +24,7 @@ Change Log
     + Hathi Trust Tiff package
     + Digital Library Compound Objects
 
+
+Dev
++++
+  * HathiTrust Jp2 package definition

@@ -2,9 +2,9 @@ import itertools
 import logging
 import os
 
-from .collection import Metadata, PackageTypes
-from .collection import InstantiationTypes
 from .collection import Instantiation, Item, Package, PackageObject
+from uiucprescon.packager.common import Metadata, PackageTypes
+from uiucprescon.packager.common import InstantiationTypes
 
 
 def _build_ds_instance(item, name, path):
@@ -327,3 +327,80 @@ def build_digital_library_compound_batch(root):
 
         build_digital_library_compound_package(new_object, path=dir_.path)
     return new_batch
+
+
+def build_hathi_jp2_batch(root):
+    new_batch = Package(root)
+    new_batch.component_metadata[Metadata.PATH] = root
+
+    for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
+        new_object = PackageObject(parent=new_batch)
+        new_object.component_metadata[Metadata.ID] = dir_.name
+        new_object.component_metadata[Metadata.PATH] = dir_.path
+
+        new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
+            PackageTypes.HATHI_TRUST_JP2_SUBMISSION
+
+        build_hathi_jp2_package(new_object, path=dir_.path)
+
+    return new_batch
+
+
+def build_hathi_jp2_instance(new_item, filename, path):
+
+    new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
+                                      parent=new_item)
+
+    def filter_same_name_files(item: os.DirEntry):
+
+        if not item.is_file():
+            return False
+
+        base, _ = os.path.splitext(item.name)
+
+        if base != filename:
+            return False
+        return True
+
+    def _organize_files(item: os.DirEntry) -> str:
+        base, ext = os.path.splitext(item.name)
+        if ext.lower() == ".jp2":
+            return "main_files"
+        else:
+            return "sidecar"
+
+    matching_files = filter(filter_same_name_files, os.scandir(path))
+
+    sidecar_files = []
+
+    main_files = []
+    for k, v in itertools.groupby(matching_files, key=_organize_files):
+        if k == "sidecar":
+            for file_ in v:
+                sidecar_files.append(file_)
+        elif k == "main_files":
+            for file_ in v:
+                main_files.append(file_)
+
+    for file_ in main_files:
+        new_instantiation.files.append(file_.path)
+
+    for file_ in sidecar_files:
+        new_instantiation.sidecar_files.append(file_.path)
+
+
+def build_hathi_jp2_package(new_object, path):
+    def filter_tiff_files(item: os.DirEntry)->bool:
+        if not item.is_file():
+            return False
+
+        base, ext = os.path.splitext(item.name)
+        if ext.lower() != ".jp2":
+            return False
+        return True
+
+    for file_ in filter(filter_tiff_files, os.scandir(path)):
+        new_item = Item(parent=new_object)
+        item_part, _ = os.path.splitext(file_.name)
+        new_item.component_metadata[Metadata.ITEM_NAME] = item_part
+        build_hathi_jp2_instance(new_item, filename=item_part, path=path)
