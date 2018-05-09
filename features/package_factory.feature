@@ -61,6 +61,15 @@ Feature: Build package objects
     When we create a HathiTiff object factory and use it to identify packages at the root folder
     Then resulting packages should be 2
     And the first Hathi TIFF object should contain everything from the first group
-    And each instance in the first Hathi TIFF object should contain a text sidecar file
+    And each instance in the first Hathi object should contain a text sidecar file
     And the second Hathi TIFF object should contain everything from the second group
-    And each instance in the second Hathi TIFF object should contain a text sidecar file
+    And each instance in the second Hathi object should contain a text sidecar file
+
+  Scenario: Hathi jp2 package containing 2 objects with sidecar text files
+    Given We have hathi jp2 package containing a folder made up of 2 objects with text sidecar files
+    When we create a HathiJp2 object factory and use it to identify packages at the root folder
+    Then resulting packages should be 2
+    And the first Hathi Jp2 object should contain everything from the first group
+    And each instance in the first Hathi object should contain a text sidecar file
+    And the second Hathi Jp2 object should contain everything from the second group
+    And each instance in the second Hathi object should contain a text sidecar file

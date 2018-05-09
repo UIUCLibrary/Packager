@@ -1,38 +1,9 @@
 import abc
 import collections
-import enum
 import typing
 
-
-class CollectionEnums(enum.Enum):
-    pass
-
-
-class Metadata(enum.Enum):
-    ITEM_NAME = "item_name"
-    ID = "id"
-    PATH = "path"
-    PACKAGE_TYPE = "package_type"
-    CATEGORY = "category"
-    TITLE_PAGE = "title_page"
-
-
-class PackageTypes(CollectionEnums):
-    DIGITAL_LIBRARY_COMPOUND = "Digital Library Compound Object"
-    CAPTURE_ONE_SESSION = "Capture One Session Package"
-
-    BRITTLE_BOOKS_HATHI_TRUST_SUBMISSION = \
-        "Brittle Books HathiTrust Submission Package"
-
-    DS_HATHI_TRUST_SUBMISSION = "DS HathiTrust Submission Package"
-    HATHI_TRUST_TIFF_SUBMISSION = "HathiTrust Tiff"
-
-
-class InstantiationTypes(CollectionEnums):
-    ACCESS = "access"
-    PRESERVATION = "preservation"
-    UNKNOWN = "unknown"
-    GENERIC = "generic"
+from uiucprescon.packager.common import Metadata, CollectionEnums
+from uiucprescon.packager.common import InstantiationTypes
 
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
