@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label "Windows&&DevPi"
+        label "Windows && DevPi"
     }
     triggers {
         cron('@daily')
@@ -161,9 +161,6 @@ pipeline {
                 stage("Run Tox test") {
                     when{
                         equals expected: true, actual: params.TEST_RUN_TOX
-                    }
-                    agent{
-                        label "Windows&&DevPi"
                     }
                     steps {
                         bat "${tool 'CPython-3.6'} -m venv venv"
