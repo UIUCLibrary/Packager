@@ -220,7 +220,7 @@ pipeline {
                     bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
                     bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
                     script {
-                        bat "$venv\\Scripts\\devpi.exe upload --from-dir dist"
+                        bat "venv\\Scripts\\devpi.exe upload --from-dir dist"
                         try {
                             bat "venv\\Scripts\\devpi.exe upload --only-docs"
                         } catch (exc) {
