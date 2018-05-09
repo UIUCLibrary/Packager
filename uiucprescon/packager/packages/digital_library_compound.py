@@ -1,16 +1,18 @@
 import logging
 import os
-import shutil
+
 import typing
-try:
-    import pykdu_compress
-except ImportError as e:
-    print("Unable to use transform DigitalLibraryCompound due to "
-          "missing import")
+# try:
+#     import pykdu_compress
+# except ImportError as e:
+#     print("Unable to use transform DigitalLibraryCompound due to "
+#           "missing import")
 
 from . import collection_builder
-from uiucprescon.packager.packages.collection import Package, Metadata
+from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.common import Metadata
 from .abs_package_builder import AbsPackageBuilder
+from uiucprescon.packager import transformations
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
@@ -54,27 +56,26 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                               category.value,
                                                               new_file_name)
 
-                    logger.debug(
-                        "Copying {} to {}".format(
-                            file_, new_preservation_file_path
-                        )
+                    copier = transformations.Transformers(
+                        strategy=transformations.CopyFile(),
+                        logger=logger
                     )
 
-                    shutil.copy(file_, new_preservation_file_path)
+                    copier.transform(source=file_,
+                                     destination=new_preservation_file_path)
 
-                    logger.info("Added {} to {}".format(
-                        new_file_name, new_preservation_file_path))
-
-                    # Convert
                     access_file = "{}.jp2".format(base_name)
 
-                    make_access_jp2(file_, os.path.join(access_path,
-                                                        access_file))
+                    access_file_full_path = os.path.join(access_path,
+                                                         access_file)
 
-                    logger.info("Generated {} in {}".format(
-                        access_file, access_path))
+                    converter = transformations.Transformers(
+                        strategy=transformations.ConvertJp2Standard(),
+                        logger=logger)
+
+                    converter.transform(file_, access_file_full_path)
 
 
-def make_access_jp2(source_file_path, output_file_name):
-    pykdu_compress.kdu_compress_cli(
-        "-i {} -o {}".format(source_file_path, output_file_name))
+# def make_access_jp2(source_file_path, output_file_name):
+#     pykdu_compress.kdu_compress_cli(
+#         "-i {} -o {}".format(source_file_path, output_file_name))
