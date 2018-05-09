@@ -28,11 +28,7 @@ pipeline {
         stage("Configure Environment") {
             steps {
                 bat "${tool 'CPython-3.6'} -m venv venv"
-                bat 'venv\\Scripts\\python.exe -m pip install devpi-client'
-                bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
-                bat 'venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt'
-                bat 'venv\\Scripts\\python.exe -m pip install pytest-cov'
-                bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress'
+                bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov devpi-client -r requirements.txt -r requirements-dev.txt'
                 dir("reports/behave"){
                     echo "build reports/behave"
                 }
