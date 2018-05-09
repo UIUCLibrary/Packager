@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label "Windows && DevPi"
+        label "Windows"
     }
     triggers {
         cron('@daily')
@@ -163,8 +163,8 @@ pipeline {
                         equals expected: true, actual: params.TEST_RUN_TOX
                     }
                     steps {
-                        bat "${tool 'CPython-3.6'} -m venv venv"
-                        bat 'venv\\Scripts\\python.exe -m pip install tox'
+                        // bat "${tool 'CPython-3.6'} -m venv venv"
+                        
                         bat "venv\\Scripts\\tox.exe"
                     }
                 }
