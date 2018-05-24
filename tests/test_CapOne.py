@@ -91,7 +91,7 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
 
     def dummy_kdu_command(args):
         split_args = args.split()
-        output_arg = split_args[3]
+        output_arg = os.path.abspath(split_args[3].strip('"'))
         with open(output_arg, "w") as f:
             pass
         pass

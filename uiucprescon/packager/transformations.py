@@ -38,7 +38,7 @@ class ConvertJp2Standard(AbsTransformation):
         source_name = os.path.basename(source)
         dest = os.path.abspath(os.path.dirname(destination))
 
-        pykdu_compress.kdu_compress_cli("-i {} -o {}".format(source,
+        pykdu_compress.kdu_compress_cli("-i \"{}\" -o \"{}\"".format(source,
                                                              destination))
         logger.info("Generated {} in {}".format(source_name, dest))
 
@@ -53,7 +53,7 @@ class ConvertJp2Hathi(AbsTransformation):
         dest = os.path.abspath(os.path.dirname(destination))
 
         pykdu_compress.kdu_compress_cli(
-            "-i {} "
+            "-i \"{}\" "
             "Clevels=5 "
             "Clayers=8 "
             "Corder=RLCP "
@@ -63,7 +63,7 @@ class ConvertJp2Hathi(AbsTransformation):
             "-no_weights "
             "-slope 42988 "
             "-jp2_space sRGB "
-            "-o {}".format(source, destination))
+            "-o \"{}\"".format(source, destination))
 
         logger.info("Generated {} in {}".format(source_name, dest))
 
