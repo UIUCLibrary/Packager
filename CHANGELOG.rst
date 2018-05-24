@@ -28,3 +28,7 @@ Change Log
 Dev
 +++
   * HathiTrust Jp2 package definition
+
+  * Bug Fix:
+
+    + Files inside paths with spaces fail to convert

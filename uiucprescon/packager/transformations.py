@@ -38,8 +38,9 @@ class ConvertJp2Standard(AbsTransformation):
         source_name = os.path.basename(source)
         dest = os.path.abspath(os.path.dirname(destination))
 
-        pykdu_compress.kdu_compress_cli("-i \"{}\" -o \"{}\"".format(source,
-                                                             destination))
+        pykdu_compress.kdu_compress_cli("-i \"{}\" -o \"{}\"".format(
+            source, destination))
+
         logger.info("Generated {} in {}".format(source_name, dest))
 
 
