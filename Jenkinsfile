@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label "Windows"
+        label "Windows&&Python3"
     }
     triggers {
         cron('@daily')
