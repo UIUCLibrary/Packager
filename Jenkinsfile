@@ -9,6 +9,7 @@ pipeline {
     }
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
+        timeout(60)
     }
 
     parameters {
