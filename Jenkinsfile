@@ -89,6 +89,25 @@ pipeline {
                         }
                     }
                 }
+                stage("Installing Required System Level Dependencies"){
+                    steps{
+                        lock("system_python_${NODE_NAME}"){
+                            bat "${tool 'CPython-3.6'} -m pip install pip --upgrade --quiet && ${tool 'CPython-3.6'} -m pip install --upgrade pipenv --quiet"
+                        }
+
+                        bat "${tool 'CPython-3.6'} -m pip list > logs/pippackages_system_${NODE_NAME}.log"
+
+                    }
+                    post{
+                        success{
+                            archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
+                        }
+                        failure {
+                            deleteDir()
+                        }
+                    }
+
+                }
             
                 stage("Creating Virtualenv for Building"){
                     steps {
@@ -109,7 +128,7 @@ pipeline {
                     post{
                         success{
                             bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
-                            archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
+                            archiveArtifacts artifacts: "logs/pippackages_venv_${NODE_NAME}.log"
                         }
                         failure {
                             deleteDir()
