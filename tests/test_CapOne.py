@@ -96,7 +96,15 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
             pass
         pass
 
+    def dummy_kdu_compress_cli2(infile, outfile, in_args=None, out_args=None):
+        # split_args = args.split()
+        # output_arg = os.path.abspath(split_args[3].strip('"'))
+        with open(outfile, "w") as f:
+            pass
+        pass
+
     monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli', dummy_kdu_command)
+    monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli2', dummy_kdu_compress_cli2)
 
     source = os.path.join(capture_one_fixture, CAPTURE_ONE_BATCH_NAME)
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
