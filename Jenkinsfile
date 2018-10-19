@@ -217,7 +217,7 @@ pipeline {
                     steps {
                         // tee('build_sphinx.log') {
                         dir('source') {
-                            powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx | tee ${WORKSPACE}\\logs\\build_sphinx.log"
+                            powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs | tee ${WORKSPACE}\\logs\\build_sphinx.log"
                         }
                     }
                     post{
