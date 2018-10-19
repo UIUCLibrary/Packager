@@ -197,7 +197,7 @@ pipeline {
                         // tee('build.log') {
                             dir("source"){
                                 // bat "venv\\Scripts\\python.exe setup.py build"
-                                powershell "& venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
+                                powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
                             }
                     }
                     post{
