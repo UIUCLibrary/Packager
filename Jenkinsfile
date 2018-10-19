@@ -1,5 +1,10 @@
 #!groovy
 
+def PKG_NAME = "unknown"
+def PKG_VERSION = "unknown"
+def DOC_ZIP_FILENAME = "doc.zip"
+def junit_filename = "junit.xml"
+
 def remove_files(artifacts){
     script{
         def files = findFiles glob: "${artifacts}"
@@ -24,6 +29,7 @@ pipeline {
     }
 
     parameters {
+        booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
         booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
@@ -36,32 +42,133 @@ pipeline {
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
-
         stage("Configure Environment") {
-            steps {
-                bat "${tool 'CPython-3.6'} -m venv venv"
-                bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov devpi-client -r requirements.txt -r requirements-dev.txt'
-                bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu"
-
-                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                    bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                    script{
-                        if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-                            bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+            stages{
+                stage("Purge all existing data in workspace"){
+                    when{
+                        equals expected: true, actual: params.FRESH_WORKSPACE
+                    }
+                    steps{
+                        deleteDir()
+                        dir("source"){
+                            checkout scm
                         }
                     }
-                    
                 }
-                dir("reports/behave"){
-                    echo "build reports/behave"
+                stage("Cleanup"){
+                    steps {
+                        dir("logs"){
+                            deleteDir()
+                            bat "dir > nul"
+                        }
+                        dir("build"){
+                            deleteDir()
+                            echo "Cleaned out build directory"
+                            bat "dir > nul"
+                        }
+                        dir("dist"){
+                            deleteDir()
+                            echo "Cleaned out dist directory"
+                            bat "dir > nul"
+                        }
+
+                        dir("reports"){
+                            deleteDir()
+                            echo "Cleaned out reports directory"
+                            bat "dir > nul"
+                        }
+                        dir("certs"){
+                            deleteDir()
+                            echo "Cleaned out certs directory"
+                            bat "dir > nul"
+                        }
+                    }
+                    post{
+                        failure {
+                            deleteDir()
+                        }
+                    }
                 }
-                dir("reports/pytestcoverage"){
-                    echo "build reports/pytestcoverage"
+            
+                stage("Creating Virtualenv for Building"){
+                    steps {
+                        bat "${tool 'CPython-3.6'} -m venv venv"
+
+                        script {
+                            try {
+                                bat "venv\\Scripts\\python.exe -m pip install -U pip --quiet"
+                            }
+                            catch (exc) {
+                                bat "${tool 'CPython-3.6'} -m venv venv"
+                                bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
+                            }
+                        }
+                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov devpi-client -r source\\requirements.txt -r source\\requirements-dev.txt'
+
+                    }
+                    post{
+                        success{
+                            bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
+                            archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
+                        }
+                        failure {
+                            deleteDir()
+                        }
+                    }
                 }
-                dir("reports/pytest"){
-                    echo "build reports/pytest"
+                stage("Logging into DevPi"){
+                    environment{
+                        DEVPI_PSWD = credentials('devpi-login')
+                    }
+                    steps{
+                        bat "venv\\Scripts\\devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}\\certs\\"
+                        bat "venv\\Scripts\\devpi.exe login DS_Jenkins --password ${env.DEVPI_PSWD} --clientdir ${WORKSPACE}\\certs\\"
+                    }
+                }
+                stage("Setting Variables Used by the Rest of the Build"){
+                    steps{
+
+                        script {
+                            // Set up the reports directory variable
+                            
+                            dir("source"){
+                                PKG_NAME = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}  setup.py --name").trim()
+                                PKG_VERSION = bat(returnStdout: true, script: "@${tool 'CPython-3.6'} setup.py --version").trim()
+                            }
+                        }
+                        script{
+                            DOC_ZIP_FILENAME = "${PKG_NAME}-${PKG_VERSION}.doc.zip"
+                            junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                        }
+                        bat "tree /A /F > ${WORKSPACE}/logs/tree_postconfig.log"
+                    }
                 }
             }
+                
+            // steps {
+            //     bat "${tool 'CPython-3.6'} -m venv venv"
+                
+            //     bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu"
+
+            //     withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+            //         bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+            //         script{
+            //             if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
+            //                 bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+            //             }
+            //         }
+                    
+            //     }
+            //     dir("reports/behave"){
+            //         echo "build reports/behave"
+            //     }
+            //     dir("reports/pytestcoverage"){
+            //         echo "build reports/pytestcoverage"
+            //     }
+            //     dir("reports/pytest"){
+            //         echo "build reports/pytest"
+            //     }
+            // }
 
         }
         stage('Build') {
