@@ -1,4 +1,5 @@
 #!groovy
+@Library("devpi") _
 
 def PKG_NAME = "unknown"
 def PKG_VERSION = "unknown"
