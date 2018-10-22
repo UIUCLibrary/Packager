@@ -669,6 +669,7 @@ pipeline {
                     when {
                         allOf{
                             equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
+                            equals expected: true, actual: params.DEPLOY_DEVPI
                             branch "master"
                         }
                     }
@@ -682,7 +683,7 @@ pipeline {
                     }
                     post{
                         success{
-                            build job: 'Speedwagon/master', 
+                            build job: 'OpenSourceProjects/Speedwagon/master',
                                 parameters: [
                                     string(name: 'PROJECT_NAME', value: 'Speedwagon'), 
                                     booleanParam(name: 'UPDATE_JIRA_EPIC', value: false), 
@@ -692,11 +693,13 @@ pipeline {
                                     booleanParam(name: 'TEST_RUN_DOCTEST', value: true), 
                                     booleanParam(name: 'TEST_RUN_FLAKE8', value: true), 
                                     booleanParam(name: 'TEST_RUN_MYPY', value: true), 
-                                    booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true), 
-                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE', value: true), 
-                                    booleanParam(name: 'DEPLOY_DEVPI', value: true), 
-                                    string(name: 'RELEASE', value: 'None'), 
-                                    booleanParam(name: 'UPDATE_DOCS', value: false), 
+                                    booleanParam(name: 'TEST_RUN_TOX', value: true),
+                                    booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_MSI', value: false),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_NSIS', value: false),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_ZIP', value: false),
+                                    booleanParam(name: 'DEPLOY_DEVPI', value: false),
+                                    booleanParam(name: 'UPDATE_DOCS', value: false),
                                     string(name: 'URL_SUBFOLDER', value: 'speedwagon')
                                 ], 
                                 wait: false
