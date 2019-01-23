@@ -1,6 +1,7 @@
 #!groovy
-@Library("devpi") _
+@Library(["devpi", "PythonHelpers"]) _
 
+// TODO: replace global vars with env vars set with Python Helpers
 def PKG_NAME = "unknown"
 def PKG_VERSION = "unknown"
 def DOC_ZIP_FILENAME = "doc.zip"
@@ -123,6 +124,7 @@ pipeline {
                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
                             }
                         }
+//                        TODO: Move Devpi install to devpi stage
                         bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov devpi-client -r source\\requirements.txt -r source\\requirements-dev.txt'
 
                     }
@@ -136,6 +138,7 @@ pipeline {
                         }
                     }
                 }
+//                        TODO: Remove devpi login stage
                 stage("Logging into DevPi"){
                     environment{
                         DEVPI_PSWD = credentials('devpi-login')
@@ -379,7 +382,7 @@ pipeline {
             }
 
         }
-
+//        TODO: Make seq stage
         stage("Deploy to Devpi Staging") {
             when {
                 allOf{
@@ -627,6 +630,7 @@ pipeline {
             //     }
             // }
         }
+        //        TODO: Clean up on post seq stage for devpi
         stage("Deploy"){
             when {
               branch "master"
@@ -725,13 +729,14 @@ pipeline {
                         }
                     }
                 }
-
+//            TODO: Move to Devpi stage
                 if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
                     bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}\\certs\\"
                     def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${PKG_NAME}==${PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
                     echo "Devpi remove exited with code ${devpi_remove_return_code}."
                 }
             }
+//            TODO: change to use cleanws
             dir("certs"){
                 deleteDir()
             }
