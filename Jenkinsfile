@@ -688,6 +688,9 @@ pipeline {
         }
     }
     post {
+        failure{
+            deleteDir()
+        }
         cleanup {
              script {
                 if(fileExists('source/setup.py')){
