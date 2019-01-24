@@ -182,7 +182,7 @@ pipeline {
                     }
                     post{
                         always {
-                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Documentation Build', pattern: 'logs/build_sphinx.log', id: 'sphinx_build')])
+//                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Documentation Build', pattern: 'logs/build_sphinx.log', id: 'sphinx_build')])
                             archiveArtifacts artifacts: 'logs/build_sphinx.log'
                         }
                         success{
