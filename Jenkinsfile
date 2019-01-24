@@ -345,15 +345,6 @@ pipeline {
                                 echo "flake8 found some warnings"
                             }
                         }
-//                        script{
-//                            try{
-//                                dir("source"){
-//                                    powershell "& ${WORKSPACE}\\venv\\Scripts\\flake8.exe uiucprescon --format=pylint | tee logs\\flake8.log"
-//                                }
-//                            } catch (exc) {
-//                                echo "flake8 found some warnings"
-//                            }
-//                        }
                     }
                     post {
                         always {
@@ -382,7 +373,6 @@ pipeline {
             }
 
         }
-//        TODO: Make seq stage
         stage("Deploy to DevPi") {
             when {
                 allOf{
@@ -638,6 +628,47 @@ pipeline {
 //                        }
                     }
                 }
+                stage("Deploy to DevPi Production") {
+                    when {
+                        allOf{
+                            equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
+                            branch "master"
+                        }
+                    }
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                          bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                        }
+                        bat "venv\\Scripts\\devpi.exe use DS_Jenkins/${env.BRANCH_NAME}_staging"
+                        bat "venv\\Scripts\\devpi.exe push ${env.PKG_NAME}==${env.PKG_VERSION} production/release"
+
+                    }
+                    post{
+                        success{
+                            build job: 'OpenSourceProjects/Speedwagon/master',
+                                parameters: [
+                                    string(name: 'PROJECT_NAME', value: 'Speedwagon'),
+                                    booleanParam(name: 'UPDATE_JIRA_EPIC', value: false),
+                                    string(name: 'JIRA_ISSUE', value: 'PSR-83'),
+                                    booleanParam(name: 'TEST_RUN_PYTEST', value: true),
+                                    booleanParam(name: 'TEST_RUN_BEHAVE', value: true),
+                                    booleanParam(name: 'TEST_RUN_DOCTEST', value: true),
+                                    booleanParam(name: 'TEST_RUN_FLAKE8', value: true),
+                                    booleanParam(name: 'TEST_RUN_MYPY', value: true),
+                                    booleanParam(name: 'TEST_RUN_TOX', value: true),
+                                    booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_MSI', value: false),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_NSIS', value: false),
+                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_ZIP', value: false),
+                                    booleanParam(name: 'DEPLOY_DEVPI', value: false),
+                                    booleanParam(name: 'UPDATE_DOCS', value: false),
+                                    string(name: 'URL_SUBFOLDER', value: 'speedwagon')
+                                ],
+                                wait: false
+
+                        }
+                    }
+                }
             }
 
             post {
@@ -657,26 +688,8 @@ pipeline {
                     remove_from_devpi("venv\\Scripts\\devpi.exe", "${env.PKG_NAME}", "${env.PKG_VERSION}", "/${env.DEVPI_USR}/${env.BRANCH_NAME}_staging", "${env.DEVPI_USR}", "${env.DEVPI_PSW}")
                 }
             }
-            // post {
-            //     success {
-            //         echo "It Worked. Pushing file to ${env.BRANCH_NAME} index"
-            //         script {
-            //             def name = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --name").trim()
-            //             def version = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --version").trim()
-            //             withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-            //                 bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-            //                 bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-            //                 bat "venv\\Scripts\\devpi.exe push ${name}==${version} ${DEVPI_USERNAME}/${env.BRANCH_NAME}"
-            //             }
-
-            //         }
-            //     }
-            // }
-
-//            }
         }
 
-        //        TODO: Clean up on post seq stage for devpi
         stage("Deploy"){
             when {
               branch "master"
@@ -715,48 +728,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Deploy to DevPi Production") {
-                    when {
-                        allOf{
-                            equals expected: true, actual: params.DEPLOY_DEVPI_PRODUCTION
-                            equals expected: true, actual: params.DEPLOY_DEVPI
-                            branch "master"
-                        }
-                    }
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                          bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                        }
-                        bat "venv\\Scripts\\devpi.exe use DS_Jenkins/${env.BRANCH_NAME}_staging"
-                        bat "venv\\Scripts\\devpi.exe push ${env.PKG_NAME}==${env.PKG_VERSION} production/release"
 
-                    }
-                    post{
-                        success{
-                            build job: 'OpenSourceProjects/Speedwagon/master',
-                                parameters: [
-                                    string(name: 'PROJECT_NAME', value: 'Speedwagon'), 
-                                    booleanParam(name: 'UPDATE_JIRA_EPIC', value: false), 
-                                    string(name: 'JIRA_ISSUE', value: 'PSR-83'), 
-                                    booleanParam(name: 'TEST_RUN_PYTEST', value: true), 
-                                    booleanParam(name: 'TEST_RUN_BEHAVE', value: true), 
-                                    booleanParam(name: 'TEST_RUN_DOCTEST', value: true), 
-                                    booleanParam(name: 'TEST_RUN_FLAKE8', value: true), 
-                                    booleanParam(name: 'TEST_RUN_MYPY', value: true), 
-                                    booleanParam(name: 'TEST_RUN_TOX', value: true),
-                                    booleanParam(name: 'PACKAGE_PYTHON_FORMATS', value: true),
-                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_MSI', value: false),
-                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_NSIS', value: false),
-                                    booleanParam(name: 'PACKAGE_WINDOWS_STANDALONE_ZIP', value: false),
-                                    booleanParam(name: 'DEPLOY_DEVPI', value: false),
-                                    booleanParam(name: 'UPDATE_DOCS', value: false),
-                                    string(name: 'URL_SUBFOLDER', value: 'speedwagon')
-                                ], 
-                                wait: false
-
-                        }
-                    }
-                }
             }
         }
     }
@@ -775,12 +747,6 @@ pipeline {
                         }
                     }
                 }
-////            TODO: Move to Devpi stage
-//                if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-//                    bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}\\certs\\"
-//                    def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${env.PKG_NAME}==${env.PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
-//                    echo "Devpi remove exited with code ${devpi_remove_return_code}."
-//                }
             }
             cleanWs(
                 deleteDirs: true,
@@ -793,43 +759,6 @@ pipeline {
                     [pattern: '*tmp', type: 'INCLUDE'],
                     ]
                 )
-//            TODO: change to use cleanws
-//            dir("certs"){
-//                deleteDir()
-//            }
-////            dir("build"){
-////                deleteDir()
-////            }
-//            dir("dist"){
-//                deleteDir()
-//            }
-//            dir("logs"){
-//                deleteDir()
-//            }
-            // bat "venv\\Scripts\\python.exe setup.py clean --all"
-        
-            // dir('dist') {
-            //     deleteDir()
-            // }
-            // dir('build') {
-            //     deleteDir()
-            // }
-            // script {
-            //     if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-            //         def name = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --name").trim()
-            //         def version = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --version").trim()
-            //         withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-            //             bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-            //             bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-            //             try {
-            //                 bat "venv\\Scripts\\devpi.exe remove -y ${name}==${version}"
-            //             } catch (Exception ex) {
-            //                 echo "Failed to remove ${name}==${version} from ${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-            //             }
-                        
-            //         }
-            //     }
-            // }
         }
     }
 }
