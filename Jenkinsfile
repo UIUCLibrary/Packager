@@ -188,8 +188,11 @@ pipeline {
                     when {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
+                    environment {
+                        PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+                    }
                     steps {
-                        bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
+                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
                     }
                     post{
                         always {
@@ -214,6 +217,12 @@ pipeline {
                             //         }
                             //     }
                             // }
+                        }
+                        failure{
+                            dir("build"){
+
+                                bat "tree /F /A"
+                            }
                         }
                     }
                 }
