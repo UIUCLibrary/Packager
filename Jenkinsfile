@@ -173,6 +173,7 @@ pipeline {
                                 deleteDirs: true,
                                 patterns: [
                                     [pattern: 'build/docs', type: 'INCLUDE'],
+                                    [pattern: "dist/${env.DOC_ZIP_FILENAME}", type: 'INCLUDE'],
                                     ]
                                 )
                         }
