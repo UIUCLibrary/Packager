@@ -1,10 +1,7 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
 
-// TODO: replace global vars with env vars set with Python Helpers
-//def PKG_NAME = "unknown"
-//def PKG_VERSION = "unknown"
-//def DOC_ZIP_FILENAME = "doc.zip"
+//  TODO: Replace WARNINGS commands with reportIssues
 
 def remove_files(artifacts){
     script{
@@ -173,7 +170,7 @@ pipeline {
                         }
                     }
                 }
-                stage("Sphinx documentation"){
+                stage("Sphinx Documentation"){
                     when {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
@@ -185,7 +182,8 @@ pipeline {
                     }
                     post{
                         always {
-                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'logs\\build_sphinx.log']]
+                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Documentation Build', pattern: 'logs/build_sphinx.log', id: 'sphinx_build')])
+                            archiveArtifacts artifacts: 'logs/build_sphinx.log'                        }
                         }
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
@@ -334,7 +332,14 @@ pipeline {
                   archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
               }
               cleanup{
-                  remove_files("dist/*.whl,dist/*.tar.gz,dist/*.zip")
+                    cleanWs(
+                        deleteDirs: true,
+                        patterns: [
+                            [pattern: "dist/*.whl}", type: 'INCLUDE'],
+                            [pattern: 'dist/*.tar.gz"', type: 'INCLUDE']
+                            [pattern: 'dist/*.zip', type: 'INCLUDE']
+                        ]
+                    )
               }
             }
 
