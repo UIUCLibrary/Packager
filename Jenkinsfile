@@ -741,19 +741,30 @@ pipeline {
 //                    echo "Devpi remove exited with code ${devpi_remove_return_code}."
 //                }
             }
+            cleanWs(
+                deleteDirs: true,
+                patterns: [
+                    [pattern: 'dist', type: 'INCLUDE'],
+//                    [pattern: 'build', type: 'INCLUDE'],
+                    [pattern: 'reports', type: 'INCLUDE'],
+                    [pattern: 'logs', type: 'INCLUDE'],
+                    [pattern: 'certs', type: 'INCLUDE'],
+                    [pattern: '*tmp', type: 'INCLUDE'],
+                    ]
+                )
 //            TODO: change to use cleanws
-            dir("certs"){
-                deleteDir()
-            }
-//            dir("build"){
+//            dir("certs"){
 //                deleteDir()
 //            }
-            dir("dist"){
-                deleteDir()
-            }
-            dir("logs"){
-                deleteDir()
-            }
+////            dir("build"){
+////                deleteDir()
+////            }
+//            dir("dist"){
+//                deleteDir()
+//            }
+//            dir("logs"){
+//                deleteDir()
+//            }
             // bat "venv\\Scripts\\python.exe setup.py clean --all"
         
             // dir('dist') {
