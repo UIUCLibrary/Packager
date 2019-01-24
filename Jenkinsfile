@@ -178,7 +178,7 @@ pipeline {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
                     steps {
-                        // tee('build_sphinx.log') {
+                        bat "if not exist build\\docs mkdir build\\docs"
                         dir('source') {
                             powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs | tee ${WORKSPACE}\\logs\\build_sphinx.log"
                         }
