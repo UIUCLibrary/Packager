@@ -176,31 +176,12 @@ pipeline {
                 }
             }
                 
-            // steps {
-            //     bat "${tool 'CPython-3.6'}\\python -m venv venv"
-                
-            //     bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu"
+            post{
+                success{
+                    echo "Configured ${env.PKG_NAME}, version ${env.PKG_VERSION}, for testing."
+                }
 
-            //     withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-            //         bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-            //         script{
-            //             if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-            //                 bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-            //             }
-            //         }
-                    
-            //     }
-            //     dir("reports/behave"){
-            //         echo "build reports/behave"
-            //     }
-            //     dir("reports/pytestcoverage"){
-            //         echo "build reports/pytestcoverage"
-            //     }
-            //     dir("reports/pytest"){
-            //         echo "build reports/pytest"
-            //     }
-            // }
-
+            }
         }
         stage('Build') {
             parallel {
