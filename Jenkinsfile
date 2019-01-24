@@ -142,7 +142,7 @@ pipeline {
                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
                             }
                         }
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt -r source\\requirements-dev.txt'
+                        bat 'venv\\Scripts\\python.exe -m pip install pytest-cov -r source\\requirements.txt -r source\\requirements-dev.txt'
 
                     }
                     post{
