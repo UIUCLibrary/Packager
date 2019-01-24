@@ -66,40 +66,6 @@ pipeline {
                         }
                     }
                 }
-//                stage("Cleanup"){
-//                    steps {
-//                        dir("logs"){
-//                            deleteDir()
-//                            bat "dir > nul"
-//                        }
-//                        dir("build"){
-//                            deleteDir()
-//                            echo "Cleaned out build directory"
-//                            bat "dir > nul"
-//                        }
-//                        dir("dist"){
-//                            deleteDir()
-//                            echo "Cleaned out dist directory"
-//                            bat "dir > nul"
-//                        }
-//
-//                        dir("reports"){
-//                            deleteDir()
-//                            echo "Cleaned out reports directory"
-//                            bat "dir > nul"
-//                        }
-//                        dir("certs"){
-//                            deleteDir()
-//                            echo "Cleaned out certs directory"
-//                            bat "dir > nul"
-//                        }
-//                    }
-//                    post{
-//                        failure {
-//                            deleteDir()
-//                        }
-//                    }
-//                }
                 stage("Installing Required System Level Dependencies"){
                     steps{
                         lock("system_python_${NODE_NAME}"){
@@ -439,47 +405,6 @@ pipeline {
                         }
                     }
                     parallel {
-//                        stage("Source Distribution: .zip") {
-//                             agent {
-//                                node {
-//                                    label "Windows && Python3 && VS2015"
-//        //                            customWorkspace "c:/Jenkins/temp/${JOB_NAME}/devpi_testing/"
-//                                }
-//                            }
-//                            options {
-//                                skipDefaultCheckout(true)
-//                            }
-//
-//                            environment {
-//                                PATH = "${tool 'cmake3.12'};$PATH"
-//                                CL = "/MP"
-//                            }
-//                            stages{
-//                                stage("Building DevPi Testing venv for Zip"){
-//                                    steps{
-//                                        echo "installing DevPi test env"
-//                                        bat "${tool 'CPython-3.6'}\\python -m venv venv"
-//                                        bat "venv\\Scripts\\pip.exe install tox devpi-client"
-//                                    }
-//                                }
-//                                stage("DevPi Testing zip Package"){
-//                                    steps {
-//                                        script {
-//                                            lock("cppan_${NODE_NAME}"){
-//                                                devpiTest(
-//                                                    devpiExecutable: "venv\\Scripts\\devpi.exe",
-//                                                    url: "https://devpi.library.illinois.edu",
-//                                                    index: "${env.BRANCH_NAME}_staging",
-//                                                    pkgName: "${env.PKG_NAME}",
-//                                                    pkgVersion: "${env.PKG_VERSION}",
-//                                                    pkgRegex: "zip"
-//                                                )
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
                         stage("Testing Submitted Source Distribution") {
                             environment {
                                 PATH = "${tool 'CPython-3.7'};${tool 'CPython-3.6'};$PATH"
@@ -592,38 +517,6 @@ pipeline {
 
                             }
                         }
-//                        stage("Built Distribution: .whl") {
-//                            agent {
-//                                node {
-//                                    label "Windows && Python3"
-//                                    customWorkspace "c:/Jenkins/temp/${JOB_NAME}/devpi_testing/"
-//                                }
-//                            }
-//                            options {
-//                                skipDefaultCheckout(true)
-//                            }
-//                            stages{
-//                                stage("Building DevPi Testing venv"){
-//                                    steps{
-//                                        bat "${tool 'CPython-3.6'}\\python -m venv venv"
-//                                        bat "venv\\Scripts\\pip.exe install tox devpi-client"
-//                                    }
-//                                }
-//                                stage("DevPi Testing Whl"){
-//                                    steps {
-//                                        devpiTest(
-//                                            devpiExecutable: "venv\\Scripts\\devpi.exe",
-//                                            url: "https://devpi.library.illinois.edu",
-//                                            index: "${env.BRANCH_NAME}_staging",
-//                                            pkgName: "${env.PKG_NAME}",
-//                                            pkgVersion: "${env.PKG_VERSION}",
-//                                            pkgRegex: "whl"
-//                                        )
-//                                        echo "Finished testing Built Distribution: .whl"
-//                                    }
-//                                }
-//                            }
-//                        }
                     }
                 }
                 stage("Deploy to DevPi Production") {
