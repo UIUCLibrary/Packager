@@ -190,10 +190,11 @@ pipeline {
                     }
                     steps {
                         bat "(if exist build\\docs rmdir build\\docs /s /q) && mkdir build\\docs"
-                        dir('source') {
+                        bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
+//                        dir('source') {
 //                            bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs"
-                            powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs | tee ${WORKSPACE}\\logs\\build_sphinx.log"
-                        }
+//                            powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs | tee ${WORKSPACE}\\logs\\build_sphinx.log"
+//                        }
                     }
                     post{
                         always {
