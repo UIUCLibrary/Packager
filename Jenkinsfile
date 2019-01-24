@@ -5,7 +5,6 @@
 //def PKG_NAME = "unknown"
 //def PKG_VERSION = "unknown"
 //def DOC_ZIP_FILENAME = "doc.zip"
-def junit_filename = "junit.xml"
 
 def remove_files(artifacts){
     script{
@@ -132,8 +131,7 @@ pipeline {
                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
                             }
                         }
-//                        TODO: Move Devpi install to devpi stage
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov devpi-client -r source\\requirements.txt -r source\\requirements-dev.txt'
+                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt -r source\\requirements-dev.txt'
 
                     }
                     post{
@@ -144,34 +142,6 @@ pipeline {
                         failure {
                             deleteDir()
                         }
-                    }
-                }
-//                        TODO: Remove devpi login stage
-//                stage("Logging into DevPi"){
-//                    environment{
-//                        DEVPI_PSWD = credentials('devpi-login')
-//                    }
-//                    steps{
-//                        bat "venv\\Scripts\\devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}\\certs\\"
-//                        bat "venv\\Scripts\\devpi.exe login DS_Jenkins --password ${env.DEVPI_PSWD} --clientdir ${WORKSPACE}\\certs\\"
-//                    }
-//                }
-                stage("Setting Variables Used by the Rest of the Build"){
-                    steps{
-
-//                        script {
-//                            // Set up the reports directory variable
-//
-//                            dir("source"){
-//                                PKG_NAME = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python  setup.py --name").trim()
-//                                PKG_VERSION = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --version").trim()
-//                            }
-//                        }
-                        script{
-//                            DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
-                            junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                        }
-                        bat "tree /A /F > ${WORKSPACE}/logs/tree_postconfig.log"
                     }
                 }
             }
@@ -263,20 +233,18 @@ pipeline {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
                     }
                     environment{
-                        junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                        junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                     }
                     steps{
 //                        dir("build\\lib"){
                          dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
+                            bat "${WORKSPACE}\\venv\\Scripts\\python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                         }
-                        //     bat "${WORKSPACE}\\venv\\Scripts\\py.test.exe --junitxml=${WORKSPACE}/reports/pytest/${junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/ --cov=uiucprescon/packager"
-                        // }
                     }
                     post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
-                            junit "reports/pytest/${junit_filename}"
+                            junit "reports/pytest/${env.junit_filename}"
                         }
                     }
                 }
