@@ -12,6 +12,20 @@ def remove_files(artifacts){
     }
 }
 
+
+def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
+    script {
+                try {
+                    bat "${devpiExecutable} login ${devpiUsername} --password ${devpiPassword}"
+                    bat "${devpiExecutable} use ${devpiIndex}"
+                    bat "${devpiExecutable} remove -y ${pkgName}==${pkgVersion}"
+                } catch (Exception ex) {
+                    echo "Failed to remove ${pkgName}==${pkgVersion} from ${devpiIndex}"
+            }
+
+    }
+}
+
 pipeline {
     agent {
         label "Windows && Python3"
@@ -567,6 +581,9 @@ pipeline {
                 failure {
                     echo "At least one package format on DevPi failed."
                 }
+                cleanup{
+                    remove_from_devpi("venv\\Scripts\\devpi.exe", "${env.PKG_NAME}", "${env.PKG_VERSION}", "/${env.DEVPI_USR}/${env.BRANCH_NAME}_staging", "${env.DEVPI_USR}", "${env.DEVPI_PSW}")
+                }
             }
             // post {
             //     success {
@@ -683,20 +700,20 @@ pipeline {
                         }
                     }
                 }
-//            TODO: Move to Devpi stage
-                if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
-                    bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}\\certs\\"
-                    def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${env.PKG_NAME}==${env.PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
-                    echo "Devpi remove exited with code ${devpi_remove_return_code}."
-                }
+////            TODO: Move to Devpi stage
+//                if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
+//                    bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}\\certs\\"
+//                    def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${env.PKG_NAME}==${env.PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
+//                    echo "Devpi remove exited with code ${devpi_remove_return_code}."
+//                }
             }
 //            TODO: change to use cleanws
             dir("certs"){
                 deleteDir()
             }
-            dir("build"){
-                deleteDir()
-            }
+//            dir("build"){
+//                deleteDir()
+//            }
             dir("dist"){
                 deleteDir()
             }
