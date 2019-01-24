@@ -1,9 +1,6 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
 
-//  TODO: Replace WARNINGS commands with reportIssues
-
-
 
 def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
     script {
@@ -345,11 +342,6 @@ pipeline {
 
         }
         stage("Deploy to DevPi") {
-            agent {
-                node {
-                    label "Windows && Python3"
-                }
-            }
             when {
                 allOf{
                     anyOf{
@@ -372,7 +364,6 @@ pipeline {
             stages{
                 stage("Install DevPi Client"){
                     steps {
-                        bat "\"${tool 'CPython-3.6'}\\python.exe\" -m venv venv && venv\\Scripts\\python.exe -m pip install --upgrade pip"
                         bat "pip install devpi-client"
                     }
                 }
