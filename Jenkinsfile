@@ -198,6 +198,7 @@ pipeline {
                     post{
                         always {
                             warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'logs\\build_sphinx.log']]
+                            archiveArtifacts artifacts: 'logs/build_sphinx.log'
                         }
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
