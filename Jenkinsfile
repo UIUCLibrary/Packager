@@ -28,7 +28,7 @@ def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUse
 
 pipeline {
     agent {
-        label "Windows && Python3 && !Docker"
+        label "Windows && Python3 && !Docker" // Something fishy is happening when run on Docker node
     }
     triggers {
         cron('@daily')
