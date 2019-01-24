@@ -1,11 +1,7 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
 
-// TODO: replace global vars with env vars set with Python Helpers
-//def PKG_NAME = "unknown"
-//def PKG_VERSION = "unknown"
-//def DOC_ZIP_FILENAME = "doc.zip"
-def junit_filename = "junit.xml"
+//  TODO: Replace WARNINGS commands with reportIssues
 
 def remove_files(artifacts){
     script{
