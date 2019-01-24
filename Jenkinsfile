@@ -120,9 +120,7 @@ pipeline {
             parallel {
                 stage("Python Package"){
                     steps {
-                        // tee('build.log') {
                             dir("source"){
-                                // bat "venv\\Scripts\\python.exe setup.py build"
                                 powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
                             }
                     }
@@ -132,7 +130,6 @@ pipeline {
                                     pyLint(name: 'Setuptools Build: PyLint', pattern: 'logs/build.log'),
                                 ]
                             )
-//                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
                             archiveArtifacts artifacts: 'logs/build.log'
                         }
                         success{
@@ -155,7 +152,6 @@ pipeline {
                     post{
                         always {
                             recordIssues(tools: [sphinxBuild(name: 'Sphinx Documentation Build', pattern: 'logs/build_sphinx.log')])
-//                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'logs\\build_sphinx.log']]
                             archiveArtifacts artifacts: 'logs/build_sphinx.log'
                         }
                         success{
@@ -165,17 +161,6 @@ pipeline {
                                 // }
                                 stash includes: 'build/docs/html/**', name: 'docs'
                             }
-                            // script{
-                            //     // Multibranch jobs add the slash and add the branch to the job name. I need only the job name
-                            //     def alljob = env.JOB_NAME.tokenize("/") as String[]
-                            //     def project_name = alljob[0]
-                            //     dir('build/docs/') {
-                            //         zip archive: true, dir: 'html', glob: '', zipFile: "${project_name}-${env.BRANCH_NAME}-docs-html-${env.GIT_COMMIT.substring(0,7)}.zip"
-                            //         dir("html"){
-                            //             stash includes: '**', name: "HTML Documentation"
-                            //         }
-                            //     }
-                            // }
                         }
                         failure{
                             dir("build"){
@@ -224,7 +209,6 @@ pipeline {
                         junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                     }
                     steps{
-//                        dir("build\\lib"){
                          dir("source"){
                             bat "${WORKSPACE}\\venv\\Scripts\\python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                         }
@@ -279,7 +263,6 @@ pipeline {
                         equals expected: true, actual: params.TEST_RUN_TOX
                     }
                     steps {
-                        // bat "${tool 'CPython-3.6'}\\python -m venv venv"
                         dir("source"){
                             bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
                         }
@@ -305,7 +288,6 @@ pipeline {
                     post {
                         always {
                             recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
-//                            warnings parserConfigurations: [[parserName: 'PyLint', pattern: 'logs/flake8.log']], unHealthy: ''
                         }
                     }
                 }
@@ -474,11 +456,9 @@ pipeline {
                                     environment {
                                         PATH = "${WORKSPACE}\\venv\\36\\Scripts;${WORKSPACE}\\venv\\37\\Scripts;$PATH"
                                     }
-//
                                     steps {
                                         echo "Testing Whl package in devpi"
                                         devpiTest(
-//                                                devpiExecutable: "venv\\36\\Scripts\\devpi.exe",
                                                 devpiExecutable: "${powershell(script: '(Get-Command devpi).path', returnStdout: true).trim()}",
                                                 url: "https://devpi.library.illinois.edu",
                                                 index: "${env.BRANCH_NAME}_staging",
