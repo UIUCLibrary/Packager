@@ -375,34 +375,10 @@ pipeline {
                         unstash "dist"
                         unstash 'docs'
                         bat "devpi use https://devpi.library.illinois.edu && devpi login ${env.DEVPI_USR} --password ${env.DEVPI_PSW} && devpi use /${env.DEVPI_USR}/${env.BRANCH_NAME}_staging && devpi upload --from-dir dist"
-                        // bat "venv\\Scripts\\devpi.exe use http://devpi.library.illinois.edu"
-//                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-//                            // bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-//                            bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-//                            dir("source"){
-//                                script {
-//                                    bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --from-dir ${WORKSPACE}\\dist --verbose"
-//                                    try {
-//                                        bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --only-docs ${WORKSPACE}\\dist\\${env.DOC_ZIP_FILENAME}"
-//                                    } catch (exc) {
-//                                        echo "Unable to upload to devpi with docs."
-//                                    }
-//                                }
-//                            }
-//                        }
-                            // script {
-                            //     bat "venv\\Scripts\\devpi.exe upload --from-dir dist"
-                            //     try {
-                            //         bat "venv\\Scripts\\devpi.exe upload --only-docs"
-                            //     } catch (exc) {
-                            //         echo "Unable to upload to devpi with docs."
-                            //     }
-                            // }
-                        // }
 
                     }
                 }
-                stage("Test Devpi packages") {
+                stage("Test DevPi packages") {
                     when {
                         allOf{
                             equals expected: true, actual: params.DEPLOY_DEVPI
