@@ -3,14 +3,6 @@
 
 //  TODO: Replace WARNINGS commands with reportIssues
 
-def remove_files(artifacts){
-    script{
-        def files = findFiles glob: "${artifacts}"
-        files.each { file_name ->
-            bat "del ${file_name}"
-        }
-    }
-}
 
 
 def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
@@ -368,7 +360,13 @@ pipeline {
                   archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
               }
               cleanup{
-                  remove_files("dist/*.whl,dist/*.tar.gz,dist/*.zip")
+                  cleanWs(
+                    patterns: [
+                        [pattern: 'dist/*.whl', type: 'INCLUDE'],
+                        [pattern: 'dist/*.tar.gz', type: 'INCLUDE'],
+                        [pattern: 'dist/*.zip', type: 'INCLUDE']
+                    ]
+                    )
               }
             }
 
