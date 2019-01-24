@@ -165,6 +165,9 @@ pipeline {
             }
         }
         stage('Build') {
+            agent {
+                label "Windows && Python3 && !Docker'
+            }
             parallel {
                 stage("Python Package"){
                     steps {
@@ -185,9 +188,7 @@ pipeline {
                     }
                 }
                 stage("Sphinx Documentation"){
-                    agent {
-                        label "Windows && Python3 && !Docker'
-                        }
+
                     when {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
