@@ -192,6 +192,7 @@ pipeline {
                         PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
                     }
                     steps {
+                        echo "Building docs on ${env.NODE_NAME}"
                         bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
                     }
                     post{
@@ -279,7 +280,6 @@ pipeline {
                        equals expected: true, actual: params.TEST_DOCTEST
                     }
                     steps {
-                    echo "Building docs on ${env.NODE_NAME}"
                         dir("source"){
                             bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest"
                         }
