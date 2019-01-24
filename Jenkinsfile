@@ -189,12 +189,7 @@ pipeline {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
                     steps {
-                        bat "(if exist build\\docs rmdir build\\docs /s /q) && mkdir build\\docs"
                         bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
-//                        dir('source') {
-//                            bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs"
-//                            powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build_sphinx --build-dir ${WORKSPACE}\\build\\docs | tee ${WORKSPACE}\\logs\\build_sphinx.log"
-//                        }
                     }
                     post{
                         always {
@@ -354,44 +349,63 @@ pipeline {
 
         }
 //        TODO: Make seq stage
-        stage("Deploy to Devpi Staging") {
+        stage("Deploy to DevPi") {
             when {
                 allOf{
-                    equals expected: true, actual: params.DEPLOY_DEVPI
+                    anyOf{
+                        equals expected: true, actual: params.DEPLOY_DEVPI
+                        triggeredBy "TimerTriggerCause"
+                    }
                     anyOf {
                         equals expected: "master", actual: env.BRANCH_NAME
                         equals expected: "dev", actual: env.BRANCH_NAME
                     }
                 }
             }
-            steps {
-                unstash "dist"
-                unstash 'docs' 
-                // bat "venv\\Scripts\\devpi.exe use http://devpi.library.illinois.edu"
-                withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
-                    // bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                    bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
-                    dir("source"){
-                        script {
-                            bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --from-dir ${WORKSPACE}\\dist --verbose"
-                            try {
-                                bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --only-docs ${WORKSPACE}\\dist\\${env.DOC_ZIP_FILENAME}"
-                            } catch (exc) {
-                                echo "Unable to upload to devpi with docs."
-                            }
-                        }
+            options{
+                timestamps()
+            }
+            environment{
+                PATH = "${WORKSPACE}\\venv\\Scripts;${tool 'CPython-3.6'};${tool 'CPython-3.6'}\\Scripts;${PATH}"
+            }
+            stages{
+                stage("Install DevPi Client"){
+                    steps {
+                        bat "pip install devpi-client"
                     }
                 }
-                    // script {
-                    //     bat "venv\\Scripts\\devpi.exe upload --from-dir dist"
-                    //     try {
-                    //         bat "venv\\Scripts\\devpi.exe upload --only-docs"
-                    //     } catch (exc) {
-                    //         echo "Unable to upload to devpi with docs."
-                    //     }
-                    // }
-                // }
+                stage("Upload to DevPi Staging"){
 
+                    steps {
+                        unstash "dist"
+                        unstash 'docs'
+                        // bat "venv\\Scripts\\devpi.exe use http://devpi.library.illinois.edu"
+                        withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
+                            // bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
+                            bat "venv\\Scripts\\devpi.exe use /${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging"
+                            dir("source"){
+                                script {
+                                    bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --from-dir ${WORKSPACE}\\dist --verbose"
+                                    try {
+                                        bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --only-docs ${WORKSPACE}\\dist\\${env.DOC_ZIP_FILENAME}"
+                                    } catch (exc) {
+                                        echo "Unable to upload to devpi with docs."
+                                    }
+                                }
+                            }
+                        }
+                            // script {
+                            //     bat "venv\\Scripts\\devpi.exe upload --from-dir dist"
+                            //     try {
+                            //         bat "venv\\Scripts\\devpi.exe upload --only-docs"
+                            //     } catch (exc) {
+                            //         echo "Unable to upload to devpi with docs."
+                            //     }
+                            // }
+                        // }
+
+                    }
+                }
             }
         }
         stage("Test Devpi packages") {
