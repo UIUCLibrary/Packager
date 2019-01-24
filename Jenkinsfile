@@ -435,46 +435,106 @@ pipeline {
                         }
                     }
                     parallel {
-                        stage("Source Distribution: .zip") {
-                             agent {
+//                        stage("Source Distribution: .zip") {
+//                             agent {
+//                                node {
+//                                    label "Windows && Python3 && VS2015"
+//        //                            customWorkspace "c:/Jenkins/temp/${JOB_NAME}/devpi_testing/"
+//                                }
+//                            }
+//                            options {
+//                                skipDefaultCheckout(true)
+//                            }
+//
+//                            environment {
+//                                PATH = "${tool 'cmake3.12'};$PATH"
+//                                CL = "/MP"
+//                            }
+//                            stages{
+//                                stage("Building DevPi Testing venv for Zip"){
+//                                    steps{
+//                                        echo "installing DevPi test env"
+//                                        bat "${tool 'CPython-3.6'}\\python -m venv venv"
+//                                        bat "venv\\Scripts\\pip.exe install tox devpi-client"
+//                                    }
+//                                }
+//                                stage("DevPi Testing zip Package"){
+//                                    steps {
+//                                        script {
+//                                            lock("cppan_${NODE_NAME}"){
+//                                                devpiTest(
+//                                                    devpiExecutable: "venv\\Scripts\\devpi.exe",
+//                                                    url: "https://devpi.library.illinois.edu",
+//                                                    index: "${env.BRANCH_NAME}_staging",
+//                                                    pkgName: "${env.PKG_NAME}",
+//                                                    pkgVersion: "${env.PKG_VERSION}",
+//                                                    pkgRegex: "zip"
+//                                                )
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+                        stage("Testing Submitted Source Distribution") {
+                            environment {
+                                PATH = "${tool 'CPython-3.7'};${tool 'CPython-3.6'};$PATH"
+                            }
+                            agent {
                                 node {
-                                    label "Windows && Python3 && VS2015"
-        //                            customWorkspace "c:/Jenkins/temp/${JOB_NAME}/devpi_testing/"
+                                    label "Windows && Python3"
                                 }
                             }
                             options {
                                 skipDefaultCheckout(true)
-                            }
 
-                            environment {
-                                PATH = "${tool 'cmake3.12'};$PATH"
-                                CL = "/MP"
                             }
                             stages{
-                                stage("Building DevPi Testing venv for Zip"){
-                                    steps{
-                                        echo "installing DevPi test env"
-                                        bat "${tool 'CPython-3.6'}\\python -m venv venv"
-                                        bat "venv\\Scripts\\pip.exe install tox devpi-client"
-                                    }
-                                }
-                                stage("DevPi Testing zip Package"){
+                                stage("Creating venv to test sdist"){
                                     steps {
-                                        script {
-                                            lock("cppan_${NODE_NAME}"){
-                                                devpiTest(
-                                                    devpiExecutable: "venv\\Scripts\\devpi.exe",
-                                                    url: "https://devpi.library.illinois.edu",
-                                                    index: "${env.BRANCH_NAME}_staging",
-                                                    pkgName: "${env.PKG_NAME}",
-                                                    pkgVersion: "${env.PKG_VERSION}",
-                                                    pkgRegex: "zip"
-                                                )
-                                            }
+                                        lock("system_python_${NODE_NAME}"){
+                                            bat "python -m venv venv"
                                         }
+                                        bat "venv\\Scripts\\python.exe -m pip install pip --upgrade && venv\\Scripts\\pip.exe install setuptools --upgrade && venv\\Scripts\\pip.exe install \"tox<3.7\" detox devpi-client"
                                     }
+
+                                }
+                                stage("Testing DevPi zip Package"){
+                                    options{
+                                        timeout(20)
+                                    }
+                                    environment {
+                                        PATH = "${tool 'cmake3.12'};${WORKSPACE}\\venv\\Scripts;$PATH"
+                                        CL = "/MP"
+                                    }
+                                    steps {
+                                        devpiTest(
+                                            devpiExecutable: "${powershell(script: '(Get-Command devpi).path', returnStdout: true).trim()}",
+                                            url: "https://devpi.library.illinois.edu",
+                                            index: "${env.BRANCH_NAME}_staging",
+                                            pkgName: "${env.PKG_NAME}",
+                                            pkgVersion: "${env.PKG_VERSION}",
+                                            pkgRegex: "zip",
+                                            detox: false
+                                        )
+                                        echo "Finished testing Source Distribution: .zip"
+                                    }
+
                                 }
                             }
+                            post {
+                                cleanup{
+                                    cleanWs(
+                                        deleteDirs: true,
+                                        disableDeferredWipeout: true,
+                                        patterns: [
+                                            [pattern: '*tmp', type: 'INCLUDE'],
+                                            [pattern: 'certs', type: 'INCLUDE']
+                                            ]
+                                    )
+                                }
+                            }
+
                         }
                         stage("Built Distribution: .whl") {
                             agent {
