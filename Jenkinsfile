@@ -567,7 +567,7 @@ pipeline {
                         equals expected: true, actual: params.DEPLOY_DOCS
                     }
                     steps{
-                        bat "venv\\Scripts\\python.exe setup.py build_sphinx"
+                        bat "venv\\Scripts\\sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest"
                         dir("build/docs/html/"){
                             input 'Update project documentation?'
                             sshPublisher(
