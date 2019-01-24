@@ -2,9 +2,9 @@
 @Library(["devpi", "PythonHelpers"]) _
 
 // TODO: replace global vars with env vars set with Python Helpers
-def PKG_NAME = "unknown"
-def PKG_VERSION = "unknown"
-def DOC_ZIP_FILENAME = "doc.zip"
+//def PKG_NAME = "unknown"
+//def PKG_VERSION = "unknown"
+//def DOC_ZIP_FILENAME = "doc.zip"
 def junit_filename = "junit.xml"
 
 def remove_files(artifacts){
@@ -159,16 +159,16 @@ pipeline {
                 stage("Setting Variables Used by the Rest of the Build"){
                     steps{
 
-                        script {
-                            // Set up the reports directory variable
-                            
-                            dir("source"){
-                                PKG_NAME = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python  setup.py --name").trim()
-                                PKG_VERSION = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --version").trim()
-                            }
-                        }
+//                        script {
+//                            // Set up the reports directory variable
+//
+//                            dir("source"){
+//                                PKG_NAME = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python  setup.py --name").trim()
+//                                PKG_VERSION = bat(returnStdout: true, script: "@${tool 'CPython-3.6'}\\python setup.py --version").trim()
+//                            }
+//                        }
                         script{
-                            DOC_ZIP_FILENAME = "${PKG_NAME}-${PKG_VERSION}.doc.zip"
+//                            DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
                             junit_filename = "junit-${env.NODE_NAME}-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                         }
                         bat "tree /A /F > ${WORKSPACE}/logs/tree_postconfig.log"
@@ -239,7 +239,7 @@ pipeline {
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             script{
-                                zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
+                                zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${env.DOC_ZIP_FILENAME}"
                                 // }
                                 stash includes: 'build/docs/html/**', name: 'docs'
                             }
@@ -412,7 +412,7 @@ pipeline {
                         script {
                             bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --from-dir ${WORKSPACE}\\dist --verbose"
                             try {
-                                bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --only-docs ${WORKSPACE}\\dist\\${DOC_ZIP_FILENAME}"
+                                bat "${WORKSPACE}\\venv\\Scripts\\devpi.exe upload --only-docs ${WORKSPACE}\\dist\\${env.DOC_ZIP_FILENAME}"
                             } catch (exc) {
                                 echo "Unable to upload to devpi with docs."
                             }
@@ -523,8 +523,8 @@ pipeline {
                                             devpiExecutable: "venv\\Scripts\\devpi.exe",
                                             url: "https://devpi.library.illinois.edu",
                                             index: "${env.BRANCH_NAME}_staging",
-                                            pkgName: "${PKG_NAME}",
-                                            pkgVersion: "${PKG_VERSION}",
+                                            pkgName: "${env.PKG_NAME}",
+                                            pkgVersion: "${env.PKG_VERSION}",
                                             pkgRegex: "tar.gz"
                                         )
                                     }
@@ -565,8 +565,8 @@ pipeline {
                                             devpiExecutable: "venv\\Scripts\\devpi.exe",
                                             url: "https://devpi.library.illinois.edu",
                                             index: "${env.BRANCH_NAME}_staging",
-                                            pkgName: "${PKG_NAME}",
-                                            pkgVersion: "${PKG_VERSION}",
+                                            pkgName: "${env.PKG_NAME}",
+                                            pkgVersion: "${env.PKG_VERSION}",
                                             pkgRegex: "zip"
                                         )
                                     }
@@ -598,8 +598,8 @@ pipeline {
                                     devpiExecutable: "venv\\Scripts\\devpi.exe",
                                     url: "https://devpi.library.illinois.edu",
                                     index: "${env.BRANCH_NAME}_staging",
-                                    pkgName: "${PKG_NAME}",
-                                    pkgVersion: "${PKG_VERSION}",
+                                    pkgName: "${env.PKG_NAME}",
+                                    pkgVersion: "${env.PKG_VERSION}",
                                     pkgRegex: "whl"
                                 )
                                 echo "Finished testing Built Distribution: .whl"
@@ -614,7 +614,7 @@ pipeline {
                     script {
                         withCredentials([usernamePassword(credentialsId: 'DS_devpi', usernameVariable: 'DEVPI_USERNAME', passwordVariable: 'DEVPI_PASSWORD')]) {
                         bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
-                        bat "venv\\Scripts\\devpi.exe push --index ${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${PKG_NAME}==${PKG_VERSION} ${DEVPI_USERNAME}/${env.BRANCH_NAME}"
+                        bat "venv\\Scripts\\devpi.exe push --index ${DEVPI_USERNAME}/${env.BRANCH_NAME}_staging ${env.PKG_NAME}==${env.PKG_VERSION} ${DEVPI_USERNAME}/${env.BRANCH_NAME}"
                         }
                     }
                 }
@@ -690,7 +690,7 @@ pipeline {
                           bat "venv\\Scripts\\devpi.exe login ${DEVPI_USERNAME} --password ${DEVPI_PASSWORD}"
                         }
                         bat "venv\\Scripts\\devpi.exe use DS_Jenkins/${env.BRANCH_NAME}_staging"
-                        bat "venv\\Scripts\\devpi.exe push ${PKG_NAME}==${PKG_VERSION} production/release"
+                        bat "venv\\Scripts\\devpi.exe push ${env.PKG_NAME}==${env.PKG_VERSION} production/release"
 
                     }
                     post{
@@ -740,7 +740,7 @@ pipeline {
 //            TODO: Move to Devpi stage
                 if (env.BRANCH_NAME == "master" || env.BRANCH_NAME == "dev"){
                     bat "venv\\Scripts\\devpi.exe use https://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}\\certs\\"
-                    def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${PKG_NAME}==${PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
+                    def devpi_remove_return_code = bat returnStatus: true, script:"venv\\Scripts\\devpi.exe remove -y ${env.PKG_NAME}==${env.PKG_VERSION} --clientdir ${WORKSPACE}\\certs\\ "
                     echo "Devpi remove exited with code ${devpi_remove_return_code}."
                 }
             }
