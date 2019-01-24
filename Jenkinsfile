@@ -224,6 +224,14 @@ pipeline {
                                 bat "tree /F /A"
                             }
                         }
+                        cleanup{
+                            cleanWs(
+                                deleteDirs: true,
+                                patterns: [
+                                    [pattern: 'build/docs', type: 'INCLUDE'],
+                                    ]
+                                )
+                        }
                     }
                 }
             }
