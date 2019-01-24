@@ -136,7 +136,11 @@ pipeline {
                     }
                     post{
                         always{
-                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
+                            recordIssues(tools: [
+                                    pyLint(name: 'Setuptools Build: PyLint', pattern: 'logs/build.log'),
+                                ]
+                            )
+//                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'build.log']]
                             archiveArtifacts artifacts: 'logs/build.log'
                         }
                         success{
@@ -158,7 +162,8 @@ pipeline {
                     }
                     post{
                         always {
-                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'logs\\build_sphinx.log']]
+                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Documentation Build', pattern: 'logs/build_sphinx.log')])
+//                            warnings parserConfigurations: [[parserName: 'Pep8', pattern: 'logs\\build_sphinx.log']]
                             archiveArtifacts artifacts: 'logs/build_sphinx.log'
                         }
                         success{
@@ -271,7 +276,8 @@ pipeline {
                     }
                     post {
                         always {
-                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
+                        recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
+//                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
                         }
                     }
@@ -306,7 +312,8 @@ pipeline {
                     }
                     post {
                         always {
-                            warnings parserConfigurations: [[parserName: 'PyLint', pattern: 'logs/flake8.log']], unHealthy: ''
+                            recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
+//                            warnings parserConfigurations: [[parserName: 'PyLint', pattern: 'logs/flake8.log']], unHealthy: ''
                         }
                     }
                 }
