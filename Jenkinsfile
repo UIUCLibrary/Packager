@@ -166,7 +166,7 @@ pipeline {
         }
         stage('Build') {
             agent {
-                label "Windows && Python3 && !Docker'
+                label "Windows && Python3 && !Docker"
             }
             parallel {
                 stage("Python Package"){
