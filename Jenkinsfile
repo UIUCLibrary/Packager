@@ -29,6 +29,13 @@ pipeline {
         checkoutToSubdirectory("source")
         preserveStashes()
     }
+    environment {
+        PATH = "${tool 'CPython-3.6'};${tool 'CPython-3.7'};$PATH"
+        PKG_NAME = pythonPackageName(toolName: "CPython-3.6")
+        PKG_VERSION = pythonPackageVersion(toolName: "CPython-3.6")
+        DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
+        DEVPI = credentials("DS_devpi")
+    }
 
     parameters {
         booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
@@ -94,14 +101,15 @@ pipeline {
                 stage("Installing Required System Level Dependencies"){
                     steps{
                         lock("system_python_${NODE_NAME}"){
-                            bat "${tool 'CPython-3.6'}\\python -m pip install pip --upgrade --quiet && ${tool 'CPython-3.6'}\\python -m pip install --upgrade pipenv --quiet"
+                            bat "python -m pip install pip --upgrade --quiet && ${tool 'CPython-3.6'}\\python -m pip install --upgrade pipenv --quiet"
                         }
 
-                        bat "${tool 'CPython-3.6'}\\python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
+
 
                     }
                     post{
-                        success{
+                        always{
+                            bat "(if not exist logs mkdir logs) && python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
                             archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
                         }
                         failure {
@@ -113,14 +121,14 @@ pipeline {
             
                 stage("Creating Virtualenv for Building"){
                     steps {
-                        bat "${tool 'CPython-3.6'}\\python -m venv venv"
+                        bat "python -m venv venv"
 
                         script {
                             try {
                                 bat "venv\\Scripts\\python.exe -m pip install -U pip --quiet"
                             }
                             catch (exc) {
-                                bat "${tool 'CPython-3.6'}\\python -m venv venv"
+                                bat "python -m venv venv"
                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
                             }
                         }
@@ -139,15 +147,15 @@ pipeline {
                     }
                 }
 //                        TODO: Remove devpi login stage
-                stage("Logging into DevPi"){
-                    environment{
-                        DEVPI_PSWD = credentials('devpi-login')
-                    }
-                    steps{
-                        bat "venv\\Scripts\\devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}\\certs\\"
-                        bat "venv\\Scripts\\devpi.exe login DS_Jenkins --password ${env.DEVPI_PSWD} --clientdir ${WORKSPACE}\\certs\\"
-                    }
-                }
+//                stage("Logging into DevPi"){
+//                    environment{
+//                        DEVPI_PSWD = credentials('devpi-login')
+//                    }
+//                    steps{
+//                        bat "venv\\Scripts\\devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}\\certs\\"
+//                        bat "venv\\Scripts\\devpi.exe login DS_Jenkins --password ${env.DEVPI_PSWD} --clientdir ${WORKSPACE}\\certs\\"
+//                    }
+//                }
                 stage("Setting Variables Used by the Rest of the Build"){
                     steps{
 
