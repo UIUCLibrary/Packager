@@ -185,6 +185,9 @@ pipeline {
                     }
                 }
                 stage("Sphinx Documentation"){
+                    agent {
+                        label '!Docker'
+                        }
                     when {
                         equals expected: true, actual: params.BUILD_DOCS
                     }
