@@ -28,7 +28,7 @@ def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUse
 
 pipeline {
     agent {
-        label "Windows && Python3"
+        label "Windows && Python3 && !Docker"
     }
     triggers {
         cron('@daily')
@@ -165,9 +165,7 @@ pipeline {
             }
         }
         stage('Build') {
-            agent {
-                label "Windows && Python3 && !Docker"
-            }
+
             parallel {
                 stage("Python Package"){
                     steps {
