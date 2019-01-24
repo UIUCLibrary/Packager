@@ -68,18 +68,13 @@ pipeline {
                         lock("system_python_${NODE_NAME}"){
                             bat "python -m pip install pip --upgrade --quiet && python -m pip install --upgrade pipenv --quiet"
                         }
-
-
-
                     }
                     post{
                         always{
                             bat "(if not exist logs mkdir logs) && python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
                             archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
                         }
-                        failure {
-                            deleteDir()
-                        }
+
                     }
 
                 }
@@ -106,9 +101,6 @@ pipeline {
                             bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
                             archiveArtifacts artifacts: "logs/pippackages_venv_${NODE_NAME}.log"
                         }
-                        failure {
-                            deleteDir()
-                        }
                     }
                 }
             }
@@ -116,6 +108,9 @@ pipeline {
             post{
                 success{
                     echo "Configured ${env.PKG_NAME}, version ${env.PKG_VERSION}, for testing."
+                }
+                failure {
+                    deleteDir()
                 }
 
             }
