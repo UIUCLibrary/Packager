@@ -238,6 +238,9 @@ pipeline {
             }
         }
         stage("Test") {
+            environment {
+                PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+            }
             parallel {
                 stage("Run Behave BDD Tests") {
                     when {
@@ -330,14 +333,24 @@ pipeline {
                     }
                     steps{
                         script{
+                            bat "pip install flake8"
                             try{
                                 dir("source"){
-                                    powershell "& ${WORKSPACE}\\venv\\Scripts\\flake8.exe uiucprescon --format=pylint | tee logs\\flake8.log"    
+                                    bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
                                 }
                             } catch (exc) {
                                 echo "flake8 found some warnings"
                             }
                         }
+//                        script{
+//                            try{
+//                                dir("source"){
+//                                    powershell "& ${WORKSPACE}\\venv\\Scripts\\flake8.exe uiucprescon --format=pylint | tee logs\\flake8.log"
+//                                }
+//                            } catch (exc) {
+//                                echo "flake8 found some warnings"
+//                            }
+//                        }
                     }
                     post {
                         always {
