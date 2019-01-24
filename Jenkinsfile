@@ -279,6 +279,7 @@ pipeline {
                        equals expected: true, actual: params.TEST_DOCTEST
                     }
                     steps {
+                    echo "Building docs on ${env.NODE_NAME}"
                         dir("source"){
                             bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest"
                         }
