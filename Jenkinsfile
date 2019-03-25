@@ -602,25 +602,25 @@ pipeline {
     }
     post {
         cleanup {
-             script {
-                if(fileExists('source/setup.py')){
-                    dir("source"){
-                        try{
-                            retry(3) {
-                                bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py clean --all"
-                            }
-                        } catch (Exception ex) {
-                            echo "Unable to successfully run clean. Purging source directory."
-                            deleteDir()
-                        }
-                    }
-                }
-            }
+//             script {
+//                if(fileExists('source/setup.py')){
+//                    dir("source"){
+//                        try{
+//                            retry(3) {
+//                                bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py clean --all"
+//                            }
+//                        } catch (Exception ex) {
+//                            echo "Unable to successfully run clean. Purging source directory."
+//                            deleteDir()
+//                        }
+//                    }
+//                }
+//            }
             cleanWs(
                 deleteDirs: true,
                 patterns: [
                     [pattern: 'dist', type: 'INCLUDE'],
-//                    [pattern: 'build', type: 'INCLUDE'],
+                    [pattern: 'source', type: 'INCLUDE'],
                     [pattern: 'reports', type: 'INCLUDE'],
                     [pattern: 'logs', type: 'INCLUDE'],
                     [pattern: 'certs', type: 'INCLUDE'],
