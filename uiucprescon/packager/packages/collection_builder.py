@@ -220,7 +220,7 @@ def build_hathi_tiff_instance(new_item, filename, path):
 
 
 def build_hathi_tiff_package(new_object, path):
-    def filter_tiff_files(item: os.DirEntry)->bool:
+    def filter_tiff_files(item: os.DirEntry) -> bool:
         if not item.is_file():
             return False
 
@@ -390,7 +390,7 @@ def build_hathi_jp2_instance(new_item, filename, path):
 
 
 def build_hathi_jp2_package(new_object, path):
-    def filter_tiff_files(item: os.DirEntry)->bool:
+    def filter_tiff_files(item: os.DirEntry) -> bool:
         if not item.is_file():
             return False
 

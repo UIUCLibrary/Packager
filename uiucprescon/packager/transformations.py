@@ -5,7 +5,7 @@ import shutil
 from py3exiv2bind.core import set_dpi
 try:
     import pykdu_compress
-except ImportError as e:
+except ImportError:
     print("Unable to use transform DigitalLibraryCompound due to "
           "missing import")
 
