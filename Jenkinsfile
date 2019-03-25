@@ -620,6 +620,7 @@ pipeline {
                 deleteDirs: true,
                 patterns: [
                     [pattern: 'dist', type: 'INCLUDE'],
+                    [pattern: 'build/docs', type: 'INCLUDE'],
                     [pattern: 'source', type: 'INCLUDE'],
                     [pattern: 'reports', type: 'INCLUDE'],
                     [pattern: 'logs', type: 'INCLUDE'],
