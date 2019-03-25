@@ -153,7 +153,7 @@ pipeline {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             script{
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${env.DOC_ZIP_FILENAME}"
-                                stash includes: 'dist/${env.DOC_ZIP_FILENAME},build/docs/html/**', name: 'docs'
+                                stash includes: "dist/${env.DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
                             }
                         }
                         failure{
