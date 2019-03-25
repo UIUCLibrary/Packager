@@ -38,7 +38,6 @@ pipeline {
 
     parameters {
         booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
-        booleanParam(name: "BUILD_DOCS", defaultValue: true, description: "Build documentation")
         booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
         booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
         booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
@@ -138,10 +137,6 @@ pipeline {
                     }
                 }
                 stage("Sphinx Documentation"){
-
-                    when {
-                        equals expected: true, actual: params.BUILD_DOCS
-                    }
                     environment {
                         PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
                     }
@@ -158,8 +153,7 @@ pipeline {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             script{
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${env.DOC_ZIP_FILENAME}"
-                                // }
-                                stash includes: 'build/docs/html/**', name: 'docs'
+                                stash includes: 'dist/${env.DOC_ZIP_FILENAME},build/docs/html/**', name: 'docs'
                             }
                         }
                         failure{
@@ -568,9 +562,10 @@ pipeline {
                         equals expected: true, actual: params.DEPLOY_DOCS
                     }
                     steps{
-                        dir("source"){
-                            bat "venv\\Scripts\\sphinx-build.exe source/docs/source build/docs/html -d build/docs/.doctrees"
-                        }
+                        unstash "docs"
+//                        dir("source"){
+//                            bat "venv\\Scripts\\sphinx-build.exe source/docs/source build/docs/html -d build/docs/.doctrees"
+//                        }
                         dir("build/docs/html/"){
                             input 'Update project documentation?'
                             sshPublisher(
