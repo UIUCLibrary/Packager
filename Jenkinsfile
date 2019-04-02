@@ -180,22 +180,6 @@ pipeline {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
             }
             parallel {
-                stage("Run Behave BDD Tests") {
-                    when {
-                       equals expected: true, actual: params.TEST_UNIT_TESTS
-                    }
-                    steps {
-                        dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\behave.exe --junit --junit-directory ${WORKSPACE}/reports/behave"
-                        }
-                        
-                    }
-                    post {
-                        always {
-                            junit "reports/behave/*.xml"
-                        }
-                    }
-                }
                 stage("Run Pytest Unit Tests"){
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
