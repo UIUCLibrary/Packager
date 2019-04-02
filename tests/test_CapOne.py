@@ -1,4 +1,6 @@
 import os
+import shutil
+
 from uiucprescon import packager
 import pytest
 import pykdu_compress
@@ -35,7 +37,8 @@ def capture_one_fixture(tmpdir_factory):
             test_dir, CAPTURE_ONE_BATCH_NAME, "000002_00000002.tif"), "w"):
         pass
 
-    return test_dir
+    yield test_dir
+    shutil.rmtree(test_dir)
 
 
 def test_capture_one_tiff_to_hathi_tiff(capture_one_fixture):

@@ -27,7 +27,7 @@ include pytest.ini
 recursive-include tests *.py
 
 # Behave tests
-recursive-include features *.py *.feature
+recursive-include tests/features *.py *.feature
 
 # Documentation
 include docs/Makefile

@@ -4,7 +4,7 @@ wheel
 sphinx
 pytest
 pytest-runner
-pytest-cov
+pytest-bdd >= 3.1.0
 tox
 behave
 flake8
