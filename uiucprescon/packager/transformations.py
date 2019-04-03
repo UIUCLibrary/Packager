@@ -35,7 +35,6 @@ class ConvertJp2Standard(AbsTransformation):
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> None:
 
-        source_name = os.path.basename(source)
         base_name, ext = os.path.splitext(source)
         new_name = f"{base_name}.jp2"
         dest = os.path.abspath(os.path.dirname(destination))
@@ -51,7 +50,6 @@ class ConvertJp2Hathi(AbsTransformation):
                   logger: logging.Logger) -> None:
         dest = os.path.abspath(os.path.dirname(destination))
 
-        # new_name = destination.replace(".tif", ".jp2")
         base_name, ext = os.path.splitext(os.path.basename(source))
         new_name = f"{base_name}.jp2"
         pykdu_compress.kdu_compress_cli2(
