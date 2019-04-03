@@ -38,9 +38,6 @@ class ConvertJp2Standard(AbsTransformation):
         source_name = os.path.basename(source)
         dest = os.path.abspath(os.path.dirname(destination))
 
-        # pykdu_compress.kdu_compress_cli("-i \"{}\" -o \"{}\"".format(
-        #     source, destination))
-
         pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
 
         logger.info("Generated {} in {}".format(source_name, dest))
@@ -51,26 +48,12 @@ class ConvertJp2Hathi(AbsTransformation):
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> None:
 
-        source_name = os.path.basename(source)
-
         dest = os.path.abspath(os.path.dirname(destination))
 
-        pykdu_compress.kdu_compress_cli(
-            "-i \"{}\" "
-            "Clevels=5 "
-            "Clayers=8 "
-            "Corder=RLCP "
-            "Cuse_sop=yes "
-            "Cuse_eph=yes "
-            "Cmodes=RESET|RESTART|CAUSAL|ERTERM|SEGMARK "
-            "-no_weights "
-            "-slope 42988 "
-            "-jp2_space sRGB "
-            "-o \"{}\"".format(source, destination))
-
+        new_name = destination.replace(".tif", ".jp2")
         pykdu_compress.kdu_compress_cli2(
             infile=source,
-            outfile=destination,
+            outfile=new_name,
             in_args=[
                 "Clevels=5",
                 "Clayers=8",
@@ -79,14 +62,17 @@ class ConvertJp2Hathi(AbsTransformation):
                 "Cuse_eph=yes",
                 "Cmodes=RESET|RESTART|CAUSAL|ERTERM|SEGMARK",
                 "-no_weights",
-                "-slope 42988",
-            ]
+                "-slope",
+                "42988",
+                "-jp2_space",
+                "sRGB",
+                ],
         )
 
         logger.info("Fixing up image to 400 dpi")
-        set_dpi(source, x=400, y=400)
+        set_dpi(new_name, x=400, y=400)
 
-        logger.info("Generated {} in {}".format(source_name, dest))
+        logger.info("Generated {} in {}".format(destination, dest))
 
 
 class Transformers:
