@@ -52,9 +52,10 @@ class ConvertJp2Hathi(AbsTransformation):
 
         base_name, ext = os.path.splitext(os.path.basename(source))
         new_name = f"{base_name}.jp2"
+        new_file = os.path.join(dest, new_name)
         pykdu_compress.kdu_compress_cli2(
             infile=source,
-            outfile=new_name,
+            outfile=new_file,
             in_args=[
                 "Clevels=5",
                 "Clayers=8",
@@ -71,7 +72,7 @@ class ConvertJp2Hathi(AbsTransformation):
         )
 
         logger.info("Fixing up image to 400 dpi")
-        set_dpi(new_name, x=400, y=400)
+        set_dpi(new_file, x=400, y=400)
 
         logger.info("Generated {} in {}".format(
             os.path.basename(new_name), dest))
