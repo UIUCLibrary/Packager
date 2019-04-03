@@ -142,7 +142,7 @@ pipeline {
                     }
                     steps {
                         echo "Building docs on ${env.NODE_NAME}"
-                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -vv -w ${WORKSPACE}\\logs\\build_sphinx.log"
+                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
                     }
                     post{
                         always {
