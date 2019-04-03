@@ -206,13 +206,16 @@ pipeline {
                     }
                     steps {
                         dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest"
+                            bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
                         }
                     }
                     post{
                         always {
                             archiveArtifacts artifacts: 'reports/doctest/output.txt'
+                            archiveArtifacts artifacts: 'logs/doctest.log'
+                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Doctest', pattern: 'logs/doctest.log', id: 'doctest')])
                         }
+
                     }
                 }
                 stage("Run MyPy Static Analysis") {
