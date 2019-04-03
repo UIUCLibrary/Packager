@@ -36,21 +36,24 @@ class ConvertJp2Standard(AbsTransformation):
                   logger: logging.Logger) -> None:
 
         source_name = os.path.basename(source)
+        base_name, ext = os.path.splitext(source)
+        new_name = f"{base_name}.jp2"
         dest = os.path.abspath(os.path.dirname(destination))
 
         pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
 
-        logger.info("Generated {} in {}".format(source_name, dest))
+        logger.info("Generated {} in {}".format(new_name, dest))
 
 
 class ConvertJp2Hathi(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> None:
-
         dest = os.path.abspath(os.path.dirname(destination))
 
-        new_name = destination.replace(".tif", ".jp2")
+        # new_name = destination.replace(".tif", ".jp2")
+        base_name, ext = os.path.splitext(os.path.basename(source))
+        new_name = f"{base_name}.jp2"
         pykdu_compress.kdu_compress_cli2(
             infile=source,
             outfile=new_name,
@@ -72,7 +75,8 @@ class ConvertJp2Hathi(AbsTransformation):
         logger.info("Fixing up image to 400 dpi")
         set_dpi(new_name, x=400, y=400)
 
-        logger.info("Generated {} in {}".format(destination, dest))
+        logger.info("Generated {} in {}".format(
+            os.path.basename(new_name), dest))
 
 
 class Transformers:
