@@ -10,8 +10,9 @@ class AbsPackageBuilder(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def locate_packages(self, path) -> typing.Iterator[Package]:
-        pass
+        """Locate packages found at a given path"""
 
     @abc.abstractmethod
     def transform(self, package: Package, dest: str) -> None:
-        pass
+        """Transform a given package into a the current type at given
+        destination"""

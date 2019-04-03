@@ -142,7 +142,7 @@ pipeline {
                     }
                     steps {
                         echo "Building docs on ${env.NODE_NAME}"
-                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -vv -w ${WORKSPACE}\\logs\\build_sphinx.log"
+                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
                     }
                     post{
                         always {
@@ -180,22 +180,6 @@ pipeline {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
             }
             parallel {
-                stage("Run Behave BDD Tests") {
-                    when {
-                       equals expected: true, actual: params.TEST_UNIT_TESTS
-                    }
-                    steps {
-                        dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\behave.exe --junit --junit-directory ${WORKSPACE}/reports/behave"
-                        }
-                        
-                    }
-                    post {
-                        always {
-                            junit "reports/behave/*.xml"
-                        }
-                    }
-                }
                 stage("Run Pytest Unit Tests"){
                     when {
                        equals expected: true, actual: params.TEST_UNIT_TESTS
@@ -205,12 +189,13 @@ pipeline {
                     }
                     steps{
                          dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
+                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
+//                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                         }
                     }
                     post {
                         always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+//                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             junit "reports/pytest/${env.junit_filename}"
                         }
                     }
@@ -221,13 +206,16 @@ pipeline {
                     }
                     steps {
                         dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest"
+                            bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
                         }
                     }
                     post{
                         always {
                             archiveArtifacts artifacts: 'reports/doctest/output.txt'
+                            archiveArtifacts artifacts: 'logs/doctest.log'
+                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Doctest', pattern: 'logs/doctest.log', id: 'doctest')])
                         }
+
                     }
                 }
                 stage("Run MyPy Static Analysis") {
@@ -285,6 +273,26 @@ pipeline {
                             recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
                         }
                     }
+                }
+            }
+            post{
+                always{
+                    dir("source"){
+                        bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
+
+                    }
+                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                    publishCoverage adapters: [
+                                    coberturaAdapter('reports/coverage.xml')
+                                    ],
+                                sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
+                }
+                cleanup{
+                    cleanWs(patterns: [
+                            [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
+                            [pattern: 'reports/coverage', type: 'INCLUDE'],
+                            [pattern: 'source/.coverage', type: 'INCLUDE']
+                        ])
                 }
             }
         }

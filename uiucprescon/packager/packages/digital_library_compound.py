@@ -42,7 +42,10 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                 os.makedirs(preservation_path)
 
             for inst in item:
-                assert len(inst.files) == 1
+                assert len(inst.files) == 1, \
+                    f"Each instance should have only 1 file, "\
+                    f"found {inst.files}: [{', '.join(inst.files)}]"
+
                 for file_ in inst.files:
                     base_name, ext = os.path.splitext(os.path.basename(file_))
                     category = inst.category
