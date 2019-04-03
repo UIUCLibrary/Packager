@@ -162,8 +162,12 @@ def build_capture_one_batch(root) -> Package:
     group_ids = set()
 
     for file_ in files:
-        group_id, _ = file_.name.split("_")
-        group_ids.add(group_id)
+        try:
+            group_id, _ = file_.name.split("_")
+            group_ids.add(group_id)
+        except ValueError:
+            raise ValueError(
+                "Unable to split {} with underscore".format(file_.name))
 
     for object_name in sorted(group_ids):
         new_object = PackageObject(parent=new_batch)
