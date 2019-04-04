@@ -12,7 +12,9 @@ from uiucprescon.packager.common import Metadata
 class CaptureOnePackage(AbsPackageBuilder):
 
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
-        for package in collection_builder.build_capture_one_batch(batch_path):
+
+        builder = collection_builder.CaptureOneBuilder()
+        for package in builder.build_batch(batch_path):
             yield package
 
     def transform(self, package: Package, dest: str) -> None:

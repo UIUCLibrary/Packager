@@ -18,10 +18,9 @@ from uiucprescon.packager import transformations
 class DigitalLibraryCompound(AbsPackageBuilder):
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
+        builder = collection_builder.DigitalLibraryCompoundBuilder()
 
-        for package in \
-                collection_builder.build_digital_library_compound_batch(path):
-
+        for package in builder.build_batch(path):
             yield package
 
     def transform(self, package: Package, dest: str) -> None:

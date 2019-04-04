@@ -17,9 +17,10 @@ def new_path(tmpdir_factory):
 @scenario("package_transform.feature",
           "package containing 2 objects and want to transform them into a "
           "another type of package"
-)
+          )
 def test_capture_one_session_two_object():
     pass
+
 
 @given("A package containing 2 objects")
 def package_objects(source_path, source_package_type):
@@ -50,19 +51,29 @@ def step_impl(package_objects, new_path_to_save_to, new_package_type):
       "new format")
 def step_impl(new_path_to_save_to, new_package_type):
     if new_package_type == "HathiTiff":
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001", "00000001.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001", "00000002.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001", "00000003.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000002", "00000001.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000002", "00000002.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001", "00000001.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001", "00000002.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001", "00000003.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000002", "00000001.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000002", "00000002.tif"))
     elif new_package_type == "CaptureOnePackage":
 
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001_00000001.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001_00000002.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000001_00000003.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001_00000001.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001_00000002.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000001_00000003.tif"))
 
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000002_00000001.tif"))
-        assert os.path.exists(os.path.join(new_path_to_save_to, "000002_00000002.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000002_00000001.tif"))
+        assert os.path.exists(
+            os.path.join(new_path_to_save_to, "000002_00000002.tif"))
     else:
         pytest.fail("No test for {}".format(new_package_type))
 
@@ -70,7 +81,7 @@ def step_impl(new_path_to_save_to, new_package_type):
 @scenario("package_transform.feature",
           "Capture One session with a .DS_Store file transform to a HathiTrust "
           "Tiff package"
-)
+          )
 def test_capture_one_session_two_object_and_ds_store():
     pass
 
@@ -107,10 +118,11 @@ def step_impl(new_path):
     assert os.path.exists(os.path.join(new_package, "000002", "00000001.tif"))
     assert os.path.exists(os.path.join(new_package, "000002", "00000002.tif"))
 
+
 @scenario("package_transform.feature",
           "Capture One session with a thumbs.db file transform to a HathiTrust "
           "Tiff package"
-)
+          )
 def test_capture_one_session_two_object_and_thumbs():
     pass
 
@@ -127,4 +139,3 @@ def capture_one_session_w_thumbs(capture_one_sample_package):
 
     # find all Capture One organized packages
     return list(capture_one_packages_factory.locate_packages(path=source_dir))
-
