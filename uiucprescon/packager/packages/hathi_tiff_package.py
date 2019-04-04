@@ -11,8 +11,8 @@ from uiucprescon.packager.common import Metadata
 
 class HathiTiff(AbsPackageBuilder):
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
-        batch = collection_builder.build_hathi_tiff_batch(batch_path)
-        for package in batch:
+        builder = collection_builder.HathiTiffBuilder()
+        for package in builder.build_batch(batch_path):
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
