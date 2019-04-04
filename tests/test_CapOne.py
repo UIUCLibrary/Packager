@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from uiucprescon import packager
 import pytest
@@ -11,7 +12,7 @@ DESTINATION_NAME = "out"
 
 @pytest.fixture(scope="session")
 def capture_one_fixture(tmpdir_factory):
-    test_dir = tmpdir_factory.mktemp("test")
+    test_dir = tmpdir_factory.mktemp("test", numbered=False)
 
     os.makedirs(os.path.join(test_dir, CAPTURE_ONE_BATCH_NAME))
     os.makedirs(os.path.join(test_dir, DESTINATION_NAME))
