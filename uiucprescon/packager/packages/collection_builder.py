@@ -512,11 +512,11 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
     @staticmethod
     def _organize_files(item: os.DirEntry) -> str:
-            base, ext = os.path.splitext(item.name)
-            if ext.lower() == ".jp2":
-                return "main_files"
-            else:
-                return "sidecar"
+        base, ext = os.path.splitext(item.name)
+        if ext.lower() == ".jp2":
+            return "main_files"
+        else:
+            return "sidecar"
 
     @classmethod
     def build_instance(cls, parent, filename, path):
