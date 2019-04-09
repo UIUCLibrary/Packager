@@ -10,6 +10,7 @@ from uiucprescon.packager.common import Metadata
 
 
 class HathiTiff(AbsPackageBuilder):
+    """Packaged files for submitting to HathiTrust containing only Tiff files"""
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiTiffBuilder()
         for package in builder.build_batch(batch_path):

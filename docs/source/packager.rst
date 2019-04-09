@@ -2,25 +2,23 @@ uiucprescon.packager
 ====================
 
 .. automodule:: uiucprescon.packager
-    :members:
-    :undoc-members:
-
-.. autoclass:: uiucprescon.packager.PackageFactory
-    :members:
-    :undoc-members:
+    :members: PackageFactory
 
 
 uiucprescon.packager.packages
 -----------------------------
-
-.. automodule:: uiucprescon.packager.packages
+.. automodule:: uiucprescon.packager.packages.abs_package_builder
     :members:
 
-.. autoclass:: uiucprescon.packager.packages.CaptureOnePackage
-    :members:
+.. currentmodule:: uiucprescon.packager.packages
 
-.. autoclass:: uiucprescon.packager.packages.HathiTiff
-    :members:
 
-.. autoclass:: uiucprescon.packager.packages.DigitalLibraryCompound
-    :members:
+Supported Package Types
+_______________________
+
+.. autosummary::
+
+    CaptureOnePackage
+    DigitalLibraryCompound
+    HathiTiff
+    HathiJp2

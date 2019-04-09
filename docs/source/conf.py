@@ -46,6 +46,7 @@ sys.path.insert(0, project_root )
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',

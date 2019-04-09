@@ -10,6 +10,8 @@ from uiucprescon.packager import transformations
 
 
 class HathiJp2(AbsPackageBuilder):
+    """Packaged files for submitting to HathiTrust containing only JPEG 2000
+    files"""
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiJp2Builder()
         batch = builder.build_batch(batch_path)

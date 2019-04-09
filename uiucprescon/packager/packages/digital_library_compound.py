@@ -16,6 +16,8 @@ from uiucprescon.packager import transformations
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
+    """Packaged files for submitting to UIUC Digital library with the compound
+    object profile"""
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
         builder = collection_builder.DigitalLibraryCompoundBuilder()

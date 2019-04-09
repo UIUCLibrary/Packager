@@ -5,6 +5,7 @@ from .collection import Package
 
 
 class AbsPackageBuilder(metaclass=abc.ABCMeta):
+    """Base class for working with file packages"""
 
     log_level = logging.INFO
 
