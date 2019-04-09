@@ -15,7 +15,6 @@ class HathiJp2(AbsPackageBuilder):
     def locate_packages(self, batch_path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiJp2Builder()
         batch = builder.build_batch(batch_path)
-        # batch = collection_builder.build_hathi_jp2_batch(batch_path)
         for package in batch:
             yield package
 
