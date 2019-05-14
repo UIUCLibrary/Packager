@@ -179,120 +179,125 @@ pipeline {
             environment {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
             }
-            parallel {
-                stage("Run Pytest Unit Tests"){
-                    when {
-                       equals expected: true, actual: params.TEST_UNIT_TESTS
-                    }
-                    environment{
-                        junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                    }
-                    steps{
-                         dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
-//                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
-                        }
-                    }
-                    post {
-                        always {
-//                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
-                            junit "reports/pytest/${env.junit_filename}"
-                        }
-                    }
-                }
-                stage("Run Doctest Tests"){
-                    when {
-                       equals expected: true, actual: params.TEST_DOCTEST
-                    }
-                    steps {
-                        dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
-                        }
-                    }
-                    post{
-                        always {
-                            archiveArtifacts artifacts: 'reports/doctest/output.txt'
-                            archiveArtifacts artifacts: 'logs/doctest.log'
-                            recordIssues(tools: [sphinxBuild(name: 'Sphinx Doctest', pattern: 'logs/doctest.log', id: 'doctest')])
-                        }
+            stages{
+                stage("Running Tests"){
 
-                    }
-                }
-                stage("Run MyPy Static Analysis") {
-                    when {
-                        equals expected: true, actual: params.TEST_RUN_MYPY
-                    }
-                    steps{
-                        script{
-                            try{
-                                dir("source"){
-                                    powershell "& ${WORKSPACE}\\venv\\Scripts\\mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
+                    parallel {
+                        stage("Run PyTest Unit Tests"){
+                            when {
+                               equals expected: true, actual: params.TEST_UNIT_TESTS
+                            }
+                            environment{
+                                junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+                            }
+                            steps{
+                                 dir("source"){
+                                    bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
+        //                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                                 }
-                            } catch (exc) {
-                                echo "MyPy found some warnings"
-                            }      
-                        }
-                    }
-                    post {
-                        always {
-                        recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
-//                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
-                        }
-                    }
-                }
-                stage("Run Tox test") {
-                    when{
-                        equals expected: true, actual: params.TEST_RUN_TOX
-                    }
-                    steps {
-                        dir("source"){
-                            bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
-                        }
-                        
-                    }
-                }
-                stage("Run Flake8 Static Analysis") {
-                    when {
-                        equals expected: true, actual: params.TEST_RUN_FLAKE8
-                    }
-                    steps{
-                        script{
-                            bat "pip install flake8"
-                            try{
-                                dir("source"){
-                                    bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
+                            }
+                            post {
+                                always {
+        //                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                                    junit "reports/pytest/${env.junit_filename}"
                                 }
-                            } catch (exc) {
-                                echo "flake8 found some warnings"
+                            }
+                        }
+                        stage("Run Doctest Tests"){
+                            when {
+                               equals expected: true, actual: params.TEST_DOCTEST
+                            }
+                            steps {
+                                dir("source"){
+                                    bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
+                                }
+                            }
+                            post{
+                                always {
+                                    archiveArtifacts artifacts: 'reports/doctest/output.txt'
+                                    archiveArtifacts artifacts: 'logs/doctest.log'
+                                    recordIssues(tools: [sphinxBuild(name: 'Sphinx Doctest', pattern: 'logs/doctest.log', id: 'doctest')])
+                                }
+
+                            }
+                        }
+                        stage("Run MyPy Static Analysis") {
+                            when {
+                                equals expected: true, actual: params.TEST_RUN_MYPY
+                            }
+                            steps{
+                                script{
+                                    try{
+                                        dir("source"){
+                                            powershell "& ${WORKSPACE}\\venv\\Scripts\\mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
+                                        }
+                                    } catch (exc) {
+                                        echo "MyPy found some warnings"
+                                    }
+                                }
+                            }
+                            post {
+                                always {
+                                recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
+        //                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
+                                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
+                                }
+                            }
+                        }
+                        stage("Run Tox test") {
+                            when{
+                                equals expected: true, actual: params.TEST_RUN_TOX
+                            }
+                            steps {
+                                dir("source"){
+                                    bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
+                                }
+
+                            }
+                        }
+                        stage("Run Flake8 Static Analysis") {
+                            when {
+                                equals expected: true, actual: params.TEST_RUN_FLAKE8
+                            }
+                            steps{
+                                script{
+                                    bat "pip install flake8"
+                                    try{
+                                        dir("source"){
+                                            bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
+                                        }
+                                    } catch (exc) {
+                                        echo "flake8 found some warnings"
+                                    }
+                                }
+                            }
+                            post {
+                                always {
+                                    recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
+                                }
                             }
                         }
                     }
-                    post {
-                        always {
-                            recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
+                    post{
+                        always{
+                            dir("source"){
+                                bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
+
+                            }
+                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                            publishCoverage adapters: [
+                                            coberturaAdapter('reports/coverage.xml')
+                                            ],
+                                        sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
+                        }
+                        cleanup{
+                            cleanWs(patterns: [
+                                    [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
+                                    [pattern: 'reports/coverage', type: 'INCLUDE'],
+                                    [pattern: 'source/.coverage', type: 'INCLUDE']
+                                ])
                         }
                     }
-                }
-            }
-            post{
-                always{
-                    dir("source"){
-                        bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
-
-                    }
-                    publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
-                    publishCoverage adapters: [
-                                    coberturaAdapter('reports/coverage.xml')
-                                    ],
-                                sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
-                }
-                cleanup{
-                    cleanWs(patterns: [
-                            [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
-                            [pattern: 'reports/coverage', type: 'INCLUDE'],
-                            [pattern: 'source/.coverage', type: 'INCLUDE']
-                        ])
                 }
             }
         }
