@@ -92,7 +92,7 @@ pipeline {
                             }
                         }
 //                        pykdu-compress is an optional install, include it to help the testing
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt -r source\\requirements-dev.txt'
+                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt'
 
                     }
                     post{
@@ -182,7 +182,7 @@ pipeline {
             stages{
                 stage("Installing Testing Packages"){
                     steps{
-                        bat 'pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage --quiet'
+                        bat 'pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage -r source\\requirements-dev.txt'
                     }
                 }
                 stage("Running Tests"){
