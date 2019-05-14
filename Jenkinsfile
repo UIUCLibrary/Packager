@@ -92,7 +92,7 @@ pipeline {
                             }
                         }
 //                        pykdu-compress is an optional install, include it to help the testing
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt'
+                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt sphinx'
 
                     }
                     post{
