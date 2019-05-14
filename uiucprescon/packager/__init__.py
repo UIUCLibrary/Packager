@@ -1,3 +1,12 @@
+"""Converting package types
+
+Changes:
+++++++++
+
+    ..  versionchanged:: 0.2.11
+        uiucprescon-packager name changed to uiucprescon.packager
+
+"""
 from .package import PackageFactory
 from . import transformations
 from . import packages
