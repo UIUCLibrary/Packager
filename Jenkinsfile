@@ -180,8 +180,12 @@ pipeline {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
             }
             stages{
+                stage("Installing Testing Packages"){
+                    steps{
+                        bat 'pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage --quiet'
+                    }
+                }
                 stage("Running Tests"){
-
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             when {
