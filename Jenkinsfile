@@ -38,10 +38,6 @@ pipeline {
 
     parameters {
         booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
-        booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
-        booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
-        booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
-        booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
@@ -178,25 +174,28 @@ pipeline {
         stage("Test") {
             environment {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+                junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
             }
             stages{
-                stage("Installing Testing Packages"){
+                stage("Configuring Testing Environment"){
                     steps{
-                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage'
+                        bat(
+                            label: "Installing Testing Packages",
+                            script: 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
+                            )
+
+                        bat(
+                            label: "Creating a reports directory",
+                            script: "if not exist reports mkdir reports"
+                        )
                     }
                 }
                 stage("Running Tests"){
                     parallel {
                         stage("Run PyTest Unit Tests"){
-                            when {
-                               equals expected: true, actual: params.TEST_UNIT_TESTS
-                            }
-                            environment{
-                                junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            }
                             steps{
                                  dir("source"){
-                                    bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
+                                    bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
         //                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                                 }
                             }
@@ -208,12 +207,9 @@ pipeline {
                             }
                         }
                         stage("Run Doctest Tests"){
-                            when {
-                               equals expected: true, actual: params.TEST_DOCTEST
-                            }
                             steps {
                                 dir("source"){
-                                    bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
+                                    bat "sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
                                 }
                             }
                             post{
@@ -226,14 +222,11 @@ pipeline {
                             }
                         }
                         stage("Run MyPy Static Analysis") {
-                            when {
-                                equals expected: true, actual: params.TEST_RUN_MYPY
-                            }
                             steps{
                                 script{
                                     try{
                                         dir("source"){
-                                            powershell "& ${WORKSPACE}\\venv\\Scripts\\mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
+                                            powershell "& mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
                                         }
                                     } catch (exc) {
                                         echo "MyPy found some warnings"
@@ -242,7 +235,7 @@ pipeline {
                             }
                             post {
                                 always {
-                                recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
+                                    recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
         //                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
                                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
                                 }
@@ -259,13 +252,27 @@ pipeline {
 
                             }
                         }
-                        stage("Run Flake8 Static Analysis") {
-                            when {
-                                equals expected: true, actual: params.TEST_RUN_FLAKE8
+                        stage("Run Bandit Static Analysis") {
+                            steps{
+                                dir("source"){
+                                    catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
+                                        bat(
+                                            label: "Running bandit",
+                                            script: "bandit --format json --output ${WORKSPACE}/reports/bandit-report.json --recursive ${WORKSPACE}\\source\\uiucprescon"
+                                            )
+                                    }
+
+                                }
                             }
+                            post {
+                                always {
+                                    archiveArtifacts "reports/bandit-report.json"
+                                }
+                            }
+                        }
+                        stage("Run Flake8 Static Analysis") {
                             steps{
                                 script{
-                                    bat "pip install flake8"
                                     try{
                                         dir("source"){
                                             bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
@@ -294,14 +301,61 @@ pipeline {
                                             ],
                                         sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
                         }
-                        cleanup{
-                            cleanWs(patterns: [
-                                    [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
-                                    [pattern: 'reports/coverage', type: 'INCLUDE'],
-                                    [pattern: 'source/.coverage', type: 'INCLUDE']
-                                ])
+
+                    }
+                }
+                stage("Run SonarQube Analysis"){
+                    when{
+                        equals expected: "master", actual: env.BRANCH_NAME
+                    }
+                    options{
+                        timeout(5)
+                    }
+                    environment{
+                        scannerHome = tool name: 'sonar-scanner-3.3.0', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                    }
+                    steps{
+                        withSonarQubeEnv(installationName: "sonarqube.library.illinois.edu") {
+                            bat(
+                                label: "Running sonar scanner",
+                                script: '\
+"%scannerHome%/bin/sonar-scanner" \
+-D"sonar.projectVersion=%PKG_VERSION%" \
+-D"sonar.projectBaseDir=%WORKSPACE%/source" \
+-D"sonar.buildString=%BUILD_TAG%" \
+-D"sonar.scm.provider=git" \
+-D"sonar.python.bandit.reportPaths=%WORKSPACE%\\reports\\bandit-report.json" \
+-D"sonar.python.coverage.reportPaths=%WORKSPACE%/reports/coverage.xml" \
+-D"sonar.python.xunit.reportPath=%WORKSPACE%/reports/pytest/%junit_filename%" \
+-D"sonar.working.directory=%WORKSPACE%\\.scannerwork" \
+-X'
+                            )
+
+                        }
+                        script{
+                            def sonarqube_result = waitForQualityGate(abortPipeline: false)
+                            if (sonarqube_result.status != 'OK') {
+                                unstable "SonarQube quality gate: ${sonarqube_result.status}"
+                            }
                         }
                     }
+                    post{
+                        always{
+                            archiveArtifacts(
+                                allowEmptyArchive: true,
+                                artifacts: ".scannerwork/report-task.txt"
+                            )
+                        }
+                    }
+                }
+            }
+            post{
+                cleanup{
+                    cleanWs(patterns: [
+                            [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
+                            [pattern: 'reports/coverage', type: 'INCLUDE'],
+                            [pattern: 'source/.coverage', type: 'INCLUDE']
+                        ])
                 }
             }
         }
