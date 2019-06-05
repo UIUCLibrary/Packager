@@ -38,10 +38,6 @@ pipeline {
 
     parameters {
         booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
-        booleanParam(name: "TEST_UNIT_TESTS", defaultValue: true, description: "Run automated unit tests")
-        booleanParam(name: "TEST_RUN_MYPY", defaultValue: true, description: "Run MyPy Tests")
-        booleanParam(name: "TEST_RUN_FLAKE8", defaultValue: true, description: "Run Flake8 Tests")
-        booleanParam(name: "TEST_DOCTEST", defaultValue: true, description: "Run Doctest on the documentation")
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
@@ -188,9 +184,6 @@ pipeline {
                 stage("Running Tests"){
                     parallel {
                         stage("Run PyTest Unit Tests"){
-                            when {
-                               equals expected: true, actual: params.TEST_UNIT_TESTS
-                            }
                             environment{
                                 junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
                             }
@@ -208,9 +201,6 @@ pipeline {
                             }
                         }
                         stage("Run Doctest Tests"){
-                            when {
-                               equals expected: true, actual: params.TEST_DOCTEST
-                            }
                             steps {
                                 dir("source"){
                                     bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
@@ -226,9 +216,6 @@ pipeline {
                             }
                         }
                         stage("Run MyPy Static Analysis") {
-                            when {
-                                equals expected: true, actual: params.TEST_RUN_MYPY
-                            }
                             steps{
                                 script{
                                     try{
@@ -260,9 +247,6 @@ pipeline {
                             }
                         }
                         stage("Run Flake8 Static Analysis") {
-                            when {
-                                equals expected: true, actual: params.TEST_RUN_FLAKE8
-                            }
                             steps{
                                 script{
                                     bat "pip install flake8"
@@ -294,14 +278,17 @@ pipeline {
                                             ],
                                         sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
                         }
-                        cleanup{
-                            cleanWs(patterns: [
-                                    [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
-                                    [pattern: 'reports/coverage', type: 'INCLUDE'],
-                                    [pattern: 'source/.coverage', type: 'INCLUDE']
-                                ])
-                        }
+
                     }
+                }
+            }
+            post{
+                cleanup{
+                    cleanWs(patterns: [
+                            [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
+                            [pattern: 'reports/coverage', type: 'INCLUDE'],
+                            [pattern: 'source/.coverage', type: 'INCLUDE']
+                        ])
                 }
             }
         }
