@@ -177,9 +177,17 @@ pipeline {
                 junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
             }
             stages{
-                stage("Installing Testing Packages"){
+                stage("Configuring Testing Environment"){
                     steps{
-                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
+                        bat(
+                            label: "Installing Testing Packages",
+                            script: 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
+                            )
+
+                        bat(
+                            label: "Creating a reports directory",
+                            script: "if not exist reports mkdir reports"
+                        )
                     }
                 }
                 stage("Running Tests"){
