@@ -324,6 +324,7 @@ pipeline {
 -D"sonar.projectBaseDir=%WORKSPACE%/source" \
 -D"sonar.buildString=%BUILD_TAG%" \
 -D"sonar.scm.provider=git" \
+-D"sonar.python.bandit.reportPaths=%WORKSPACE%\\reports\\bandit-report.json" \
 -D"sonar.python.coverage.reportPaths=%WORKSPACE%/reports/coverage.xml" \
 -D"sonar.python.xunit.reportPath=%WORKSPACE%/reports/pytest/%junit_filename%" \
 -D"sonar.working.directory=%WORKSPACE%\\.scannerwork" \
