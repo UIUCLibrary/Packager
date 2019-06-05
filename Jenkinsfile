@@ -281,6 +281,49 @@ pipeline {
 
                     }
                 }
+                stage("Run Sonarqube Analysis"){
+//                    when{
+//                        equals expected: "master", actual: env.BRANCH_NAME
+//                    }
+                    options{
+                        timeout(5)
+                    }
+                    environment{
+                        scannerHome = tool name: 'sonar-scanner-3.3.0', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                    }
+                    steps{
+                        withSonarQubeEnv(installationName: "sonarqube.library.illinois.edu") {
+                            bat(
+                                label: "Running sonar scanner",
+                                script: '\
+"%scannerHome%/bin/sonar-scanner" \
+-D"sonar.projectVersion=%PKG_VERSION%" \
+-D"sonar.projectBaseDir=%WORKSPACE%/source" \
+-D"sonar.buildString=%BUILD_TAG%" \
+-D"sonar.scm.provider=git" \
+-D"sonar.python.coverage.reportPaths=%WORKSPACE%/reports/coverage.xml" \
+-D"sonar.python.xunit.reportPath=%WORKSPACE%/reports/pytest/%junit_filename%" \
+-D"sonar.working.directory=%WORKSPACE%\\.scannerwork" \
+-X'
+                            )
+
+                        }
+                        script{
+                            def sonarqube_result = waitForQualityGate(abortPipeline: false)
+                            if (sonarqube_result.status != 'OK') {
+                                unstable "SonarQube quality gate: ${sonarqube_result.status}"
+                            }
+                        }
+                    }
+                    post{
+                        always{
+                            archiveArtifacts(
+                                allowEmptyArchive: true,
+                                artifacts: ".scannerwork/report-task.txt"
+                            )
+                        }
+                    }
+                }
             }
             post{
                 cleanup{
