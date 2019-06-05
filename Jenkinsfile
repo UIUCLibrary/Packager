@@ -304,10 +304,10 @@ pipeline {
 
                     }
                 }
-                stage("Run Sonarqube Analysis"){
-//                    when{
-//                        equals expected: "master", actual: env.BRANCH_NAME
-//                    }
+                stage("Run SonarQube Analysis"){
+                    when{
+                        equals expected: "master", actual: env.BRANCH_NAME
+                    }
                     options{
                         timeout(5)
                     }
