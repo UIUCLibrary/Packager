@@ -179,7 +179,7 @@ pipeline {
             stages{
                 stage("Installing Testing Packages"){
                     steps{
-                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint'
+                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
                     }
                 }
                 stage("Running Tests"){
@@ -187,7 +187,7 @@ pipeline {
                         stage("Run PyTest Unit Tests"){
                             steps{
                                  dir("source"){
-                                    bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
+                                    bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
         //                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
                                 }
                             }
@@ -201,7 +201,7 @@ pipeline {
                         stage("Run Doctest Tests"){
                             steps {
                                 dir("source"){
-                                    bat "${WORKSPACE}\\venv\\Scripts\\sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
+                                    bat "sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
                                 }
                             }
                             post{
@@ -218,7 +218,7 @@ pipeline {
                                 script{
                                     try{
                                         dir("source"){
-                                            powershell "& ${WORKSPACE}\\venv\\Scripts\\mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
+                                            powershell "& mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
                                         }
                                     } catch (exc) {
                                         echo "MyPy found some warnings"
@@ -227,7 +227,7 @@ pipeline {
                             }
                             post {
                                 always {
-                                recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
+                                    recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
         //                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
                                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
                                 }
@@ -244,10 +244,27 @@ pipeline {
 
                             }
                         }
+                        stage("Run Bandit Static Analysis") {
+                            steps{
+                                dir("source"){
+                                    catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
+                                        bat(
+                                            label: "Running bandit",
+                                            script: "bandit --format json --output ${WORKSPACE}/reports/bandit-report.json --recursive ${WORKSPACE}\\source\\uiucprescon"
+                                            )
+                                    }
+
+                                }
+                            }
+                            post {
+                                always {
+                                    archiveArtifacts "reports/bandit-report.json"
+                                }
+                            }
+                        }
                         stage("Run Flake8 Static Analysis") {
                             steps{
                                 script{
-                                    bat "pip install flake8"
                                     try{
                                         dir("source"){
                                             bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
