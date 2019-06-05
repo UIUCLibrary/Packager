@@ -174,6 +174,7 @@ pipeline {
         stage("Test") {
             environment {
                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+                junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
             }
             stages{
                 stage("Installing Testing Packages"){
@@ -184,9 +185,6 @@ pipeline {
                 stage("Running Tests"){
                     parallel {
                         stage("Run PyTest Unit Tests"){
-                            environment{
-                                junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
-                            }
                             steps{
                                  dir("source"){
                                     bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
