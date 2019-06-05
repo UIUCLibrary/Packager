@@ -179,7 +179,7 @@ pipeline {
             stages{
                 stage("Installing Testing Packages"){
                     steps{
-                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage'
+                        bat 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint'
                     }
                 }
                 stage("Running Tests"){
