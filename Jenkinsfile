@@ -1,6 +1,15 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
 
+def get_sonarqube_unresolved_issues(report_task_file){
+    script{
+
+        def props = readProperties  file: '.scannerwork/report-task.txt'
+        def response = httpRequest url : props['serverUrl'] + "/api/issues/search?componentKeys=" + props['projectKey'] + "&resolved=no"
+        def outstandingIssues = readJSON text: response.content
+        return outstandingIssues
+    }
+}
 
 def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
     script {
@@ -337,6 +346,8 @@ pipeline {
                             if (sonarqube_result.status != 'OK') {
                                 unstable "SonarQube quality gate: ${sonarqube_result.status}"
                             }
+                            def outstandingIssues = get_sonarqube_unresolved_issues(".scannerwork/report-task.txt")
+                            writeJSON file: 'reports/sonar-report.json', json: outstandingIssues
                         }
                     }
                     post{
