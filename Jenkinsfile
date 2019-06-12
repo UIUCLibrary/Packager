@@ -356,9 +356,9 @@ pipeline {
                                 allowEmptyArchive: true,
                                 artifacts: ".scannerwork/report-task.txt"
                             )
+                            archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
+                            recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
                         }
-                        archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
-                        recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
                     }
                 }
             }
