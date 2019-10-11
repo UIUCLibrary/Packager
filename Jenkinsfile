@@ -357,7 +357,12 @@ pipeline {
                                 artifacts: ".scannerwork/report-task.txt"
                             )
                             archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
-                            recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
+                            stash includes: "reports/sonar-report.json", name: 'SONAR_REPORT'
+                            node('Windows'){
+                                checkout scm
+                                unstash "SONAR_REPORT"
+                                recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
+                            }
                         }
                     }
                 }
