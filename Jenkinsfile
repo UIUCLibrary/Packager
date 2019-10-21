@@ -106,7 +106,7 @@ pipeline {
                 }
                 stage("Getting Distribution Info"){
                     environment{
-                        PATH = "${tool 'CPython-3.7'};${tool 'cmake3.13'};$PATH"
+                        PATH = "${tool 'CPython-3.7'};$PATH"
                     }
                     steps{
                         dir("source"){
@@ -521,8 +521,7 @@ pipeline {
                                         timeout(20)
                                     }
                                     environment {
-                                        PATH = "${tool 'cmake3.12'};${WORKSPACE}\\venv\\Scripts;$PATH"
-                                        CL = "/MP"
+                                        PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
                                     }
                                     steps {
                                         devpiTest(
