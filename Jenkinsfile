@@ -24,6 +24,31 @@ def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUse
     }
 }
 
+
+
+
+def get_package_version(stashName, metadataFile){
+    ws {
+        unstash "${stashName}"
+        script{
+            def props = readProperties interpolate: true, file: "${metadataFile}"
+            deleteDir()
+            return props.Version
+        }
+    }
+}
+
+def get_package_name(stashName, metadataFile){
+    ws {
+        unstash "${stashName}"
+        script{
+            def props = readProperties interpolate: true, file: "${metadataFile}"
+            deleteDir()
+            return props.Name
+        }
+    }
+}
+
 pipeline {
     agent {
         label "Windows && Python3 && !Docker" // Something fishy is happening when run on Docker node
@@ -39,10 +64,7 @@ pipeline {
     }
     environment {
         PATH = "${tool 'CPython-3.6'};${tool 'CPython-3.7'};$PATH"
-        PKG_NAME = pythonPackageName(toolName: "CPython-3.6")
-        PKG_VERSION = pythonPackageVersion(toolName: "CPython-3.6")
-        DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
-        DEVPI = credentials("DS_devpi")
+
     }
 
     parameters {
@@ -82,6 +104,24 @@ pipeline {
                     }
 
                 }
+                stage("Getting Distribution Info"){
+                    environment{
+                        PATH = "${tool 'CPython-3.7'};$PATH"
+                    }
+                    steps{
+                        dir("source"){
+                            bat "python setup.py dist_info"
+                        }
+                    }
+                    post{
+                        success{
+                            dir("source"){
+                                stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
+                                archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
+                            }
+                        }
+                    }
+                }
             
                 stage("Creating Virtualenv for Building"){
                     steps {
@@ -110,9 +150,6 @@ pipeline {
             }
                 
             post{
-                success{
-                    echo "Configured ${env.PKG_NAME}, version ${env.PKG_VERSION}, for testing."
-                }
                 failure {
                     deleteDir()
                 }
@@ -144,6 +181,8 @@ pipeline {
                 stage("Sphinx Documentation"){
                     environment {
                         PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+                        PKG_NAME = get_package_name("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
+                        PKG_VERSION = get_package_version("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
                     }
                     steps {
                         echo "Building docs on ${env.NODE_NAME}"
@@ -157,8 +196,9 @@ pipeline {
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                             script{
-                                zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${env.DOC_ZIP_FILENAME}"
-                                stash includes: "dist/${env.DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
+                                def DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
+                                zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
+                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
                             }
                         }
                         failure{
@@ -172,7 +212,7 @@ pipeline {
                                 deleteDirs: true,
                                 patterns: [
                                     [pattern: 'build/docs', type: 'INCLUDE'],
-                                    [pattern: "dist/${env.DOC_ZIP_FILENAME}", type: 'INCLUDE'],
+                                    [pattern: "dist/*.doc.zip", type: 'INCLUDE'],
                                     ]
                                 )
                         }
@@ -322,6 +362,8 @@ pipeline {
                     }
                     environment{
                         scannerHome = tool name: 'sonar-scanner-3.3.0', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                        PKG_NAME = get_package_name("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
+                        PKG_VERSION = get_package_version("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
                     }
                     steps{
                         withSonarQubeEnv(installationName: "sonarqube.library.illinois.edu") {
@@ -421,6 +463,9 @@ pipeline {
             }
             environment{
                 PATH = "${WORKSPACE}\\venv\\Scripts;${tool 'CPython-3.6'};${tool 'CPython-3.6'}\\Scripts;${PATH}"
+                PKG_NAME = get_package_name("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
+                PKG_VERSION = get_package_version("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
+                DEVPI = credentials("DS_devpi")
             }
             stages{
                 stage("Install DevPi Client"){
@@ -476,8 +521,7 @@ pipeline {
                                         timeout(20)
                                     }
                                     environment {
-                                        PATH = "${tool 'cmake3.12'};${WORKSPACE}\\venv\\Scripts;$PATH"
-                                        CL = "/MP"
+                                        PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
                                     }
                                     steps {
                                         devpiTest(
