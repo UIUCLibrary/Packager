@@ -59,7 +59,6 @@ pipeline {
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
         timeout(60)
-        checkoutToSubdirectory("source")
         preserveStashes()
     }
     environment {
@@ -84,9 +83,7 @@ pipeline {
                     }
                     steps{
                         deleteDir()
-                        dir("source"){
-                            checkout scm
-                        }
+                        checkout scm
                     }
                 }
                 stage("Installing Required System Level Dependencies"){
@@ -109,16 +106,12 @@ pipeline {
                         PATH = "${tool 'CPython-3.7'};$PATH"
                     }
                     steps{
-                        dir("source"){
-                            bat "python setup.py dist_info"
-                        }
+                        bat "python setup.py dist_info"
                     }
                     post{
                         success{
-                            dir("source"){
-                                stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-                                archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-                            }
+                            stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
+                            archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
                         }
                     }
                 }
@@ -137,7 +130,7 @@ pipeline {
                             }
                         }
 //                        pykdu-compress is an optional install, include it to help the testing
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r source\\requirements.txt sphinx'
+                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r requirements.txt sphinx'
 
                     }
                     post{
@@ -161,9 +154,7 @@ pipeline {
             parallel {
                 stage("Python Package"){
                     steps {
-                            dir("source"){
-                                powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
-                            }
+                        powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
                     }
                     post{
                         always{
@@ -186,7 +177,7 @@ pipeline {
                     }
                     steps {
                         echo "Building docs on ${env.NODE_NAME}"
-                        bat "sphinx-build source/docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
+                        bat "sphinx-build docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
                     }
                     post{
                         always {
@@ -230,7 +221,7 @@ pipeline {
                     steps{
                         bat(
                             label: "Installing Testing Packages",
-                            script: 'pip install -r source\\requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
+                            script: 'pip install -r requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
                             )
 
                         bat(
@@ -243,10 +234,7 @@ pipeline {
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             steps{
-                                 dir("source"){
-                                    bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
-        //                            bat "${WORKSPACE}\\venv\\Scripts\\coverage run --parallel-mode --source python.exe -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest --cov-report html:${WORKSPACE}/reports/pytestcoverage/  --cov-report xml:${WORKSPACE}/reports/coverage.xml --cov=uiucprescon --cov-config=${WORKSPACE}/source/setup.cfg"
-                                }
+                                bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
                             }
                             post {
                                 always {
@@ -257,9 +245,7 @@ pipeline {
                         }
                         stage("Run Doctest Tests"){
                             steps {
-                                dir("source"){
-                                    bat "sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
-                                }
+                                bat "sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
                             }
                             post{
                                 always {
@@ -274,9 +260,7 @@ pipeline {
                             steps{
                                 script{
                                     try{
-                                        dir("source"){
-                                            powershell "& mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
-                                        }
+                                        powershell "& mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
                                     } catch (exc) {
                                         echo "MyPy found some warnings"
                                     }
@@ -295,22 +279,17 @@ pipeline {
                                 equals expected: true, actual: params.TEST_RUN_TOX
                             }
                             steps {
-                                dir("source"){
-                                    bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
-                                }
+                                bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
 
                             }
                         }
                         stage("Run Bandit Static Analysis") {
                             steps{
-                                dir("source"){
-                                    catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
-                                        bat(
-                                            label: "Running bandit",
-                                            script: "bandit --format json --output ${WORKSPACE}/reports/bandit-report.json --recursive ${WORKSPACE}\\source\\uiucprescon"
-                                            )
-                                    }
-
+                                catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
+                                    bat(
+                                        label: "Running bandit",
+                                        script: "bandit --format json --output ${WORKSPACE}/reports/bandit-report.json --recursive uiucprescon"
+                                    )
                                 }
                             }
                             post {
@@ -323,9 +302,7 @@ pipeline {
                             steps{
                                 script{
                                     try{
-                                        dir("source"){
-                                            bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
-                                        }
+                                        bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
                                     } catch (exc) {
                                         echo "flake8 found some warnings"
                                     }
@@ -340,10 +317,7 @@ pipeline {
                     }
                     post{
                         always{
-                            dir("source"){
-                                bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
-
-                            }
+                            bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
                             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
@@ -372,7 +346,7 @@ pipeline {
                                 script: '\
 "%scannerHome%/bin/sonar-scanner" \
 -D"sonar.projectVersion=%PKG_VERSION%" \
--D"sonar.projectBaseDir=%WORKSPACE%/source" \
+-D"sonar.projectBaseDir=%WORKSPACE%" \
 -D"sonar.buildString=%BUILD_TAG%" \
 -D"sonar.scm.provider=git" \
 -D"sonar.python.bandit.reportPaths=%WORKSPACE%\\reports\\bandit-report.json" \
@@ -414,7 +388,6 @@ pipeline {
                     cleanWs(patterns: [
                             [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
                             [pattern: 'reports/coverage', type: 'INCLUDE'],
-                            [pattern: 'source/.coverage', type: 'INCLUDE']
                         ])
                 }
             }
@@ -423,9 +396,7 @@ pipeline {
         stage("Package") {
 
             steps {
-                dir("source"){
-                    bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py bdist_wheel -d ${WORKSPACE}\\dist sdist --format zip -d ${WORKSPACE}\\dist"
-                }
+                bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py bdist_wheel -d ${WORKSPACE}\\dist sdist --format zip -d ${WORKSPACE}\\dist"
             }
             post {
               success {
@@ -696,9 +667,6 @@ pipeline {
                     }
                     steps{
                         unstash "docs"
-//                        dir("source"){
-//                            bat "venv\\Scripts\\sphinx-build.exe source/docs/source build/docs/html -d build/docs/.doctrees"
-//                        }
                         dir("build/docs/html/"){
                             input 'Update project documentation?'
                             sshPublisher(
@@ -751,7 +719,6 @@ pipeline {
                 patterns: [
                     [pattern: 'dist', type: 'INCLUDE'],
                     [pattern: 'build/docs', type: 'INCLUDE'],
-                    [pattern: 'source', type: 'INCLUDE'],
                     [pattern: 'reports', type: 'INCLUDE'],
                     [pattern: 'logs', type: 'INCLUDE'],
                     [pattern: 'certs', type: 'INCLUDE'],
