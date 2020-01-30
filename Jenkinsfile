@@ -50,21 +50,22 @@ def get_package_name(stashName, metadataFile){
 }
 
 pipeline {
-    agent {
-        label "Windows && Python3 && !Docker" // Something fishy is happening when run on Docker node
-    }
+    agent none
+//     agent {
+//         label "Windows && Python3 && !Docker" // Something fishy is happening when run on Docker node
+//     }
     triggers {
         cron('@daily')
     }
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
-        timeout(60)
-        preserveStashes()
+//         timeout(60)
+//         preserveStashes()
     }
-    environment {
-        PATH = "${tool 'CPython-3.6'};${tool 'CPython-3.7'};$PATH"
-
-    }
+//     environment {
+//         PATH = "${tool 'CPython-3.6'};${tool 'CPython-3.7'};$PATH"
+//
+//     }
 
     parameters {
         booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
