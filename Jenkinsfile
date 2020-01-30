@@ -300,7 +300,7 @@ pipeline {
                             steps{
                                 script{
                                     try{
-                                        powershell "& mypy.exe -p uiucprescon --html-report eports\\mypy\\html\\ | tee logs/mypy.log"
+                                        powershell "& mypy.exe -p uiucprescon --html-report reports\\mypy\\html\\ | tee logs/mypy.log"
                                     } catch (exc) {
                                         echo "MyPy found some warnings"
                                     }
@@ -364,6 +364,22 @@ pipeline {
                                             ],
                                         sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
                         }
+                        cleanup{
+                            cleanWs(
+                                deleteDirs: true,
+                                patterns: [
+                                    [pattern: "dist/", type: 'INCLUDE'],
+                                    [pattern: 'build/', type: 'INCLUDE'],
+                                    [pattern: '.pytest_cache/', type: 'INCLUDE'],
+                                    [pattern: '.mypy_cache/', type: 'INCLUDE'],
+                                    [pattern: '.tox/', type: 'INCLUDE'],
+                                    [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
+                                    [pattern: 'reports/', type: 'INCLUDE'],
+                                    [pattern: 'logs/', type: 'INCLUDE']
+                                    ]
+                            )
+                        }
+
 
                     }
                 }
