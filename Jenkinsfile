@@ -68,7 +68,6 @@ pipeline {
 //     }
 
     parameters {
-        booleanParam(name: "FRESH_WORKSPACE", defaultValue: false, description: "Purge workspace before staring and checking out source")
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
@@ -76,80 +75,108 @@ pipeline {
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
-        stage("Configure Environment") {
-            stages{
-                stage("Purge all existing data in workspace"){
-                    when{
-                        equals expected: true, actual: params.FRESH_WORKSPACE
-                    }
-                    steps{
-                        deleteDir()
-                        checkout scm
+        stage("Getting Distribution Info"){
+                agent {
+                    dockerfile {
+                        filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                        label "windows && docker"
                     }
                 }
-                stage("Installing Required System Level Dependencies"){
-                    steps{
-                        lock("system_python_${NODE_NAME}"){
-                            bat "python -m pip install pip --upgrade --quiet && python -m pip install --upgrade pipenv --quiet"
-                        }
-                    }
-                    post{
-                        always{
-                            bat "(if not exist logs mkdir logs) && python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
-                            archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
-                        }
-
-                    }
-
+                options{
+                    timeout(5)
                 }
-                stage("Getting Distribution Info"){
-                    environment{
-                        PATH = "${tool 'CPython-3.7'};$PATH"
-                    }
-                    steps{
-                        bat "python setup.py dist_info"
-                    }
-                    post{
-                        success{
-                            stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-                            archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-                        }
-                    }
+                steps{
+                    bat "python setup.py dist_info"
                 }
-            
-                stage("Creating Virtualenv for Building"){
-                    steps {
-                        bat "python -m venv venv"
-
-                        script {
-                            try {
-                                bat "venv\\Scripts\\python.exe -m pip install -U pip --quiet"
-                            }
-                            catch (exc) {
-                                bat "python -m venv venv"
-                                bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
-                            }
-                        }
-//                        pykdu-compress is an optional install, include it to help the testing
-                        bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r requirements.txt sphinx'
-
+                post{
+                    success{
+                        stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
+                        archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
                     }
-                    post{
-                        success{
-                            bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
-                            archiveArtifacts artifacts: "logs/pippackages_venv_${NODE_NAME}.log"
-                        }
+                    cleanup{
+                        cleanWs(
+                            deleteDirs: true,
+                            patterns: [
+                                [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
+                                ]
+                        )
                     }
                 }
             }
-                
-            post{
-                failure {
-                    deleteDir()
-                }
-
-            }
-        }
+//         stage("Configure Environment") {
+//             stages{
+//                 stage("Purge all existing data in workspace"){
+//                     when{
+//                         equals expected: true, actual: params.FRESH_WORKSPACE
+//                     }
+//                     steps{
+//                         deleteDir()
+//                         checkout scm
+//                     }
+//                 }
+//                 stage("Installing Required System Level Dependencies"){
+//                     steps{
+//                         lock("system_python_${NODE_NAME}"){
+//                             bat "python -m pip install pip --upgrade --quiet && python -m pip install --upgrade pipenv --quiet"
+//                         }
+//                     }
+//                     post{
+//                         always{
+//                             bat "(if not exist logs mkdir logs) && python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
+//                             archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
+//                         }
+//
+//                     }
+//
+//                 }
+//                 stage("Getting Distribution Info"){
+//                     environment{
+//                         PATH = "${tool 'CPython-3.7'};$PATH"
+//                     }
+//                     steps{
+//                         bat "python setup.py dist_info"
+//                     }
+//                     post{
+//                         success{
+//                             stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
+//                             archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
+//                         }
+//                     }
+//                 }
+//
+//                 stage("Creating Virtualenv for Building"){
+//                     steps {
+//                         bat "python -m venv venv"
+//
+//                         script {
+//                             try {
+//                                 bat "venv\\Scripts\\python.exe -m pip install -U pip --quiet"
+//                             }
+//                             catch (exc) {
+//                                 bat "python -m venv venv"
+//                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
+//                             }
+//                         }
+// //                        pykdu-compress is an optional install, include it to help the testing
+//                         bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r requirements.txt sphinx'
+//
+//                     }
+//                     post{
+//                         success{
+//                             bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
+//                             archiveArtifacts artifacts: "logs/pippackages_venv_${NODE_NAME}.log"
+//                         }
+//                     }
+//                 }
+//             }
+//
+//             post{
+//                 failure {
+//                     deleteDir()
+//                 }
+//
+//             }
+//         }
         stage('Build') {
 
             parallel {
