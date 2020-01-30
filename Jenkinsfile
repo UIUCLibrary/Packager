@@ -1,6 +1,38 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
 
+def CONFIGURATIONS = [
+    "3.6": [
+            package_testing: [
+                whl: [
+                    pkgRegex: "*.whl",
+                ],
+                sdist: [
+                    pkgRegex: "*.zip",
+                ]
+            ],
+            test_docker_image: "python:3.6-windowsservercore",
+            tox_env: "py36",
+            devpi_wheel_regex: "cp36"
+
+        ],
+    "3.7": [
+            package_testing: [
+                whl: [
+                    pkgRegex: "*.whl",
+                ],
+                sdist:[
+                    pkgRegex: "*.zip",
+                ]
+            ],
+            test_docker_image: "python:3.7",
+            tox_env: "py37",
+            devpi_wheel_regex: "cp37"
+        ]
+]
+
+
+
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
 
@@ -478,6 +510,69 @@ pipeline {
             }
 
         }
+        stage('Testing all Package') {
+            matrix{
+                agent none
+                axes{
+                    axis {
+                        name "PYTHON_VERSION"
+                        values(
+                            "3.6",
+                            "3.7"
+                        )
+                    }
+                    axis {
+                        name "PYTHON_PACKAGE_TYPE"
+                        values(
+                            "whl",
+                            "sdist"
+                        )
+                    }
+                }
+                stages{
+                    stage("Testing Package"){
+                        agent {
+                            dockerfile {
+                                filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                                label "windows && docker"
+                                additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
+                            }
+                        }
+                        options{
+                            timeout(15)
+                        }
+                        steps{
+                            unstash "dist"
+                            bat(
+                                label: "Checking Python version",
+                                script: "python --version"
+                            )
+                            script{
+                                findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
+                                    bat(
+                                        script: "tox --installpkg=${WORKSPACE}\\${it} -e py",
+                                        label: "Testing ${it}"
+                                    )
+                                }
+                            }
+                        }
+                        post{
+                            cleanup{
+                                cleanWs(
+                                    deleteDirs: true,
+                                    patterns: [
+                                        [pattern: 'dist/', type: 'INCLUDE'],
+                                        [pattern: 'build/', type: 'INCLUDE'],
+                                        [pattern: '.tox/', type: 'INCLUDE'],
+                                        ]
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+         }
+
         stage("Deploy to DevPi") {
             when {
                 allOf{
