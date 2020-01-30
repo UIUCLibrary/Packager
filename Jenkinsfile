@@ -726,8 +726,8 @@ pipeline {
             }
         }
     }
-    post {
-        cleanup {
+//     post {
+//         cleanup {
 //             script {
 //                if(fileExists('source/setup.py')){
 //                    dir("source"){
@@ -742,17 +742,17 @@ pipeline {
 //                    }
 //                }
 //            }
-            cleanWs(
-                deleteDirs: true,
-                patterns: [
-                    [pattern: 'dist', type: 'INCLUDE'],
-                    [pattern: 'build/docs', type: 'INCLUDE'],
-                    [pattern: 'reports', type: 'INCLUDE'],
-                    [pattern: 'logs', type: 'INCLUDE'],
-                    [pattern: 'certs', type: 'INCLUDE'],
-                    [pattern: '*tmp', type: 'INCLUDE'],
-                    ]
-                )
-        }
-    }
+//             cleanWs(
+//                 deleteDirs: true,
+//                 patterns: [
+//                     [pattern: 'dist', type: 'INCLUDE'],
+//                     [pattern: 'build/docs', type: 'INCLUDE'],
+//                     [pattern: 'reports', type: 'INCLUDE'],
+//                     [pattern: 'logs', type: 'INCLUDE'],
+//                     [pattern: 'certs', type: 'INCLUDE'],
+//                     [pattern: '*tmp', type: 'INCLUDE'],
+//                     ]
+//                 )
+//         }
+//     }
 }
