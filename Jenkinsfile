@@ -450,24 +450,31 @@ pipeline {
         }
 
         stage("Package") {
+            agent {
+                dockerfile {
+                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                    label "windows && docker"
+                }
+            }
 
             steps {
-                bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py bdist_wheel -d ${WORKSPACE}\\dist sdist --format zip -d ${WORKSPACE}\\dist"
+                bat "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
             }
             post {
-              success {
-                  stash includes: 'dist/*.*', name: "dist"
-                  archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
-              }
-              cleanup{
-                  cleanWs(
-                    patterns: [
-                        [pattern: 'dist/*.whl', type: 'INCLUDE'],
-                        [pattern: 'dist/*.tar.gz', type: 'INCLUDE'],
-                        [pattern: 'dist/*.zip', type: 'INCLUDE']
-                    ]
+                success {
+                    stash includes: 'dist/*.*', name: "dist"
+                    archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
+                }
+                cleanup{
+                    cleanWs(
+                        deleteDirs: true,
+                        patterns: [
+                            [pattern: 'dist/', type: 'INCLUDE'],
+                            [pattern: 'build/', type: 'INCLUDE'],
+                            [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
+                        ]
                     )
-              }
+                }
             }
 
         }
