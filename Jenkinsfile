@@ -181,31 +181,40 @@ pipeline {
 
             parallel {
                 stage("Python Package"){
+                    agent {
+                        dockerfile {
+                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                            label "windows && docker"
+                        }
+                    }
                     steps {
-                        powershell "& ${WORKSPACE}\\venv\\Scripts\\python.exe setup.py build --build-lib ../build/lib --build-temp ../build/temp | tee ${WORKSPACE}\\logs\\build.log"
+                        bat "python setup.py build --build-lib build/lib --build-temp build/temp"
                     }
                     post{
-                        always{
-                            recordIssues(tools: [
-                                    pyLint(name: 'Setuptools Build: PyLint', pattern: 'logs/build.log'),
-                                ]
+                        cleanup{
+                            cleanWs(
+                                deleteDirs: true,
+                                patterns: [
+                                    [pattern: 'build/', type: 'INCLUDE'],
+                                    [pattern: "dist/", type: 'INCLUDE'],
+                                    ]
                             )
-                            archiveArtifacts artifacts: 'logs/build.log'
-                        }
-                        success{
-                            stash includes: 'build/lib/**', name: "${NODE_NAME}_build"
                         }
                     }
                 }
                 stage("Sphinx Documentation"){
-                    environment {
-                        PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
-                        PKG_NAME = get_package_name("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
-                        PKG_VERSION = get_package_version("DIST-INFO", "uiucprescon.packager.dist-info/METADATA")
+                    agent {
+                        dockerfile {
+                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                            label "windows && docker"
+                        }
                     }
                     steps {
-                        echo "Building docs on ${env.NODE_NAME}"
-                        bat "sphinx-build docs/source build/docs/html -d build/docs/.doctrees -v -w ${WORKSPACE}\\logs\\build_sphinx.log"
+                        bat "if not exist logs mkdir logs"
+                        bat(
+                            label: "Building docs on ${env.NODE_NAME}",
+                            script: "python -m sphinx docs/source build/docs/html -d build/docs/.doctrees -v -w logs\\build_sphinx.log"
+                        )
                     }
                     post{
                         always {
@@ -214,24 +223,21 @@ pipeline {
                         }
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
+                            unstash "DIST-INFO"
                             script{
+                                def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
                                 stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
-                            }
-                        }
-                        failure{
-                            dir("build"){
-
-                                bat "tree /F /A"
                             }
                         }
                         cleanup{
                             cleanWs(
                                 deleteDirs: true,
                                 patterns: [
-                                    [pattern: 'build/docs', type: 'INCLUDE'],
-                                    [pattern: "dist/*.doc.zip", type: 'INCLUDE'],
+                                    [pattern: 'build/', type: 'INCLUDE'],
+                                    [pattern: "dist/", type: 'INCLUDE'],
+                                    [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
                                     ]
                                 )
                         }
