@@ -226,7 +226,7 @@ pipeline {
                             unstash "DIST-INFO"
                             script{
                                 def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
-                                def DOC_ZIP_FILENAME = "${env.PKG_NAME}-${env.PKG_VERSION}.doc.zip"
+                                def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
                                 stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
                             }
