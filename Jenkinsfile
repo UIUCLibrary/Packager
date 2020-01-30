@@ -247,20 +247,26 @@ pipeline {
         }
         stage("Test") {
             environment {
-                PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
+//                 PATH = "${WORKSPACE}\\venv\\Scripts;$PATH"
                 junit_filename = "junit-${env.GIT_COMMIT.substring(0,7)}-pytest.xml"
+            }
+            agent {
+                dockerfile {
+                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                    label "windows && docker"
+                }
             }
             stages{
                 stage("Configuring Testing Environment"){
                     steps{
                         bat(
-                            label: "Installing Testing Packages",
-                            script: 'pip install -r requirements-dev.txt && pip install "tox>=3.7,<3.10" lxml mypy flake8 pytest pytest-cov coverage pylint bandit'
-                            )
-
-                        bat(
-                            label: "Creating a reports directory",
-                            script: "if not exist reports mkdir reports"
+                            label: "Creating logging and report directories",
+                            script: """
+                                if not exist logs mkdir logs
+                                if not exist reports\\coverage mkdir reports\\coverage
+                                if not exist reports\\doctests mkdir reports\\doctests
+                                if not exist reports\\mypy\\html mkdir reports\\mypy\\html
+                            """
                         )
                     }
                 }
@@ -268,7 +274,7 @@ pipeline {
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             steps{
-                                bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=${WORKSPACE}/reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
+                                bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/${env.junit_filename} --junit-prefix=${env.NODE_NAME}-pytest "
                             }
                             post {
                                 always {
@@ -279,7 +285,7 @@ pipeline {
                         }
                         stage("Run Doctest Tests"){
                             steps {
-                                bat "sphinx-build.exe -b doctest -d ${WORKSPACE}/build/docs/doctrees docs/source ${WORKSPACE}/reports/doctest -w ${WORKSPACE}/logs/doctest.log"
+                                bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
                             }
                             post{
                                 always {
@@ -294,7 +300,7 @@ pipeline {
                             steps{
                                 script{
                                     try{
-                                        powershell "& mypy.exe -p uiucprescon --html-report ${WORKSPACE}\\reports\\mypy\\html\\ | tee ${WORKSPACE}/logs/mypy.log"
+                                        powershell "& mypy.exe -p uiucprescon --html-report eports\\mypy\\html\\ | tee logs/mypy.log"
                                     } catch (exc) {
                                         echo "MyPy found some warnings"
                                     }
@@ -313,7 +319,7 @@ pipeline {
                                 equals expected: true, actual: params.TEST_RUN_TOX
                             }
                             steps {
-                                bat "${WORKSPACE}\\venv\\Scripts\\tox.exe"
+                                bat "tox -e py"
 
                             }
                         }
@@ -322,7 +328,7 @@ pipeline {
                                 catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
                                     bat(
                                         label: "Running bandit",
-                                        script: "bandit --format json --output ${WORKSPACE}/reports/bandit-report.json --recursive uiucprescon"
+                                        script: "bandit --format json --output reports/bandit-report.json --recursive uiucprescon"
                                     )
                                 }
                             }
@@ -336,7 +342,7 @@ pipeline {
                             steps{
                                 script{
                                     try{
-                                        bat "flake8 uiucprescon --tee --output-file=${WORKSPACE}\\logs\\flake8.log"
+                                        bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
                                     } catch (exc) {
                                         echo "flake8 found some warnings"
                                     }
