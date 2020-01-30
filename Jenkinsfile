@@ -357,7 +357,7 @@ pipeline {
                     }
                     post{
                         always{
-                            bat "\"${WORKSPACE}\\venv\\Scripts\\coverage\" combine && \"${WORKSPACE}\\venv\\Scripts\\coverage\" xml -o ${WORKSPACE}\\reports\\coverage.xml && \"${WORKSPACE}\\venv\\Scripts\\coverage\" html -d ${WORKSPACE}\\reports\\coverage"
+                            bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
                             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
