@@ -494,7 +494,7 @@ pipeline {
             }
             post {
                 success {
-                    stash includes: 'dist/*.*', name: "dist"
+                    stash includes: 'dist/*.*', name: "PYTHON_PACKAGES"
                     archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
                 }
                 cleanup{
@@ -542,7 +542,7 @@ pipeline {
                             timeout(15)
                         }
                         steps{
-                            unstash "dist"
+                            unstash "PYTHON_PACKAGES"
                             bat(
                                 label: "Checking Python version",
                                 script: "python --version"
@@ -572,7 +572,7 @@ pipeline {
                 }
             }
          }
-        stage("Deploy to DevPi") {
+         stage("Deploy to DevPi") {
             when {
                 allOf{
                     anyOf{
