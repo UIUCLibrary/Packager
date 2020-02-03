@@ -260,7 +260,7 @@ pipeline {
                                 def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
-                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
+                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
                             }
                         }
                         cleanup{
