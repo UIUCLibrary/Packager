@@ -260,7 +260,7 @@ pipeline {
                                 def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
-                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'docs'
+                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
                             }
                         }
                         cleanup{
@@ -494,7 +494,7 @@ pipeline {
             }
             post {
                 success {
-                    stash includes: 'dist/*.*', name: "dist"
+                    stash includes: 'dist/*.*', name: "PYTHON_PACKAGES"
                     archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
                 }
                 cleanup{
@@ -542,7 +542,7 @@ pipeline {
                             timeout(15)
                         }
                         steps{
-                            unstash "dist"
+                            unstash "PYTHON_PACKAGES"
                             bat(
                                 label: "Checking Python version",
                                 script: "python --version"
@@ -572,7 +572,7 @@ pipeline {
                 }
             }
          }
-        stage("Deploy to DevPi") {
+         stage("Deploy to DevPi") {
             when {
                 allOf{
                     anyOf{
