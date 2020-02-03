@@ -83,24 +83,15 @@ def get_package_name(stashName, metadataFile){
 
 pipeline {
     agent none
-//     agent {
-//         label "Windows && Python3 && !Docker" // Something fishy is happening when run on Docker node
-//     }
     triggers {
-        cron('@daily')
+       parameterizedCron '@daily % DEPLOY_DEVPI=true; TEST_RUN_TOX=true'
     }
     options {
         disableConcurrentBuilds()  //each branch has 1 job running at a time
-//         timeout(60)
-//         preserveStashes()
     }
-//     environment {
-//         PATH = "${tool 'CPython-3.6'};${tool 'CPython-3.7'};$PATH"
-//
-//     }
 
     parameters {
-        booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
+        booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
@@ -108,109 +99,34 @@ pipeline {
     }
     stages {
         stage("Getting Distribution Info"){
-                agent {
-                    dockerfile {
-                        filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                        label "windows && docker"
-                    }
-                }
-                options{
-                    timeout(5)
-                }
-                steps{
-                    bat "python setup.py dist_info"
-                }
-                post{
-                    success{
-                        stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-                        archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-                    }
-                    cleanup{
-                        cleanWs(
-                            deleteDirs: true,
-                            patterns: [
-                                [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                                ]
-                        )
-                    }
+            agent {
+                dockerfile {
+                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                    label "windows && docker"
                 }
             }
-//         stage("Configure Environment") {
-//             stages{
-//                 stage("Purge all existing data in workspace"){
-//                     when{
-//                         equals expected: true, actual: params.FRESH_WORKSPACE
-//                     }
-//                     steps{
-//                         deleteDir()
-//                         checkout scm
-//                     }
-//                 }
-//                 stage("Installing Required System Level Dependencies"){
-//                     steps{
-//                         lock("system_python_${NODE_NAME}"){
-//                             bat "python -m pip install pip --upgrade --quiet && python -m pip install --upgrade pipenv --quiet"
-//                         }
-//                     }
-//                     post{
-//                         always{
-//                             bat "(if not exist logs mkdir logs) && python -m pip list > logs/pippackages_system_${NODE_NAME}.log"
-//                             archiveArtifacts artifacts: "logs/pippackages_system_${NODE_NAME}.log"
-//                         }
-//
-//                     }
-//
-//                 }
-//                 stage("Getting Distribution Info"){
-//                     environment{
-//                         PATH = "${tool 'CPython-3.7'};$PATH"
-//                     }
-//                     steps{
-//                         bat "python setup.py dist_info"
-//                     }
-//                     post{
-//                         success{
-//                             stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-//                             archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-//                         }
-//                     }
-//                 }
-//
-//                 stage("Creating Virtualenv for Building"){
-//                     steps {
-//                         bat "python -m venv venv"
-//
-//                         script {
-//                             try {
-//                                 bat "venv\\Scripts\\python.exe -m pip install -U pip --quiet"
-//                             }
-//                             catch (exc) {
-//                                 bat "python -m venv venv"
-//                                 bat "call venv\\Scripts\\python.exe -m pip install -U pip --no-cache-dir"
-//                             }
-//                         }
-// //                        pykdu-compress is an optional install, include it to help the testing
-//                         bat 'venv\\Scripts\\python.exe -m pip install pykdu-compress pytest-cov -r requirements.txt sphinx'
-//
-//                     }
-//                     post{
-//                         success{
-//                             bat "venv\\Scripts\\pip.exe list > logs/pippackages_venv_${NODE_NAME}.log"
-//                             archiveArtifacts artifacts: "logs/pippackages_venv_${NODE_NAME}.log"
-//                         }
-//                     }
-//                 }
-//             }
-//
-//             post{
-//                 failure {
-//                     deleteDir()
-//                 }
-//
-//             }
-//         }
+            options{
+                timeout(5)
+            }
+            steps{
+                bat "python setup.py dist_info"
+            }
+            post{
+                success{
+                    stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
+                    archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
+                }
+                cleanup{
+                    cleanWs(
+                        deleteDirs: true,
+                        patterns: [
+                            [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
+                            ]
+                    )
+                }
+            }
+        }
         stage('Build') {
-
             parallel {
                 stage("Python Package"){
                     agent {
@@ -260,7 +176,7 @@ pipeline {
                                 def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
-                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: "DOCS_ARCHIVE"
+                                stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
                             }
                         }
                         cleanup{
@@ -1023,33 +939,4 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
             }
         }
     }
-//     post {
-//         cleanup {
-//             script {
-//                if(fileExists('source/setup.py')){
-//                    dir("source"){
-//                        try{
-//                            retry(3) {
-//                                bat "${WORKSPACE}\\venv\\Scripts\\python.exe setup.py clean --all"
-//                            }
-//                        } catch (Exception ex) {
-//                            echo "Unable to successfully run clean. Purging source directory."
-//                            deleteDir()
-//                        }
-//                    }
-//                }
-//            }
-//             cleanWs(
-//                 deleteDirs: true,
-//                 patterns: [
-//                     [pattern: 'dist', type: 'INCLUDE'],
-//                     [pattern: 'build/docs', type: 'INCLUDE'],
-//                     [pattern: 'reports', type: 'INCLUDE'],
-//                     [pattern: 'logs', type: 'INCLUDE'],
-//                     [pattern: 'certs', type: 'INCLUDE'],
-//                     [pattern: '*tmp', type: 'INCLUDE'],
-//                     ]
-//                 )
-//         }
-//     }
 }
