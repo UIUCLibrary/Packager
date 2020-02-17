@@ -457,9 +457,6 @@ pipeline {
                                 additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
                             }
                         }
-                        options{
-                            timeout(15)
-                        }
                         steps{
                             unstash "PYTHON_PACKAGES"
                             bat(
@@ -468,10 +465,12 @@ pipeline {
                             )
                             script{
                                 findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
-                                    bat(
-                                        script: "tox --installpkg=${WORKSPACE}\\${it} -e py",
-                                        label: "Testing ${it}"
-                                    )
+                                    timeout(15){
+                                        bat(
+                                            script: "tox --installpkg=${WORKSPACE}\\${it} -e py",
+                                            label: "Testing ${it}"
+                                        )
+                                    }
                                 }
                             }
                         }
