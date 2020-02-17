@@ -105,11 +105,10 @@ pipeline {
                     label "windows && docker"
                 }
             }
-            options{
-                timeout(5)
-            }
             steps{
-                bat "python setup.py dist_info"
+                timeout(5){
+                    bat "python setup.py dist_info"
+                }
             }
             post{
                 success{
