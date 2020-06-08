@@ -425,15 +425,20 @@ pipeline {
             }
         }
         stage("Package") {
+//             agent {
+//                 dockerfile {
+//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     label "windows && docker"
+//                 }
+//             }
             agent {
                 dockerfile {
-                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                    label "windows && docker"
+                    filename 'ci/docker/python/linux/Dockerfile'
+                    label 'linux && docker'
                 }
             }
-
             steps {
-                bat "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
+                sh "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
             }
             post {
                 success {
