@@ -86,9 +86,9 @@ pipeline {
     triggers {
        parameterizedCron '@daily % DEPLOY_DEVPI=true; TEST_RUN_TOX=true'
     }
-    options {
-        disableConcurrentBuilds()  //each branch has 1 job running at a time
-    }
+//     options {
+//         disableConcurrentBuilds()  //each branch has 1 job running at a time
+//     }
 
     parameters {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
