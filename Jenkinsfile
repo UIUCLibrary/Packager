@@ -273,7 +273,6 @@ pipeline {
                             post {
                                 always {
                                     recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
-        //                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
                                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
                                 }
                             }
