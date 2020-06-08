@@ -128,14 +128,20 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
+//                     agent {
+//                         dockerfile {
+//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                             label "windows && docker"
+//                         }
+//                     }
                     agent {
                         dockerfile {
-                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                            label "windows && docker"
+                            filename 'ci/docker/python/linux/Dockerfile'
+                            label 'linux && docker'
                         }
                     }
                     steps {
-                        bat "python setup.py build --build-lib build/lib --build-temp build/temp"
+                        sh "python setup.py build --build-lib build/lib --build-temp build/temp"
                     }
                     post{
                         cleanup{
@@ -150,17 +156,23 @@ pipeline {
                     }
                 }
                 stage("Sphinx Documentation"){
+//                     agent {
+//                         dockerfile {
+//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                             label "windows && docker"
+//                         }
+//                     }
                     agent {
                         dockerfile {
-                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                            label "windows && docker"
+                            filename 'ci/docker/python/linux/Dockerfile'
+                            label 'linux && docker'
                         }
                     }
                     steps {
-                        bat "if not exist logs mkdir logs"
-                        bat(
+                        sh(
                             label: "Building docs on ${env.NODE_NAME}",
-                            script: "python -m sphinx docs/source build/docs/html -d build/docs/.doctrees -v -w logs\\build_sphinx.log"
+                            script: """mkdir -p logs
+                                       python -m sphinx docs/source build/docs/html -d build/docs/.doctrees -v -w logs/build_sphinx.log"""
                         )
                     }
                     post{
