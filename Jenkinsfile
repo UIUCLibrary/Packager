@@ -156,12 +156,6 @@ pipeline {
                     }
                 }
                 stage("Sphinx Documentation"){
-//                     agent {
-//                         dockerfile {
-//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-//                             label "windows && docker"
-//                         }
-//                     }
                     agent {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
@@ -207,29 +201,45 @@ pipeline {
         stage("Test") {
             agent {
                 dockerfile {
-                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                    label "windows && docker"
+                    filename 'ci/docker/python/linux/Dockerfile'
+                    label 'linux && docker'
                 }
             }
+//             agent {
+//                 dockerfile {
+//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     label "windows && docker"
+//                 }
+//             }
             stages{
                 stage("Configuring Testing Environment"){
                     steps{
-                        bat(
+                        sh(
                             label: "Creating logging and report directories",
                             script: """
-                                if not exist logs mkdir logs
-                                if not exist reports\\coverage mkdir reports\\coverage
-                                if not exist reports\\doctests mkdir reports\\doctests
-                                if not exist reports\\mypy\\html mkdir reports\\mypy\\html
+                                mkdir -p logs
+                                mkdir -p reports/coverage
+                                mkdir -p reports/doctests
+                                mkdir -p reports/mypy/html
                             """
                         )
+//                         bat(
+//                             label: "Creating logging and report directories",
+//                             script: """
+//                                 if not exist logs mkdir logs
+//                                 if not exist reports\\coverage mkdir reports\\coverage
+//                                 if not exist reports\\doctests mkdir reports\\doctests
+//                                 if not exist reports\\mypy\\html mkdir reports\\mypy\\html
+//                             """
+//                         )
                     }
                 }
                 stage("Running Tests"){
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             steps{
-                                bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest "
+                                sh "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest"
+//                                 bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest "
                             }
                             post {
                                 always {
@@ -241,7 +251,8 @@ pipeline {
                         }
                         stage("Run Doctest Tests"){
                             steps {
-                                bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
+                                sh "python -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
+//                                 bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
                             }
                             post{
                                 always {
@@ -254,13 +265,10 @@ pipeline {
                         }
                         stage("Run MyPy Static Analysis") {
                             steps{
-                                script{
-                                    try{
-                                        powershell "& mypy.exe -p uiucprescon --html-report reports\\mypy\\html\\ | tee logs/mypy.log"
-                                    } catch (exc) {
-                                        echo "MyPy found some warnings"
-                                    }
+                                catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
+                                    sh "mypy -p uiucprescon --html-report reports/mypy/html/  | tee logs/mypy.log"
                                 }
+
                             }
                             post {
                                 always {
@@ -275,14 +283,14 @@ pipeline {
                                 equals expected: true, actual: params.TEST_RUN_TOX
                             }
                             steps {
-                                bat "tox -e py"
+                                sh "tox -e py"
 
                             }
                         }
                         stage("Run Bandit Static Analysis") {
                             steps{
                                 catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
-                                    bat(
+                                    sh(
                                         label: "Running bandit",
                                         script: "bandit --format json --output reports/bandit-report.json --recursive uiucprescon"
                                     )
@@ -297,13 +305,16 @@ pipeline {
                         }
                         stage("Run Flake8 Static Analysis") {
                             steps{
-                                script{
-                                    try{
-                                        bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
-                                    } catch (exc) {
-                                        echo "flake8 found some warnings"
-                                    }
+                                catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
+                                    sh "flake8 uiucprescon --tee --output-file=logs/flake8.log"
                                 }
+//                                 script{
+//                                     try{
+//                                         bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
+//                                     } catch (exc) {
+//                                         echo "flake8 found some warnings"
+//                                     }
+//                                 }
                             }
                             post {
                                 always {
@@ -314,7 +325,8 @@ pipeline {
                     }
                     post{
                         always{
-                            bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
+                            sh "coverage combine && coverage xml -o reports/coverage.xml && coverage html -d reports/coverage"
+//                             bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
                             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
