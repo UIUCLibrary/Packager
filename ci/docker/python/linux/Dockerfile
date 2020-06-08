@@ -29,8 +29,7 @@ ENV PIP_EXTRA_INDEX_URL="https://devpi.library.illinois.edu/production/release"
 ENV PIP_TRUSTED_HOST="devpi.library.illinois.edu"
 
 RUN pip install --no-index --find-links=/wheels -r /tmp/requirements.txt && \
-    pip install behave \
-                flake8 \
+    pip install flake8 \
                 pytest \
                 pytest-cov \
                 coverage \
@@ -39,6 +38,8 @@ RUN pip install --no-index --find-links=/wheels -r /tmp/requirements.txt && \
                 sphinx-argparse \
                 tox \
                 mypy \
+                pytest_bdd \
+                bandit \
                 rinohtype \
                 pylint
 ENV PIP_FIND_LINKS=/wheels
