@@ -441,8 +441,10 @@ pipeline {
                 sh "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
             }
             post {
-                success {
+                always{
                     stash includes: 'dist/*.*', name: "PYTHON_PACKAGES"
+                }
+                success {
                     archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
                 }
                 cleanup{
