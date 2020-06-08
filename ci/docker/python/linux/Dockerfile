@@ -27,6 +27,7 @@ COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt /tmp/
 ENV PIP_EXTRA_INDEX_URL="https://devpi.library.illinois.edu/production/release"
 ENV PIP_TRUSTED_HOST="devpi.library.illinois.edu"
+ENV PIP_FIND_LINKS=/wheels
 
 RUN pip install --no-index --find-links=/wheels -r /tmp/requirements.txt && \
     pip install flake8 \
@@ -41,7 +42,8 @@ RUN pip install --no-index --find-links=/wheels -r /tmp/requirements.txt && \
                 pytest_bdd \
                 bandit \
                 rinohtype \
-                pylint
-ENV PIP_FIND_LINKS=/wheels
+                pylint && \
+   pip install pykdu_compress --pre
+
 USER user
 WORKDIR /home/user
