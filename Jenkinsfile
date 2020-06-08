@@ -28,6 +28,19 @@ def CONFIGURATIONS = [
             test_docker_image: "python:3.7",
             tox_env: "py37",
             devpi_wheel_regex: "cp37"
+        ],
+    "3.8": [
+            package_testing: [
+                whl: [
+                    pkgRegex: "*.whl",
+                ],
+                sdist:[
+                    pkgRegex: "*.zip",
+                ]
+            ],
+            test_docker_image: "python:3.8",
+            tox_env: "py38",
+            devpi_wheel_regex: "cp38"
         ]
 ]
 
@@ -466,8 +479,8 @@ pipeline {
                     axis {
                         name "PYTHON_VERSION"
                         values(
-                            "3.6",
-                            "3.7"
+                            "3.7",
+                            "3.8"
                         )
                     }
                     axis {
