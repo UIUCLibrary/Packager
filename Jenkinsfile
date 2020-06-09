@@ -402,7 +402,7 @@ pipeline {
                 script{
                     withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
                         unstash "DIST-INFO"
-                        def props = readProperties(interpolate: true, file: "uiucprescon.packager.egg-info/METADATA")
+                        def props = readProperties(interpolate: true, file: "uiucprescon.packager.dist-info/METADATA")
                         if (env.CHANGE_ID){
                             sh(
                                 label: "Running Sonar Scanner",
