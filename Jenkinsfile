@@ -334,17 +334,11 @@ pipeline {
                                 catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
                                     sh "flake8 uiucprescon --tee --output-file=logs/flake8.log"
                                 }
-//                                 script{
-//                                     try{
-//                                         bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
-//                                     } catch (exc) {
-//                                         echo "flake8 found some warnings"
-//                                     }
-//                                 }
                             }
                             post {
                                 always {
                                     recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
+                                    stash includes: "logs/flake8.log", name: 'FLAKE8_REPORT'
                                 }
                             }
                         }
