@@ -396,6 +396,7 @@ pipeline {
                 sh "git fetch --all"
                 unstash "COVERAGE_REPORT"
                 unstash "PYTEST_REPORT"
+                unstash "BANDIT_REPORT"
 //                 unstash "PYLINT_REPORT"
                 unstash "FLAKE8_REPORT"
                 script{
