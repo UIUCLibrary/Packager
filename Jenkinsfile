@@ -329,6 +329,29 @@ pipeline {
                                 }
                             }
                         }
+                        stage("Run Pylint Static Analysis") {
+                            steps{
+                                catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
+                                    sh(
+                                        script: '''mkdir -p logs
+                                                   pylint uiucprescon -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt''',
+                                        label: "Running pylint"
+                                    )
+                                }
+                                sh(
+                                    script: 'pylint uiucprescon  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt',
+                                    label: "Running pylint for sonarqube",
+                                    returnStatus: true
+                                )
+                            }
+                            post{
+                                always{
+                                    stash includes: "reports/pylint_issues.txt,reports/pylint.txt", name: 'PYLINT_REPORT'
+                                    archiveArtifacts allowEmptyArchive: true, artifacts: "reports/pylint.txt"
+                                    recordIssues(tools: [pyLint(pattern: 'reports/pylint.txt')])
+                                }
+                            }
+                        }
                         stage("Run Flake8 Static Analysis") {
                             steps{
                                 catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
@@ -397,7 +420,7 @@ pipeline {
                 unstash "COVERAGE_REPORT"
                 unstash "PYTEST_REPORT"
                 unstash "BANDIT_REPORT"
-//                 unstash "PYLINT_REPORT"
+                unstash "PYLINT_REPORT"
                 unstash "FLAKE8_REPORT"
                 script{
                     withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
