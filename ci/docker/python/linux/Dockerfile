@@ -11,9 +11,8 @@ RUN python -m pip install --upgrade pip &&  \
     pip install setuptools && \
     pip install wheel && \
     pip install conan
-RUN pip wheel --wheel-dir=/wheels -r /tmp/requirements.txt --pre -i ${PYTHON_INDEX} -v
-RUN pip wheel --wheel-dir=/wheels -r /tmp/requirements-dev.txt \
-        --pre -i ${PYTHON_INDEX} -v
+RUN pip wheel --wheel-dir=/wheels -r /tmp/requirements.txt -i ${PYTHON_INDEX} -v
+RUN pip wheel --wheel-dir=/wheels -r /tmp/requirements-dev.txt -i ${PYTHON_INDEX} -v
 RUN pip wheel  --wheel-dir=/wheels 'pykdu-compress>=0.1.3b1' --pre -i ${PYTHON_INDEX} -v
 
 FROM python:${PYTHON_VERSION}
