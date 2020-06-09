@@ -28,6 +28,19 @@ def CONFIGURATIONS = [
             test_docker_image: "python:3.7",
             tox_env: "py37",
             devpi_wheel_regex: "cp37"
+        ],
+    "3.8": [
+            package_testing: [
+                whl: [
+                    pkgRegex: "*.whl",
+                ],
+                sdist:[
+                    pkgRegex: "*.zip",
+                ]
+            ],
+            test_docker_image: "python:3.8",
+            tox_env: "py38",
+            devpi_wheel_regex: "cp38"
         ]
 ]
 
@@ -86,9 +99,9 @@ pipeline {
     triggers {
        parameterizedCron '@daily % DEPLOY_DEVPI=true; TEST_RUN_TOX=true'
     }
-    options {
-        disableConcurrentBuilds()  //each branch has 1 job running at a time
-    }
+//     options {
+//         disableConcurrentBuilds()  //each branch has 1 job running at a time
+//     }
 
     parameters {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
@@ -101,13 +114,13 @@ pipeline {
         stage("Getting Distribution Info"){
             agent {
                 dockerfile {
-                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                    label "windows && docker"
+                    filename 'ci/docker/python/linux/Dockerfile'
+                    label 'linux && docker'
                 }
             }
             steps{
                 timeout(5){
-                    bat "python setup.py dist_info"
+                    sh "python setup.py dist_info"
                 }
             }
             post{
@@ -128,14 +141,20 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
+//                     agent {
+//                         dockerfile {
+//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                             label "windows && docker"
+//                         }
+//                     }
                     agent {
                         dockerfile {
-                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                            label "windows && docker"
+                            filename 'ci/docker/python/linux/Dockerfile'
+                            label 'linux && docker'
                         }
                     }
                     steps {
-                        bat "python setup.py build --build-lib build/lib --build-temp build/temp"
+                        sh "python setup.py build --build-lib build/lib --build-temp build/temp"
                     }
                     post{
                         cleanup{
@@ -152,15 +171,15 @@ pipeline {
                 stage("Sphinx Documentation"){
                     agent {
                         dockerfile {
-                            filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                            label "windows && docker"
+                            filename 'ci/docker/python/linux/Dockerfile'
+                            label 'linux && docker'
                         }
                     }
                     steps {
-                        bat "if not exist logs mkdir logs"
-                        bat(
+                        sh(
                             label: "Building docs on ${env.NODE_NAME}",
-                            script: "python -m sphinx docs/source build/docs/html -d build/docs/.doctrees -v -w logs\\build_sphinx.log"
+                            script: """mkdir -p logs
+                                       python -m sphinx docs/source build/docs/html -d build/docs/.doctrees -v -w logs/build_sphinx.log"""
                         )
                     }
                     post{
@@ -195,29 +214,45 @@ pipeline {
         stage("Test") {
             agent {
                 dockerfile {
-                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                    label "windows && docker"
+                    filename 'ci/docker/python/linux/Dockerfile'
+                    label 'linux && docker'
                 }
             }
+//             agent {
+//                 dockerfile {
+//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     label "windows && docker"
+//                 }
+//             }
             stages{
                 stage("Configuring Testing Environment"){
                     steps{
-                        bat(
+                        sh(
                             label: "Creating logging and report directories",
                             script: """
-                                if not exist logs mkdir logs
-                                if not exist reports\\coverage mkdir reports\\coverage
-                                if not exist reports\\doctests mkdir reports\\doctests
-                                if not exist reports\\mypy\\html mkdir reports\\mypy\\html
+                                mkdir -p logs
+                                mkdir -p reports/coverage
+                                mkdir -p reports/doctests
+                                mkdir -p reports/mypy/html
                             """
                         )
+//                         bat(
+//                             label: "Creating logging and report directories",
+//                             script: """
+//                                 if not exist logs mkdir logs
+//                                 if not exist reports\\coverage mkdir reports\\coverage
+//                                 if not exist reports\\doctests mkdir reports\\doctests
+//                                 if not exist reports\\mypy\\html mkdir reports\\mypy\\html
+//                             """
+//                         )
                     }
                 }
                 stage("Running Tests"){
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             steps{
-                                bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest "
+                                sh "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest"
+//                                 bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest "
                             }
                             post {
                                 always {
@@ -229,7 +264,8 @@ pipeline {
                         }
                         stage("Run Doctest Tests"){
                             steps {
-                                bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
+                                sh "python -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
+//                                 bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
                             }
                             post{
                                 always {
@@ -242,18 +278,14 @@ pipeline {
                         }
                         stage("Run MyPy Static Analysis") {
                             steps{
-                                script{
-                                    try{
-                                        powershell "& mypy.exe -p uiucprescon --html-report reports\\mypy\\html\\ | tee logs/mypy.log"
-                                    } catch (exc) {
-                                        echo "MyPy found some warnings"
-                                    }
+                                catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
+                                    sh "mypy -p uiucprescon --html-report reports/mypy/html/  | tee logs/mypy.log"
                                 }
+
                             }
                             post {
                                 always {
                                     recordIssues(tools: [myPy(name: 'MyPy', pattern: 'logs/mypy.log')])
-        //                            warnings parserConfigurations: [[parserName: 'MyPy', pattern: "logs/mypy.log"]], unHealthy: ''
                                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/mypy/html/', reportFiles: 'index.html', reportName: 'MyPy HTML Report', reportTitles: ''])
                                 }
                             }
@@ -263,20 +295,34 @@ pipeline {
                                 equals expected: true, actual: params.TEST_RUN_TOX
                             }
                             steps {
-                                bat "tox -e py"
+                                sh "tox -e py"
 
                             }
                         }
                         stage("Run Bandit Static Analysis") {
                             steps{
                                 catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
-                                    bat(
+                                    sh(
                                         label: "Running bandit",
-                                        script: "bandit --format json --output reports/bandit-report.json --recursive uiucprescon"
+                                        script: "bandit --format json --output reports/bandit-report.json --recursive uiucprescon || bandit -f html --recursive uiucprescon --output reports/bandit-report.html"
                                     )
                                 }
                             }
                             post {
+                                unstable{
+                                    script{
+                                        if(fileExists('reports/bandit-report.html')){
+                                            publishHTML([
+                                                allowMissing: false,
+                                                alwaysLinkToLastBuild: false,
+                                                keepAll: false,
+                                                reportDir: 'reports',
+                                                reportFiles: 'bandit-report.html',
+                                                reportName: 'Bandit Report', reportTitles: ''
+                                                ])
+                                        }
+                                    }
+                                }
                                 always {
                                     archiveArtifacts "reports/bandit-report.json"
                                     stash includes: "reports/bandit-report.json", name: 'BANDIT_REPORT'
@@ -285,13 +331,16 @@ pipeline {
                         }
                         stage("Run Flake8 Static Analysis") {
                             steps{
-                                script{
-                                    try{
-                                        bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
-                                    } catch (exc) {
-                                        echo "flake8 found some warnings"
-                                    }
+                                catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
+                                    sh "flake8 uiucprescon --tee --output-file=logs/flake8.log"
                                 }
+//                                 script{
+//                                     try{
+//                                         bat "flake8 uiucprescon --tee --output-file=logs\\flake8.log"
+//                                     } catch (exc) {
+//                                         echo "flake8 found some warnings"
+//                                     }
+//                                 }
                             }
                             post {
                                 always {
@@ -302,7 +351,8 @@ pipeline {
                     }
                     post{
                         always{
-                            bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
+                            sh "coverage combine && coverage xml -o reports/coverage.xml && coverage html -d reports/coverage"
+//                             bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
                             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
@@ -401,19 +451,26 @@ pipeline {
             }
         }
         stage("Package") {
+//             agent {
+//                 dockerfile {
+//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     label "windows && docker"
+//                 }
+//             }
             agent {
                 dockerfile {
-                    filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                    label "windows && docker"
+                    filename 'ci/docker/python/linux/Dockerfile'
+                    label 'linux && docker'
                 }
             }
-
             steps {
-                bat "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
+                sh "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
             }
             post {
-                success {
+                always{
                     stash includes: 'dist/*.*', name: "PYTHON_PACKAGES"
+                }
+                success {
                     archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
                 }
                 cleanup{
@@ -436,8 +493,8 @@ pipeline {
                     axis {
                         name "PYTHON_VERSION"
                         values(
-                            "3.6",
-                            "3.7"
+                            "3.7",
+                            "3.8"
                         )
                     }
                     axis {
