@@ -9,3 +9,4 @@ RUN python -m pip install --upgrade pip ; pip install devpi-client "tox<3.7"
 ENV TMP=c:\temp `
     TMPDIR=c:\temp `
     TEMP=c:\temp
+RUN pip install pykdu-compress==0.1.3b1 -i https://devpi.library.illinois.edu/production/release
