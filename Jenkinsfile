@@ -107,6 +107,7 @@ pipeline {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
+        booleanParam(name: "DEPLOY_ADD_TAG", defaultValue: false, description: "Tag commit to current version")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
@@ -723,10 +724,53 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
             }
         }
         stage("Deploy"){
-            when {
-              branch "master"
-            }
             parallel {
+                stage("Tagging git Commit"){
+                    agent {
+                        dockerfile {
+                            filename 'ci/docker/python/linux/Dockerfile'
+                            label 'linux && docker'
+                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                        }
+                    }
+                    when{
+                        allOf{
+                            equals expected: true, actual: params.DEPLOY_ADD_TAG
+                        }
+                        beforeAgent true
+                        beforeInput true
+                    }
+                    options{
+                        timeout(time: 1, unit: 'DAYS')
+                        retry(3)
+                    }
+                    input {
+                          message 'Add a version tag to git commit?'
+                          parameters {
+                                credentials credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'github.com', description: '', name: 'gitCreds', required: true
+                          }
+                    }
+                    steps{
+                        unstash "DIST-INFO"
+                        script{
+                            def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
+                            def commitTag = input message: 'git commit', parameters: [string(defaultValue: "v${props.Version}", description: 'Version to use a a git tag', name: 'Tag', trim: false)]
+                            withCredentials([usernamePassword(credentialsId: gitCreds, passwordVariable: 'password', usernameVariable: 'username')]) {
+                                sh(label: "Tagging ${commitTag}",
+                                   script: """git config --local credential.helper "!f() { echo username=\\$username; echo password=\\$password; }; f"
+                                              git tag -a ${commitTag} -m 'Tagged by Jenkins'
+                                              git push origin --tags
+                                   """
+                                )
+                            }
+                        }
+                    }
+                    post{
+                        cleanup{
+                            deleteDir()
+                        }
+                    }
+                }
                 stage("Deploy Online Documentation") {
                     when{
                         equals expected: true, actual: params.DEPLOY_DOCS
