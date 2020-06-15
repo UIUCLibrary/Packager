@@ -335,6 +335,7 @@ pipeline {
                                 catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
                                     sh(
                                         script: '''mkdir -p logs
+                                                   mkdir -p reports
                                                    pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt''',
                                         label: "Running pylint"
                                     )
@@ -356,7 +357,11 @@ pipeline {
                         stage("Run Flake8 Static Analysis") {
                             steps{
                                 catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
-                                    sh "flake8 uiucprescon --tee --output-file=logs/flake8.log"
+                                    sh(label: "Running Flake8",
+                                       script: '''mkdir -p logs
+                                                  flake8 uiucprescon --tee --output-file=logs/flake8.log
+                                               '''
+                                       )
                                 }
                             }
                             post {
