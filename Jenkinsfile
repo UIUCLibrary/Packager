@@ -673,6 +673,9 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         }
                         beforeAgent true
                     }
+                    options{
+                        lock("uiucprescon.packager-devpi")
+                    }
                     agent {
                         dockerfile {
                             filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
