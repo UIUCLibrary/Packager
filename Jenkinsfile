@@ -677,6 +677,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                             branch "master"
                         }
                         beforeAgent true
+                        beforeInput true
                     }
                     options{
                         lock("uiucprescon.packager-devpi")
