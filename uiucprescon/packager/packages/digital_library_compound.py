@@ -3,11 +3,11 @@ import os
 
 import typing
 
-from . import collection_builder
 from uiucprescon.packager.packages.collection import Package
 from uiucprescon.packager.common import Metadata
-from .abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager import transformations
+from . import collection_builder
+from .abs_package_builder import AbsPackageBuilder
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):

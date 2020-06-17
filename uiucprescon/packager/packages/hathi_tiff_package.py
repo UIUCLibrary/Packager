@@ -4,9 +4,9 @@ import typing
 
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
-from .abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import Metadata
+from .abs_package_builder import AbsPackageBuilder
 
 
 class HathiTiff(AbsPackageBuilder):

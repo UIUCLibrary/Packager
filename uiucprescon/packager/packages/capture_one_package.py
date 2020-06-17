@@ -1,12 +1,14 @@
+"""Package generated from the lab using Capture One"""
+
 import logging
 import os
 import typing
-from . import collection_builder
-from uiucprescon.packager.packages.collection import Package
-from .abs_package_builder import AbsPackageBuilder
-
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import Metadata
+from uiucprescon.packager.packages.collection import Package
+from . import collection_builder
+from .abs_package_builder import AbsPackageBuilder
+
 
 
 class CaptureOnePackage(AbsPackageBuilder):

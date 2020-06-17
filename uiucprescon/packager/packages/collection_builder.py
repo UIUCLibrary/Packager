@@ -4,9 +4,9 @@ import logging
 import os
 import warnings
 
-from .collection import Instantiation, Item, Package, PackageObject
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
+from .collection import Instantiation, Item, Package, PackageObject
 
 
 def _build_ds_instance(item, name, path):
