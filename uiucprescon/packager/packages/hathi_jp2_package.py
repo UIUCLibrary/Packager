@@ -30,7 +30,10 @@ class HathiJp2(AbsPackageBuilder):
                 os.makedirs(new_item_path)
 
             for inst in item:
-                assert len(inst.files) == 1
+                if len(inst.files) != 1:
+                    raise AssertionError(
+                        f"Expected 1 file, found {len(inst.files)}")
+
                 for file_ in inst.files:
                     _, ext = os.path.splitext(file_)
 

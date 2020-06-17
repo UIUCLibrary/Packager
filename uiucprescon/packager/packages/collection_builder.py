@@ -475,8 +475,11 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         for access_file, preservation_file in \
                 zip(access_files, preservation_files):
 
-            assert os.path.splitext(access_file.name)[0] == \
-                   os.path.splitext(preservation_file.name)[0]
+            if os.path.splitext(access_file.name)[0] != \
+                   os.path.splitext(preservation_file.name)[0]:
+                raise AssertionError(
+                    f"{os.path.splitext(access_file.name)[0]} should be the "
+                    f"same name {os.path.splitext(preservation_file.name)[0]}")
 
             item_id = os.path.splitext(access_file.name)[0]
             new_item = Item(parent=parent)
