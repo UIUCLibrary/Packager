@@ -10,7 +10,6 @@ from . import collection_builder
 from .abs_package_builder import AbsPackageBuilder
 
 
-
 class CaptureOnePackage(AbsPackageBuilder):
     """Package generated from the lab using Capture One
 
