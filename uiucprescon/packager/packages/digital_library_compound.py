@@ -2,11 +2,6 @@ import logging
 import os
 
 import typing
-# try:
-#     import pykdu_compress
-# except ImportError as e:
-#     print("Unable to use transform DigitalLibraryCompound due to "
-#           "missing import")
 
 from . import collection_builder
 from uiucprescon.packager.packages.collection import Package
@@ -96,8 +91,3 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                         logger=logger)
 
                     converter.transform(file_, access_file_full_path)
-
-
-# def make_access_jp2(source_file_path, output_file_name):
-#     pykdu_compress.kdu_compress_cli(
-#         "-i {} -o {}".format(source_file_path, output_file_name))
