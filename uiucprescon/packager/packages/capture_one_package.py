@@ -1,12 +1,13 @@
+"""Package generated from the lab using Capture One"""
+
 import logging
 import os
 import typing
-from . import collection_builder
-from uiucprescon.packager.packages.collection import Package
-from .abs_package_builder import AbsPackageBuilder
-
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import Metadata
+from uiucprescon.packager.packages.collection import Package
+from . import collection_builder
+from .abs_package_builder import AbsPackageBuilder
 
 
 class CaptureOnePackage(AbsPackageBuilder):
@@ -34,7 +35,8 @@ class CaptureOnePackage(AbsPackageBuilder):
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
             for inst in item:
-                assert len(inst.files) == 1
+                if len(inst.files) != 1:
+                    raise AssertionError("More than one file found")
                 for file_ in inst.files:
                     _, ext = os.path.splitext(file_)
                     new_file_name = "{}_{}{}".format(object_name, item_name,

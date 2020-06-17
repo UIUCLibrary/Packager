@@ -2,17 +2,12 @@ import logging
 import os
 
 import typing
-# try:
-#     import pykdu_compress
-# except ImportError as e:
-#     print("Unable to use transform DigitalLibraryCompound due to "
-#           "missing import")
 
-from . import collection_builder
 from uiucprescon.packager.packages.collection import Package
 from uiucprescon.packager.common import Metadata
-from .abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager import transformations
+from . import collection_builder
+from .abs_package_builder import AbsPackageBuilder
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
@@ -61,9 +56,10 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                 os.makedirs(preservation_path)
 
             for inst in item:
-                assert len(inst.files) == 1, \
-                    f"Each instance should have only 1 file, "\
-                    f"found {inst.files}: [{', '.join(inst.files)}]"
+                if len(inst.files) != 1:
+                    raise AssertionError(
+                        f"Each instance should have only 1 file, found "
+                        f"{inst.files}: [{', '.join(inst.files)}]")
 
                 for file_ in inst.files:
                     base_name, ext = os.path.splitext(os.path.basename(file_))
@@ -96,8 +92,3 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                         logger=logger)
 
                     converter.transform(file_, access_file_full_path)
-
-
-# def make_access_jp2(source_file_path, output_file_name):
-#     pykdu_compress.kdu_compress_cli(
-#         "-i {} -o {}".format(source_file_path, output_file_name))

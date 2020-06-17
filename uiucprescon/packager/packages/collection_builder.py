@@ -4,9 +4,9 @@ import logging
 import os
 import warnings
 
-from .collection import Instantiation, Item, Package, PackageObject
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
+from .collection import Instantiation, Item, Package, PackageObject
 
 
 def _build_ds_instance(item, name, path):
@@ -420,8 +420,12 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         preservation_file = os.path.join(path, "preservation",
                                          filename + ".tif")
 
-        assert os.path.exists(access_file)
-        assert os.path.exists(preservation_file)
+        if not os.path.exists(access_file):
+            raise FileNotFoundError(f"Access file {access_file} not found")
+
+        if not os.path.exists(preservation_file):
+            raise FileNotFoundError(
+                f"Preservation file {preservation_file} not found")
 
         access_instance = Instantiation(category=InstantiationTypes.ACCESS,
                                         parent=parent)
@@ -447,8 +451,12 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
 
-        assert os.path.exists(access_path)
-        assert os.path.exists(preservation_path)
+        if not os.path.exists(access_path):
+            raise FileNotFoundError(f"Access path {access_path} not found")
+
+        if not os.path.exists(preservation_path):
+            raise FileNotFoundError(
+                f"Preservation path {preservation_path} not found")
 
         access_files = sorted(
             filter(lambda i: cls.file_type_filter(i, ".jp2"),
@@ -460,13 +468,18 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
                    os.scandir(preservation_path)),
             key=lambda f: f.name)
 
-        assert len(access_files) == len(preservation_files)
+        if len(access_files) != len(preservation_files):
+            raise AssertionError("Number of access files do not match the "
+                                 "number of preservation files")
 
         for access_file, preservation_file in \
                 zip(access_files, preservation_files):
 
-            assert os.path.splitext(access_file.name)[0] == \
-                   os.path.splitext(preservation_file.name)[0]
+            if os.path.splitext(access_file.name)[0] != \
+                   os.path.splitext(preservation_file.name)[0]:
+                raise AssertionError(
+                    f"{os.path.splitext(access_file.name)[0]} should be the "
+                    f"same name {os.path.splitext(preservation_file.name)[0]}")
 
             item_id = os.path.splitext(access_file.name)[0]
             new_item = Item(parent=parent)
