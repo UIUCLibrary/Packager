@@ -423,7 +423,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         if not os.path.exists(access_file):
             raise FileNotFoundError(f"Access file {access_file} not found")
 
-        if not  os.path.exists(preservation_file):
+        if not os.path.exists(preservation_file):
             raise FileNotFoundError(
                 f"Preservation file {preservation_file} not found")
 
@@ -454,7 +454,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         if not os.path.exists(access_path):
             raise FileNotFoundError(f"Access path {access_path} not found")
 
-        if not  os.path.exists(preservation_path):
+        if not os.path.exists(preservation_path):
             raise FileNotFoundError(
                 f"Preservation path {preservation_path} not found")
 
