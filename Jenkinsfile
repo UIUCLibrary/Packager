@@ -548,6 +548,7 @@ pipeline {
                         post{
                             cleanup{
                                 cleanWs(
+                                    notFailBuild: true,
                                     deleteDirs: true,
                                     patterns: [
                                         [pattern: 'dist/', type: 'INCLUDE'],
