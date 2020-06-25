@@ -2,7 +2,10 @@ import abc
 import itertools
 import logging
 import os
+import re
 import warnings
+import zipfile
+from typing import Tuple, Optional, Iterator, Iterable
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
@@ -112,7 +115,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def build_instance(cls, parent, path, filename):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
         pass
 
     @classmethod
@@ -532,7 +535,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             return "sidecar"
 
     @classmethod
-    def build_instance(cls, parent, filename, path):
+    def build_instance(cls, parent, filename, path, *args, **kwargs):
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
 
@@ -556,3 +559,275 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
         for file_ in sidecar_files:
             new_instantiation.sidecar_files.append(file_.path)
+
+
+class HathiLimitedViewBuilder(AbsCollectionBuilder):
+    BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
+    METS_FILE_REGEX = r"\.mets\.xml"
+    ZIP_FILE_REGEX = r"\.zip"
+    PREFIX_REGEX = "UIUC|uiuc"
+    package_matcher = re.compile(f"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
+    zip_file_matcher = re.compile(f"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
+    mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
+
+    @classmethod
+    def filter_package_dir_name(cls, dirname) -> bool:
+        if not cls.package_matcher.match(dirname):
+            return False
+        return True
+
+    @classmethod
+    def filter_package_dirs(cls, item: os.DirEntry) -> bool:
+        if not cls.filter_package_dir_name(item.name):
+            return False
+
+        if not item.is_dir():
+            return False
+        return True
+
+    @classmethod
+    def build_batch(cls, root):
+        others = []
+        for item in os.scandir(root):
+
+            if not cls.filter_package_dirs(item):
+                others.append((item.path, item.is_dir()))
+                continue
+
+            new_package = Package(root)
+
+            new_package.component_metadata[Metadata.ID] = \
+                item.name.split(".")[-1]
+
+            new_package.component_metadata[Metadata.PATH] = item.path
+            new_package.component_metadata[Metadata.ITEM_NAME] = item.name
+            cls.build_package(parent=new_package, path=item.path)
+            yield new_package
+
+    @classmethod
+    def build_instance(cls, parent, path, *args, **kwargs):
+        file_category = kwargs['file_category']
+        new_instantiation = Instantiation(category=file_category,
+                                          parent=parent)
+        new_instantiation.sidecar_files = [
+            os.path.split(sidecar_file)[-1] for sidecar_file in
+            kwargs.get('sidecar_files', [])
+        ]
+        file_name = kwargs.get('filename')
+        if file_name is not None:
+            new_instantiation.files.append(file_name)
+
+        new_instantiation.component_metadata[Metadata.PATH] = path
+        new_instantiation.component_metadata[Metadata.ID] = \
+            os.path.splitext(file_name)[0]
+
+    @classmethod
+    def split_package_content(cls, item: os.DirEntry) -> \
+            Tuple[Optional[os.DirEntry],
+                  Optional[os.DirEntry],
+                  Optional[os.DirEntry]]:
+
+        if cls.mets_file_matcher.match(item.name):
+            return None, item, None
+
+        if cls.zip_file_matcher.match(item.name):
+            return item, None, None
+
+        return None, None, item
+
+    # @staticmethod
+    # def identify_package_files():
+
+    @staticmethod
+    def filter_image_format(file_name: str) -> bool:
+        valid_images_extension = [
+            ".tif",
+            ".jp2"
+        ]
+        base, ext = os.path.splitext(file_name)
+        if ext not in valid_images_extension:
+            return False
+        return True
+
+    @classmethod
+    def build_package(cls, parent, path):
+        package_builder = HathiLimitedViewPackageBuilder(path=path)
+        zip_files, mets_files, invalid_files = package_builder.get_content()
+
+        if len(zip_files) != 1:
+            raise AssertionError(f"Expected {path} to have 1 zip file, "
+                                 f"found {len(zip_files)}")
+
+        if len(mets_files) != 1:
+            raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
+                                 f"found {len(mets_files)}")
+        contents = cls.get_zip_content(package_builder, zip_files)
+
+        for k, files in contents['item'].items():
+            cls.build_item(parent,
+                           path=zip_files[0].path,
+                           item_name=k,
+                           files=files
+                           )
+
+    @classmethod
+    def get_zip_content(cls, package_builder, zip_files):
+        contents = {}
+
+        for i in itertools.groupby(sorted(
+                package_builder.iter_items_from_archive(zip_files[0]),
+                key=package_builder.get_item_type),
+                key=package_builder.get_item_type):
+            file_type, files = i
+            contents[i[0]] = dict(files)
+        return contents
+
+    @classmethod
+    def build_item(cls, parent, *args, **kwargs):
+        path_name = kwargs.get("path")
+        new_item = Item(parent)
+        new_item.component_metadata[Metadata.PATH] = path_name
+
+        item_name = kwargs.get('item_name')
+        if item_name is not None:
+            new_item.component_metadata[Metadata.ITEM_NAME] = item_name
+
+        file_types = dict()
+        for file_category, files in itertools.groupby(
+                sorted(kwargs['files'],
+                       key=lambda x: cls.get_file_type(x).value),
+                key=cls.get_file_type):
+            file_types[file_category] = list(files)
+
+        for archived_file in itertools.chain(
+                file_types.get(InstantiationTypes.ACCESS, []),
+                file_types.get(InstantiationTypes.PRESERVATION, []),
+                file_types.get(InstantiationTypes.SUPPLEMENTARY, [])):
+
+            path, file_name = os.path.split(archived_file)
+            cls.build_instance(parent=new_item,
+                               path=path,
+                               filename=file_name,
+                               file_category=cls.get_file_type(archived_file)
+                               )
+
+    @classmethod
+    def get_file_type(cls, file_name) -> InstantiationTypes:
+        base, ext = os.path.splitext(file_name)
+
+        if cls.filter_image_format(file_name):
+            if ext.lower() == ".tif":
+                return InstantiationTypes.PRESERVATION
+            if ext.lower() == ".jp2":
+                return InstantiationTypes.ACCESS
+            return InstantiationTypes.UNKNOWN
+
+        if ext.lower() == ".txt":
+            return InstantiationTypes.SUPPLEMENTARY
+
+        return InstantiationTypes.UNKNOWN
+
+
+class HathiLimitedViewPackageBuilder:
+    BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
+    METS_FILE_REGEX = r"\.mets\.xml"
+    ZIP_FILE_REGEX = r"\.zip"
+    PREFIX_REGEX = "UIUC|uiuc"
+
+    package_matcher = re.compile(f"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
+    zip_file_matcher = re.compile(f"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
+    mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
+
+    def __init__(self, path) -> None:
+        self.path = path
+
+    @classmethod
+    def split_package_content(cls, item: os.DirEntry) -> \
+            Tuple[Optional[os.DirEntry],
+                  Optional[os.DirEntry],
+                  Optional[os.DirEntry]]:
+
+        if cls.mets_file_matcher.match(item.name):
+            return None, item, None
+
+        if cls.zip_file_matcher.match(item.name):
+            return item, None, None
+
+        return None, None, item
+
+    @staticmethod
+    def get_item_key(file_name: str) -> str:
+        """Get hashable key for a filename.
+
+        This is mainly used for sorting or grouping
+
+        Args:
+            file_name: file name to get a key for
+
+        Returns: key for the file
+        """
+
+        key = os.path.splitext(os.path.split(file_name)[-1])[0]
+        return key
+
+    @staticmethod
+    def filter_files_only(zip_file_source, file_name) -> bool:
+        if zipfile.Path(zip_file_source, file_name).is_dir():
+            return False
+        return True
+
+    @classmethod
+    def get_item_type(cls, item_group):
+        k, files = item_group
+        for file in files:
+            if cls.is_image_format(file) is True:
+                return "item"
+            if file.endswith("mets.xml") is True:
+                return "metadata"
+        return "unknown"
+
+    @staticmethod
+    def is_image_format(file_name: str) -> bool:
+        valid_images_extension = [
+            ".tif",
+            ".jp2"
+        ]
+        base, ext = os.path.splitext(file_name)
+        if ext not in valid_images_extension:
+            return False
+        return True
+
+    @classmethod
+    def iter_items_from_archive(cls, zip_file) -> \
+            Iterator[Tuple[str, Iterable[str]]]:
+
+        with zipfile.ZipFile(zip_file) as item_contents:
+            for file_group in itertools.groupby(
+                    sorted(
+                        filter(
+                            lambda x: cls.filter_files_only(item_contents, x),
+                            item_contents.namelist()
+                        ),
+                        key=cls.get_item_key),
+                    cls.get_item_key):
+                files = list(file_group[1])
+                yield file_group[0], list(map(lambda d: str(d), files))
+
+    def get_content(self):
+        zip_files = []
+        mets_files = []
+        unidentified_files = []
+
+        for item in os.scandir(self.path):
+            zip_file, mets_file, unidentified_file = \
+                self.split_package_content(item)
+
+            if zip_file is not None:
+                zip_files.append(zip_file)
+
+            if mets_file is not None:
+                mets_files.append(mets_file)
+            if unidentified_file is not None:
+                unidentified_files.append(unidentified_file)
+
+        return zip_files, mets_files, unidentified_files

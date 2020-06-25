@@ -14,40 +14,53 @@ class AbsTransformation(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
-                  logger: logging.Logger) -> None:
+                  logger: logging.Logger) -> str:
         pass
 
 
 class CopyFile(AbsTransformation):
     def transform(self, source: str, destination: str,
-                  logger: logging.Logger) -> None:
+                  logger: logging.Logger) -> str:
 
         dest = os.path.abspath(os.path.dirname(destination))
         source_name = os.path.basename(source)
 
         logger.debug("Copying {} to {}".format(source_name, dest))
         shutil.copy(source, destination)
-        logger.info("Added {} to {}".format(source_name, dest))
+        return os.path.join(dest, source_name)
+        # logger.info("Added {} to {}".format(source_name, dest))
+
+
+class ConvertTiff(AbsTransformation):
+
+    def transform(self, source: str, destination: str,
+                  logger: logging.Logger) -> str:
+        base_name, ext = os.path.splitext(source)
+        new_name = f"{base_name}.tif"
+        dest = os.path.abspath(os.path.dirname(destination))
+
+        pykdu_compress.kdu_expand_cli(infile=source, outfile=destination)
+        logger.info("Generated {} in {}".format(new_name, dest))
+        return new_name
 
 
 class ConvertJp2Standard(AbsTransformation):
 
     def transform(self, source: str, destination: str,
-                  logger: logging.Logger) -> None:
+                  logger: logging.Logger) -> str:
 
         base_name, ext = os.path.splitext(source)
         new_name = f"{base_name}.jp2"
-        dest = os.path.abspath(os.path.dirname(destination))
 
         pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
-
-        logger.info("Generated {} in {}".format(new_name, dest))
+        dest = os.path.abspath(os.path.dirname(destination))
+        return os.path.join(dest, new_name)
 
 
 class ConvertJp2Hathi(AbsTransformation):
 
     def transform(self, source: str, destination: str,
-                  logger: logging.Logger) -> None:
+                  logger: logging.Logger) -> str:
         dest = os.path.abspath(os.path.dirname(destination))
 
         base_name, ext = os.path.splitext(os.path.basename(source))
@@ -71,11 +84,9 @@ class ConvertJp2Hathi(AbsTransformation):
                 ],
         )
 
-        logger.info("Fixing up image to 400 dpi")
+        logger.info(f"Fixing up {new_file} to 400 dpi")
         set_dpi(new_file, x=400, y=400)
-
-        logger.info("Generated {} in {}".format(
-            os.path.basename(new_name), dest))
+        return new_file
 
 
 class Transformers:
@@ -85,5 +96,8 @@ class Transformers:
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
 
     def transform(self, source, destination) -> None:
-        return self._strategy.transform(source, destination,
-                                        logger=self._logger)
+        new_name = self._strategy.transform(source, destination,
+                                            logger=self._logger)
+
+        path, filename = os.path.split(new_name)
+        self._logger.info("Added {} in {}".format(filename, path))

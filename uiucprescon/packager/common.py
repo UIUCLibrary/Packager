@@ -31,3 +31,4 @@ class InstantiationTypes(CollectionEnums):
     PRESERVATION = "preservation"
     UNKNOWN = "unknown"
     GENERIC = "generic"
+    SUPPLEMENTARY = "supplementary"
