@@ -15,7 +15,6 @@ def package_names():
 
 
 @pytest.mark.parametrize("dirname,expected_valid", package_names())
-def test_hathi_limited_batch_names(dirname,expected_valid):
+def test_hathi_limited_batch_names(dirname, expected_valid):
     assert HathiLimitedViewBuilder.filter_package_dir_name(dirname) \
            is expected_valid
-
