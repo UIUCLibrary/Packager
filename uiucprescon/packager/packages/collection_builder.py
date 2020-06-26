@@ -581,7 +581,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         others = []
         for item in os.scandir(root):
 
-            if not item.is_dir() or not cls.is_package_dir_name(item):
+            if not item.is_dir() or not cls.is_package_dir_name(item.name):
                 others.append((item.path, item.is_dir()))
                 continue
 

@@ -1,9 +1,15 @@
 import os
 import shutil
+import sys
+import tempfile
+from zipfile import ZipFile
 
 import pytest
 from typing import NamedTuple, Dict
 import pathlib
+
+from uiucprescon import packager
+
 
 class PackageTestType(NamedTuple):
     sub_path: str
@@ -153,5 +159,83 @@ def source_path(tmpdir_factory, capture_one_sample_package, hathi_tiff_sample_pa
                      sample_packages["DigitalLibraryCompound"].sub_path))
 
     yield test_dir
+    shutil.rmtree(test_dir)
+
+
+@pytest.fixture(scope="module", params=["uiuc.40", "uiuc.40834v1", "uiuc.5285248v1924"])
+def hathi_limited_view_sample_packages(tmpdir_factory, request):
+    test_dir = tmpdir_factory.mktemp("hathi_limited")
+    sample_package_names = {
+        "uiuc.40": [
+            (
+                "40.mets.xml",
+                (
+                    "40",
+                    [
+                        "40.mets.xml"
+                    ] +
+                    [f"{str(a).zfill(7)}.txt" for a in range(282)] +
+                    [f"{str(a).zfill(7)}.jp2" for a in range(282)] +
+                    [f"{str(a).zfill(7)}.xml" for a in range(282)]
+                )
+            )
+        ],
+        "uiuc.40834v1": [
+            (
+                "40834v1.mets.xml",
+                (
+                    "40834v1",
+                    [
+                        "40834v1.mets.xml"
+                    ] +
+                    [f"{str(a).zfill(7)}.txt" for a in range(256)] +
+                    [f"{str(a).zfill(7)}.tif" for a in range(256)] +
+                    [f"{str(a).zfill(7)}.xml" for a in range(256)]
+                )
+            )
+        ],
+        "uiuc.5285248v1924": [
+            (
+                "5285248v1924.mets.xml",
+                (
+                    "5285248v1924",
+                    [
+                        "5285248v1924.mets.xml"
+                    ] +
+                    [f"{str(a).zfill(7)}.txt" for a in range(282)] +
+                    [f"{str(a).zfill(7)}.jp2" for a in range(282)] +
+                    [f"{str(a).zfill(7)}.xml" for a in range(282)]
+                )
+            )
+        ]
+    }
+
+    pkg_data = sample_package_names[request.param]
+    pkg_dir = test_dir.join(request.param)
+    os.makedirs(pkg_dir)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        for mets_file_filename, archive_data in pkg_data:
+            with open(pkg_dir.join(mets_file_filename), "w"):
+                # Create an empty file
+                pass
+
+            bib_id, zip_content = archive_data
+
+            with ZipFile(pkg_dir.join(f"{bib_id}.zip"), 'w') as myzip:
+                os.makedirs(os.path.join(tmp_dir, bib_id))
+                for zipped_file in zip_content:
+                    generated_file = os.path.join(tmp_dir, bib_id, zipped_file)
+                    with open(generated_file, "w"):
+                        # Create an empty file
+                        pass
+
+                    arcname = os.path.join(bib_id, zipped_file)
+                    myzip.write(generated_file, arcname=arcname)
+
+    hathi_limited_view_packager = packager.PackageFactory(
+        packager.packages.HathiLimitedView())
+
+    yield list(hathi_limited_view_packager.locate_packages(path=str(test_dir)))
+
     shutil.rmtree(test_dir)
 

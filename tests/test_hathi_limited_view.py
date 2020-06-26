@@ -1,13 +1,15 @@
 import csv
 import os
+import tempfile
 
 import pytest
-
+import shutil
 from uiucprescon import packager
+from uiucprescon.packager.common import Metadata
 from uiucprescon.packager import InstantiationTypes
 from uiucprescon.packager.packages.collection_builder import \
     HathiLimitedViewBuilder
-
+import pykdu_compress
 
 def package_names():
     with open(os.path.join(os.path.dirname(__file__), "package_names.csv")) \
@@ -50,3 +52,33 @@ def test_read_only_transform(capture_one_sample_package):
         packager.packages.HathiLimitedView())
     with pytest.raises(NotImplementedError):
         hathi_limited_view_packager.transform(capture_one_packages, dest=".")
+
+
+def test_convert(hathi_limited_view_sample_packages, monkeypatch):
+
+    def mock_kdu_convert(infile: str, outfile: str, in_args=None, out_args=None):
+        shutil.copyfile(infile, outfile)
+
+    monkeypatch.setattr(pykdu_compress, "kdu_compress_cli2", mock_kdu_convert)
+    monkeypatch.setattr(pykdu_compress, "kdu_expand_cli", mock_kdu_convert)
+
+    digital_library_compound_builder = packager.PackageFactory(
+        packager.packages.DigitalLibraryCompound())
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        for package in hathi_limited_view_sample_packages:
+            digital_library_compound_builder.transform(package, dest=tmp_dir)
+
+        assert len(list(os.scandir(tmp_dir))) == 1
+
+        for i, new_package in enumerate(
+                digital_library_compound_builder.locate_packages(tmp_dir)):
+            assert new_package.metadata[Metadata.ID] == \
+                   hathi_limited_view_sample_packages[i].metadata[Metadata.ID]
+
+            assert new_package.metadata[Metadata.PATH] == tmp_dir
+
+
+
+
+
