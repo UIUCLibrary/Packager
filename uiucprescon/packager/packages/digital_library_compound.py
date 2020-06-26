@@ -98,10 +98,11 @@ class Transform:
 
         """
 
-        supplementary_dir = \
-            os.path.join(self.destination_root,
-                         object_name,
-                         InstantiationTypes.SUPPLEMENTARY.value)
+        supplementary_dir = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.SUPPLEMENTARY.value  # pylint: disable=no-member
+        )
 
         if not os.path.exists(supplementary_dir):
             os.makedirs(supplementary_dir)
@@ -130,10 +131,11 @@ class Transform:
 
         """
 
-        access_path = os.path.join(self.destination_root,
-                                   object_name,
-                                   InstantiationTypes.ACCESS.value
-                                   )
+        access_path = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.ACCESS.value  # pylint: disable=no-member
+        )
         if not os.path.exists(access_path):
             os.makedirs(access_path)
 
@@ -159,10 +161,11 @@ class Transform:
 
     def transform_preservation_file(self, src, item_name, object_name):
 
-        preservation_path = os.path.join(self.destination_root,
-                                         object_name,
-                                         InstantiationTypes.PRESERVATION.value
-                                         )
+        preservation_path = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.PRESERVATION.value  # pylint: disable=no-member
+        )
 
         if not os.path.exists(preservation_path):
             os.makedirs(preservation_path)
