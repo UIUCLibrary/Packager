@@ -567,8 +567,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
     ZIP_FILE_REGEX = r"\.zip"
     PREFIX_REGEX = "UIUC|uiuc"
     package_matcher = re.compile(rf"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
-    zip_file_matcher = re.compile(f"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
-    mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
+    zip_file_matcher = re.compile(rf"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
+    mets_file_matcher = re.compile(rf"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
     @classmethod
     def filter_package_dir_name(cls, dirname) -> bool:
