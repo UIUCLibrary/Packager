@@ -759,7 +759,8 @@ class HathiLimitedViewPackageBuilder:
 
     @staticmethod
     def filter_files_only(zip_file_source, file_name) -> bool:
-        if zipfile.Path(zip_file_source, file_name).is_dir():
+
+        if zip_file_source.getinfo(file_name).is_dir():
             return False
         return True
 
