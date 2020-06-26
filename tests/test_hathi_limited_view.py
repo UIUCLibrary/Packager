@@ -3,6 +3,7 @@ import os
 
 import pytest
 
+from uiucprescon import packager
 from uiucprescon.packager import InstantiationTypes
 from uiucprescon.packager.packages.collection_builder import \
     HathiLimitedViewBuilder
@@ -36,3 +37,16 @@ sample_files = [
 def test_get_file_type(sample_file, expected_valid):
     assert HathiLimitedViewBuilder.get_file_type(sample_file) == expected_valid
     assert True
+
+
+def test_read_only_transform(capture_one_sample_package):
+
+    capture_one_packager = packager.PackageFactory(
+        packager.packages.CaptureOnePackage()
+    )
+    capture_one_packages = capture_one_packager.locate_packages(capture_one_sample_package)
+
+    hathi_limited_view_packager = packager.PackageFactory(
+        packager.packages.HathiLimitedView())
+    with pytest.raises(NotImplementedError):
+        hathi_limited_view_packager.transform(capture_one_packages, dest=".")
