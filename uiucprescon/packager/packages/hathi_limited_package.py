@@ -34,6 +34,8 @@ from .collection import Package
 
 
 class HathiLimitedView(AbsPackageBuilder):
+    """limited-view content received from HathiTrust"""
+
     def locate_packages(self, path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiLimitedViewBuilder()
         batch = builder.build_batch(path)
