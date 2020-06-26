@@ -566,7 +566,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
     METS_FILE_REGEX = r"\.mets\.xml"
     ZIP_FILE_REGEX = r"\.zip"
     PREFIX_REGEX = "UIUC|uiuc"
-    package_matcher = re.compile(f"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
+    package_matcher = re.compile(rf"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
     zip_file_matcher = re.compile(f"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
     mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
@@ -734,7 +734,7 @@ class HathiLimitedViewPackageBuilder:
     ZIP_FILE_REGEX = r"\.zip"
     PREFIX_REGEX = "UIUC|uiuc"
 
-    package_matcher = re.compile(f"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
+    package_matcher = re.compile(rf"^({PREFIX_REGEX})\.{BIB_ID_REGEX}$")
     zip_file_matcher = re.compile(f"^{BIB_ID_REGEX}({ZIP_FILE_REGEX})$")
     mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
