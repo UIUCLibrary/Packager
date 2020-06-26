@@ -140,8 +140,11 @@ class Instantiation(AbsPackageComponent):
                     temp_file = os.path.join(temp_dir.name,
                                              self.metadata[Metadata.PATH],
                                              f)
+
                     zip_file.extract(
-                        os.path.join(self.metadata[Metadata.PATH], f),
+                        os.path.normpath(
+                            os.path.join(self.metadata[Metadata.PATH], f)
+                        ),
                         path=temp_dir.name)
                     yield temp_file
             else:
