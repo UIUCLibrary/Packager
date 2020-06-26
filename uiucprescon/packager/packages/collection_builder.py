@@ -571,17 +571,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
     mets_file_matcher = re.compile(rf"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
     @classmethod
-    def filter_package_dir_name(cls, dirname) -> bool:
+    def is_package_dir_name(cls, dirname) -> bool:
         if not cls.package_matcher.match(dirname):
-            return False
-        return True
-
-    @classmethod
-    def filter_package_dirs(cls, item: os.DirEntry) -> bool:
-        if not cls.filter_package_dir_name(item.name):
-            return False
-
-        if not item.is_dir():
             return False
         return True
 
@@ -590,7 +581,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         others = []
         for item in os.scandir(root):
 
-            if not cls.filter_package_dirs(item):
+            if not item.is_dir() or not cls.is_package_dir_name(item):
                 others.append((item.path, item.is_dir()))
                 continue
 
@@ -635,9 +626,6 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
         return None, None, item
 
-    # @staticmethod
-    # def identify_package_files():
-
     @staticmethod
     def filter_image_format(file_name: str) -> bool:
         valid_images_extension = [
@@ -645,7 +633,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             ".jp2"
         ]
         base, ext = os.path.splitext(file_name)
-        if ext not in valid_images_extension:
+        if ext.lower() not in valid_images_extension:
             return False
         return True
 
@@ -720,7 +708,6 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
                 return InstantiationTypes.PRESERVATION
             if ext.lower() == ".jp2":
                 return InstantiationTypes.ACCESS
-            return InstantiationTypes.UNKNOWN
 
         if ext.lower() == ".txt":
             return InstantiationTypes.SUPPLEMENTARY
