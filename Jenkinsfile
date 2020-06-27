@@ -144,7 +144,7 @@ pipeline {
                 stage("Python Package"){
 //                     agent {
 //                         dockerfile {
-//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                             filename 'ci/docker/python/windows/Dockerfile'
 //                             label "windows && docker"
 //                         }
 //                     }
@@ -221,7 +221,7 @@ pipeline {
             }
 //             agent {
 //                 dockerfile {
-//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     filename 'ci/docker/python/windows/Dockerfile'
 //                     label "windows && docker"
 //                 }
 //             }
@@ -533,7 +533,7 @@ pipeline {
                     stage("Testing Package"){
                         agent {
                             dockerfile {
-                                filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+                                filename 'ci/docker/python/windows/Dockerfile'
                                 label "windows && docker"
                                 additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
                             }
