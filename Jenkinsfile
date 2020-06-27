@@ -11,7 +11,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.6-windowsservercore",
+            test_docker_image: [
+                windows: "python:3.6-windowsservercore",
+                linux: "python:3.6"
+            ],
             tox_env: "py36",
             devpi_wheel_regex: "cp36"
 
@@ -25,7 +28,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.7",
+            test_docker_image: [
+                windows: "python:3.7",
+                linux: "python:3.7"
+            ],
             tox_env: "py37",
             devpi_wheel_regex: "cp37"
         ],
@@ -38,7 +44,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.8",
+            test_docker_image: [
+                windows: "python:3.8",
+                linux: "python:3.8"
+            ],
             tox_env: "py38",
             devpi_wheel_regex: "cp38"
         ]
@@ -529,7 +538,7 @@ pipeline {
                             dockerfile {
                                 filename "ci/docker/python/${PLATFORM}/Dockerfile"
                                 label "${${PLATFORM}} && docker"
-                                additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
+                                additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
                             }
                         }
                         steps{
