@@ -514,7 +514,7 @@ pipeline {
                         name "PLATFORM"
                         values(
                             "windows",
-//                             "3.8"
+                            "linux"
                         )
                     }
                     axis {
