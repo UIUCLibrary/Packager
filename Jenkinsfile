@@ -142,12 +142,6 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
-//                     agent {
-//                         dockerfile {
-//                             filename 'ci/docker/python/windows/Dockerfile'
-//                             label "windows && docker"
-//                         }
-//                     }
                     agent {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
@@ -533,7 +527,7 @@ pipeline {
                     stage("Testing Package"){
                         agent {
                             dockerfile {
-                                filename 'ci/docker/python/windows/Dockerfile'
+                                filename "ci/docker/python/${PLATFORM}/Dockerfile"
                                 label "windows && docker"
                                 additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
                             }
