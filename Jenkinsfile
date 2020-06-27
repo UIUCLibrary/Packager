@@ -543,21 +543,21 @@ pipeline {
                         }
                         steps{
                             unstash "PYTHON_PACKAGES"
-                            bat(
-                                label: "Checking Python version",
-                                script: "python --version"
-                            )
                             script{
                                 findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
                                     timeout(15){
                                         if(PLATFORM == "windows"){
                                             bat(
-                                                script: "tox --installpkg=${it.path} -e py -vv",
+                                                script: """python --version
+                                                           tox --installpkg=${it.path} -e py -vv
+                                                           """,
                                                 label: "Testing ${it}"
                                             )
                                         } else {
                                             sh(
-                                                script: "tox --installpkg=${it.path} -e py -vv",
+                                                script: """python --version
+                                                           tox --installpkg=${it.path} -e py -vv
+                                                           """,
                                                 label: "Testing ${it}"
                                             )
                                         }
