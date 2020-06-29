@@ -627,27 +627,26 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         agent {
                           dockerfile {
                             additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
-                            filename 'CI/docker/deploy/devpi/test/windows/Dockerfile'
+                            filename 'ci/docker/python/windows/Dockerfile'
                             label 'windows && docker'
                           }
                         }
                         stages{
                             stage("Testing DevPi Package"){
-                                options{
-                                    timeout(10)
-                                }
                                 steps{
                                     script{
                                         unstash "DIST-INFO"
                                         def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                        bat(
-                                            label: "Connecting to Devpi Server",
-                                            script: "devpi use https://devpi.library.illinois.edu --clientdir certs\\ && devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\ && devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\"
-                                        )
-                                        bat(
-                                            label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
-                                            script: "devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v"
-                                        )
+                                        timeout(10){
+                                            bat(
+                                                label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
+                                                script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
+                                                           devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
+                                                           devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\
+                                                           devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
+                                                           """
+                                            )
+                                        }
                                     }
                                 }
                                 post{
