@@ -373,8 +373,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
             base, ext = os.path.splitext(item.name)
             if ext.lower() == ".tif":
                 return "main_files"
-            else:
-                return "sidecar"
+            return "sidecar"
 
         matching_files = \
             filter(lambda x, file_name=filename:
@@ -531,8 +530,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         base, ext = os.path.splitext(item.name)
         if ext.lower() == ".jp2":
             return "main_files"
-        else:
-            return "sidecar"
+        return "sidecar"
 
     @classmethod
     def build_instance(cls, parent, path, filename, *args, **kwargs):
