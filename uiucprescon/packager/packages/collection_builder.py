@@ -349,7 +349,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         if not item.is_file():
             return False
 
-        base, ext = os.path.splitext(item.name)
+        ext = os.path.splitext(item.name)[1]
         if ext.lower() != ".tif":
             return False
         return True
@@ -370,7 +370,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
                                           parent=parent)
 
         def _organize_files(item: os.DirEntry) -> str:
-            base, ext = os.path.splitext(item.name)
+            ext = os.path.splitext(item.name)[1]
             if ext.lower() == ".tif":
                 return "main_files"
             return "sidecar"
@@ -512,7 +512,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         if not item.is_file():
             return False
 
-        base, ext = os.path.splitext(item.name)
+        ext = os.path.splitext(item.name)[1]
         if ext.lower() != ".jp2":
             return False
         return True
@@ -527,7 +527,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
     @staticmethod
     def _organize_files(item: os.DirEntry) -> str:
-        base, ext = os.path.splitext(item.name)
+        ext = os.path.splitext(item.name)[1]
         if ext.lower() == ".jp2":
             return "main_files"
         return "sidecar"
