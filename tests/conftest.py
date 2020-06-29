@@ -38,7 +38,7 @@ def capture_one_sample_package(tmpdir_factory):
                       "000001_00000003.tif",
                       "000002_00000001.tif",
                       "000002_00000002.tif"]:
-        pathlib.Path(os.path.join(test_dir, file_name)).touch()
+        test_dir.join(file_name).write("")
 
     yield test_dir
     shutil.rmtree(test_dir)
