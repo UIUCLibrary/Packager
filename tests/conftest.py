@@ -211,26 +211,22 @@ def hathi_limited_view_sample_packages(tmpdir_factory, request):
     }
 
     pkg_data = sample_package_names[request.param]
-    pkg_dir = test_dir.join(request.param)
-    os.makedirs(pkg_dir)
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        for mets_file_filename, archive_data in pkg_data:
-            with open(pkg_dir.join(mets_file_filename), "w"):
-                # Create an empty file
-                pass
+    pkg_dir = test_dir.mkdir(request.param)
+    tmp_dir = test_dir.mkdir(f"build_dir-{request.param}")
 
-            bib_id, zip_content = archive_data
+    # with tempfile.TemporaryDirectory() as tmp_dir:
+    for mets_file_filename, archive_data in pkg_data:
+        pkg_dir.join(mets_file_filename).write("")
+        bib_id, zip_content = archive_data
 
-            with ZipFile(pkg_dir.join(f"{bib_id}.zip"), 'w') as myzip:
-                os.makedirs(os.path.join(tmp_dir, bib_id))
-                for zipped_file in zip_content:
-                    generated_file = os.path.join(tmp_dir, bib_id, zipped_file)
-                    with open(generated_file, "w"):
-                        # Create an empty file
-                        pass
+        with ZipFile(pkg_dir.join(f"{bib_id}.zip"), 'w') as myzip:
+            build_package_dir = tmp_dir.mkdir(bib_id)
+            for zipped_file in zip_content:
+                generated_file = build_package_dir.join(zipped_file)
+                generated_file.write("")
 
-                    arcname = os.path.join(bib_id, zipped_file)
-                    myzip.write(generated_file, arcname=arcname)
+                arcname = os.path.join(bib_id, zipped_file)
+                myzip.write(generated_file, arcname=arcname)
 
     hathi_limited_view_packager = packager.PackageFactory(
         packager.packages.HathiLimitedView())
