@@ -77,7 +77,7 @@ class Batch(AbsPackageComponent):
     def __init__(self, path=None, parent=None):
         super().__init__(parent)
         self.path = path
-        self.packages:  typing.List[Package] = []
+        self.packages: typing.List[Package] = []
 
 
 class Package(AbsPackageComponent):
