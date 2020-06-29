@@ -12,18 +12,10 @@ include requirements.txt
 # Development requirements
 include requirements-dev.txt
 
-# Mypy settings
-include mypy.ini
-
-# Build scripts
-include Makefile
-include make.bat
-
 # Tox configuration setting
 include tox.ini
 
 # Pytest configuration setting
-include pytest.ini
 recursive-include tests *.py
 
 # Behave tests
