@@ -164,7 +164,7 @@ class DSBuilder(AbsCollectionBuilder):
         return new_batch
 
     @classmethod
-    def build_instance(cls, parent, path, filename):
+    def build_instance(cls, path, parent, filename, *args, **kwargs):
 
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
@@ -200,7 +200,7 @@ class DSBuilder(AbsCollectionBuilder):
 class BrittleBooksBuilder(AbsCollectionBuilder):
 
     @classmethod
-    def build_instance(cls, parent, path, filename):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
         new_instantiation = Instantiation(
             category=InstantiationTypes.ACCESS,
             parent=parent)
@@ -272,7 +272,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         return new_batch
 
     @classmethod
-    def build_instance(cls, parent, path, filename):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
 
         new_instantiation = \
             Instantiation(category=InstantiationTypes.PRESERVATION,
@@ -364,7 +364,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
             cls.build_instance(new_item, filename=item_part, path=path)
 
     @classmethod
-    def build_instance(cls, parent, path, filename):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
 
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
@@ -535,7 +535,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             return "sidecar"
 
     @classmethod
-    def build_instance(cls, parent, filename, path, *args, **kwargs):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
 
