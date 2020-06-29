@@ -212,9 +212,8 @@ def hathi_limited_view_sample_packages(tmpdir_factory, request):
 
     pkg_data = sample_package_names[request.param]
     pkg_dir = test_dir.mkdir(request.param)
-    tmp_dir = test_dir.mkdir(f"build_dir-{request.param}")
 
-    # with tempfile.TemporaryDirectory() as tmp_dir:
+    tmp_dir = test_dir.mkdir(f"build_dir-{request.param}")
     for mets_file_filename, archive_data in pkg_data:
         pkg_dir.join(mets_file_filename).write("")
         bib_id, zip_content = archive_data
