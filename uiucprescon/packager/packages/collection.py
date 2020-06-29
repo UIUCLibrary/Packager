@@ -141,9 +141,13 @@ class Instantiation(AbsPackageComponent):
                 with ZipFile(zip_file_name) as zip_file:
 
                     # On Windows ZipFile expects unix-style slashes
-                    file_to_extract = os.path.join(self.metadata[Metadata.PATH], f).replace("\\", "/")
+                    file_to_extract = \
+                        os.path.join(self.metadata[Metadata.PATH],
+                                     f).replace("\\", "/")
                     try:
-                        yield zip_file.extract(file_to_extract, path=temp_dir.name)
+                        yield zip_file.extract(file_to_extract,
+                                               path=temp_dir.name)
+
                     except KeyError as e:
                         raise ZipFileException(e, zip_file=zip_file_name,
                                                problem_files=[file_to_extract])
