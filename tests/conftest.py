@@ -164,7 +164,7 @@ def source_path(tmpdir_factory, capture_one_sample_package, hathi_tiff_sample_pa
 
 @pytest.fixture(scope="module", params=["uiuc.40", "uiuc.40834v1", "uiuc.5285248v1924"])
 def hathi_limited_view_sample_packages(tmpdir_factory, request):
-    test_dir = tmpdir_factory.mktemp("hathi_limited", numbered=False)
+    test_dir = tmpdir_factory.mktemp("hathi_limited", numbered=True)
     sample_package_names = {
         "uiuc.40": [
             (
