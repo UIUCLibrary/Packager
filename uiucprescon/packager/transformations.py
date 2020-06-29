@@ -49,7 +49,7 @@ class ConvertJp2Standard(AbsTransformation):
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
 
-        base_name, ext = os.path.splitext(source)
+        base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.jp2"
 
         pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
@@ -63,7 +63,7 @@ class ConvertJp2Hathi(AbsTransformation):
                   logger: logging.Logger) -> str:
         dest = os.path.abspath(os.path.dirname(destination))
 
-        base_name, ext = os.path.splitext(os.path.basename(source))
+        base_name = os.path.splitext(os.path.basename(source))[0]
         new_name = f"{base_name}.jp2"
         new_file = os.path.join(dest, new_name)
         pykdu_compress.kdu_compress_cli2(

@@ -632,7 +632,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             ".tif",
             ".jp2"
         ]
-        base, ext = os.path.splitext(file_name)
+        ext = os.path.splitext(file_name)[1]
         if ext.lower() not in valid_images_extension:
             return False
         return True
@@ -649,6 +649,9 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         if len(mets_files) != 1:
             raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
                                  f"found {len(mets_files)}")
+        if len(invalid_files) != 1:
+            print("Found invalid files {}".format(",".join(invalid_files)))
+
         contents = cls.get_zip_content(package_builder, zip_files)
 
         for k, files in contents['item'].items():
@@ -666,7 +669,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
                 package_builder.iter_items_from_archive(zip_files[0]),
                 key=package_builder.get_item_type),
                 key=package_builder.get_item_type):
-            file_type, files = i
+            files = i[1]
             contents[i[0]] = dict(files)
         return contents
 
@@ -701,7 +704,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def get_file_type(cls, file_name) -> InstantiationTypes:
-        base, ext = os.path.splitext(file_name)
+        ext = os.path.splitext(file_name)[1]
 
         if cls.filter_image_format(file_name):
             if ext.lower() == ".tif":
@@ -766,7 +769,7 @@ class HathiLimitedViewPackageBuilder:
 
     @classmethod
     def get_item_type(cls, item_group):
-        k, files = item_group
+        _, files = item_group
         for file in files:
             if cls.is_image_format(file) is True:
                 return "item"
@@ -780,7 +783,7 @@ class HathiLimitedViewPackageBuilder:
             ".tif",
             ".jp2"
         ]
-        base, ext = os.path.splitext(file_name)
+        ext = os.path.splitext(file_name)[1]
         if ext not in valid_images_extension:
             return False
         return True
