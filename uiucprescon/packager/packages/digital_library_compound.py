@@ -71,7 +71,8 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                     transformer.transform_access_file(file_, item_name,
                                                       object_name)
 
-    def get_file_base_name(self, item_name, object_name):
+    @staticmethod
+    def get_file_base_name(item_name, object_name):
         new_base_name = f"{object_name}_{item_name}"
         return new_base_name
 
