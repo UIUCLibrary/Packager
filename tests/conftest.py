@@ -164,7 +164,7 @@ def source_path(tmpdir_factory, capture_one_sample_package, hathi_tiff_sample_pa
 
 @pytest.fixture(scope="module", params=["uiuc.40", "uiuc.40834v1", "uiuc.5285248v1924"])
 def hathi_limited_view_sample_packages(tmpdir_factory, request):
-    test_dir = tmpdir_factory.mktemp("hathi_limited", numbered=True)
+    test_dir = tmpdir_factory.mktemp(f"hathi_limited-{request.param}", numbered=True)
     sample_package_names = {
         "uiuc.40": [
             (
@@ -211,13 +211,17 @@ def hathi_limited_view_sample_packages(tmpdir_factory, request):
     }
 
     pkg_data = sample_package_names[request.param]
+
+    # eg: 5285248v1924/
     pkg_dir = test_dir.mkdir(request.param)
 
     tmp_dir = test_dir.mkdir(f"build_dir-{request.param}")
     for mets_file_filename, archive_data in pkg_data:
+        # Add any files to the package
         pkg_dir.join(mets_file_filename).write("")
         bib_id, zip_content = archive_data
 
+        # eg: 5285248v1924/5285248v1924.zip
         with ZipFile(pkg_dir.join(f"{bib_id}.zip"), 'w') as myzip:
             build_package_dir = tmp_dir.mkdir(bib_id)
             for zipped_file in zip_content:
@@ -230,6 +234,4 @@ def hathi_limited_view_sample_packages(tmpdir_factory, request):
     hathi_limited_view_packager = packager.PackageFactory(
         packager.packages.HathiLimitedView())
 
-    with tempfile.TemporaryDirectory() as tmp_package_dir:
-        shutil.copytree(tmp_dir, os.path.join(tmp_package_dir, request.param))
-        yield list(hathi_limited_view_packager.locate_packages(path=str(test_dir)))
+    yield list(hathi_limited_view_packager.locate_packages(path=str(test_dir)))

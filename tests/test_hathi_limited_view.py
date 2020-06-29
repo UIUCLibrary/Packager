@@ -73,8 +73,10 @@ def test_convert(hathi_limited_view_sample_packages, monkeypatch):
             try:
                 digital_library_compound_builder.transform(package, dest=tmp_dir)
             except errors.ZipFileException as e:
-                print(f"{e.src} had a problem", file=sys.stderr)
-                problem_file = zipfile.ZipFile(e.src)
+                print(f"{e.src_zip_file} had a problem", file=sys.stderr)
+                if len(e.problem_files) > 0:
+                    print(f"Problems with {','.join(e.problem_files)}", file=sys.stderr)
+                problem_file = zipfile.ZipFile(e.src_zip_file)
                 print(problem_file.namelist(), file=sys.stderr)
                 raise
 
