@@ -35,7 +35,7 @@ class ConvertTiff(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
-        base_name, ext = os.path.splitext(source)
+        base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.tif"
         dest = os.path.abspath(os.path.dirname(destination))
 
