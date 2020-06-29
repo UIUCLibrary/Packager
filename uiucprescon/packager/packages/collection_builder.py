@@ -164,7 +164,7 @@ class DSBuilder(AbsCollectionBuilder):
         return new_batch
 
     @classmethod
-    def build_instance(cls, path, parent, filename, *args, **kwargs):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
 
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
@@ -417,7 +417,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         return new_batch
 
     @classmethod
-    def build_instance(cls, parent, filename, path):
+    def build_instance(cls, parent, path, filename, *args, **kwargs):
         access_file = os.path.join(path, "access", filename + ".jp2")
 
         preservation_file = os.path.join(path, "preservation",

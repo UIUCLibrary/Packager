@@ -21,10 +21,10 @@ class CaptureOnePackage(AbsPackageBuilder):
       - uniqueID2_00000002.tif
 """
 
-    def locate_packages(self, batch_path) -> typing.Iterator[Package]:
+    def locate_packages(self, path) -> typing.Iterator[Package]:
 
         builder = collection_builder.CaptureOneBuilder()
-        for package in builder.build_batch(batch_path):
+        for package in builder.build_batch(path):
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
