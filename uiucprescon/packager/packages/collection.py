@@ -135,7 +135,7 @@ class Instantiation(AbsPackageComponent):
 
     def get_files(self):
         temp_dir = TemporaryDirectory()
-        for f in self._files:
+        for pkg_file in self._files:
             if ".zip" in self.parent.metadata[Metadata.PATH]:
                 zip_file_name = self.parent.metadata[Metadata.PATH]
                 with ZipFile(zip_file_name) as zip_file:
@@ -143,7 +143,7 @@ class Instantiation(AbsPackageComponent):
                     # On Windows ZipFile expects unix-style slashes
                     file_to_extract = \
                         os.path.join(self.metadata[Metadata.PATH],
-                                     f).replace("\\", "/")
+                                     pkg_file).replace("\\", "/")
                     try:
                         yield zip_file.extract(file_to_extract,
                                                path=temp_dir.name)
@@ -153,7 +153,7 @@ class Instantiation(AbsPackageComponent):
                                                problem_files=[file_to_extract])
 
             else:
-                yield os.path.join(self.metadata[Metadata.PATH], f)
+                yield os.path.join(self.metadata[Metadata.PATH], pkg_file)
 
     @property
     def children(self):
