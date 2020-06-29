@@ -139,17 +139,15 @@ class Instantiation(AbsPackageComponent):
             if ".zip" in self.parent.metadata[Metadata.PATH]:
                 zip_file_name = self.parent.metadata[Metadata.PATH]
                 with ZipFile(zip_file_name) as zip_file:
-                    temp_file = os.path.join(temp_dir.name,
-                                             self.metadata[Metadata.PATH],
-                                             f)
 
-                    file_to_extract = f"{self.metadata[Metadata.PATH]}/{f}"
+                    # On Windows ZipFile expects unix-style slashes
+                    file_to_extract = os.path.join(self.metadata[Metadata.PATH], f).replace("\\", "/")
                     try:
-                        zip_file.extract(file_to_extract, path=temp_dir.name)
+                        yield zip_file.extract(file_to_extract, path=temp_dir.name)
                     except KeyError as e:
                         raise ZipFileException(e, zip_file=zip_file_name,
                                                problem_files=[file_to_extract])
-                    yield temp_file
+
             else:
                 yield os.path.join(self.metadata[Metadata.PATH], f)
 
