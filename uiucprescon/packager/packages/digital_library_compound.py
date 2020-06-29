@@ -4,7 +4,7 @@ import os
 import typing
 
 from uiucprescon.packager.packages.collection import Package
-from uiucprescon.packager.common import Metadata
+from uiucprescon.packager.common import Metadata, InstantiationTypes
 from uiucprescon.packager import transformations
 from . import collection_builder
 from .abs_package_builder import AbsPackageBuilder
@@ -30,6 +30,10 @@ class DigitalLibraryCompound(AbsPackageBuilder):
          + access (folder)
              - uniqueID2_00000001.jp2
              - uniqueID2_00000002.jp2
+
+    .. versionchanged:: 0.1.3
+        Possible to transform packages that contain images in a compressed file
+
     """
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
@@ -46,49 +50,149 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
 
-            access_path = os.path.join(dest, object_name, "access")
-            preservation_path = os.path.join(dest, object_name, "preservation")
-
-            if not os.path.exists(access_path):
-                os.makedirs(access_path)
-
-            if not os.path.exists(preservation_path):
-                os.makedirs(preservation_path)
-
+            transformer = Transform(logger, self, destination_root=dest)
             for inst in item:
                 if len(inst.files) != 1:
                     raise AssertionError(
                         f"Each instance should have only 1 file, found "
                         f"{inst.files}: [{', '.join(inst.files)}]")
 
-                for file_ in inst.files:
-                    base_name, ext = os.path.splitext(os.path.basename(file_))
-                    category = inst.category
+                for file_ in inst.get_files():
 
-                    new_file_name = "{}_{}{}".format(object_name,
-                                                     item_name,
-                                                     ext)
+                    if inst.category == InstantiationTypes.SUPPLEMENTARY:
+                        transformer.transform_supplementary_data(file_,
+                                                                 item_name,
+                                                                 object_name)
+                        continue
 
-                    new_preservation_file_path = os.path.join(dest,
-                                                              object_name,
-                                                              category.value,
-                                                              new_file_name)
+                    transformer.transform_preservation_file(file_, item_name,
+                                                            object_name)
 
-                    copier = transformations.Transformers(
-                        strategy=transformations.CopyFile(),
-                        logger=logger
-                    )
+                    transformer.transform_access_file(file_, item_name,
+                                                      object_name)
 
-                    copier.transform(source=file_,
-                                     destination=new_preservation_file_path)
+    def get_file_base_name(self, item_name, object_name):
+        new_base_name = f"{object_name}_{item_name}"
+        return new_base_name
 
-                    access_file = "{}.jp2".format(base_name)
 
-                    access_file_full_path = os.path.join(access_path,
-                                                         access_file)
+class Transform:
 
-                    converter = transformations.Transformers(
-                        strategy=transformations.ConvertJp2Standard(),
-                        logger=logger)
+    def __init__(self, logger, package_builder: DigitalLibraryCompound,
+                 destination_root) -> None:
 
-                    converter.transform(file_, access_file_full_path)
+        self._package_builder = package_builder
+        self.logger = logger
+        self.destination_root = destination_root
+
+    def transform_supplementary_data(self, src: str, item_name: str,
+                                     object_name: str):
+        """Transform the supplementary file
+
+       Args:
+            src: supplementary file to be used
+            item_name: Item name of that the file belongs to
+            object_name: Object name of that the file belongs to
+
+        Returns:
+
+        """
+
+        supplementary_dir = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.SUPPLEMENTARY.value  # pylint: disable=no-member
+        )
+
+        if not os.path.exists(supplementary_dir):
+            os.makedirs(supplementary_dir)
+
+        base_name = self._package_builder.get_file_base_name(
+            item_name, object_name)
+        ext = os.path.splitext(src)[1]
+        new_file = os.path.join(supplementary_dir, f"{base_name}{ext}")
+
+        copier = transformations.Transformers(
+            strategy=transformations.CopyFile(),
+            logger=self.logger
+        )
+        copier.transform(src, new_file)
+
+    def transform_access_file(self, src: str, item_name: str,
+                              object_name: str):
+        """Transform the file into an access file
+
+        Args:
+            src: file to be used to generate the access file
+            item_name: Item name of that the file belongs to
+            object_name: Object name of that the file belongs to
+
+        Returns:
+
+        """
+
+        access_path = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.ACCESS.value  # pylint: disable=no-member
+        )
+        if not os.path.exists(access_path):
+            os.makedirs(access_path)
+
+        access_file = "{}.jp2".format(
+            self._package_builder.get_file_base_name(item_name, object_name)
+        )
+
+        access_file_full_path = os.path.join(access_path, access_file)
+        ext = os.path.splitext(src)[1]
+        if ext.lower() == ".jp2":
+            access_file_maker = transformations.Transformers(
+                strategy=transformations.CopyFile(),
+                logger=self.logger)
+
+        elif ext.lower() == ".tif":
+            access_file_maker = transformations.Transformers(
+                strategy=transformations.ConvertJp2Standard(),
+                logger=self.logger)
+        else:
+            raise ValueError("Unknown extension {}".format(ext))
+
+        access_file_maker.transform(src, access_file_full_path)
+
+    def transform_preservation_file(self, src, item_name, object_name):
+
+        preservation_path = os.path.join(
+            self.destination_root,
+            object_name,
+            InstantiationTypes.PRESERVATION.value  # pylint: disable=no-member
+        )
+
+        if not os.path.exists(preservation_path):
+            os.makedirs(preservation_path)
+
+        new_base_name = self._package_builder.get_file_base_name(
+            item_name, object_name)
+
+        new_preservation_file_path = \
+            os.path.join(self.destination_root,
+                         object_name,
+                         "preservation",
+                         f"{new_base_name}.tif")
+
+        ext = os.path.splitext(src)[1]
+        if ext.lower() == ".jp2":
+
+            preservation_file_copier = transformations.Transformers(
+                strategy=transformations.ConvertTiff(),
+                logger=self.logger
+            )
+
+        elif ext.lower() == ".tif":
+            preservation_file_copier = transformations.Transformers(
+                strategy=transformations.CopyFile(),
+                logger=self.logger)
+        else:
+            raise ValueError("Unknown extension {}".format(ext))
+
+        preservation_file_copier.transform(
+            source=src, destination=new_preservation_file_path)

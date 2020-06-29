@@ -1,0 +1,18 @@
+bandit
+behave
+conan
+coverage
+flake8
+lxml
+mypy
+pykdu-compress>=0.1.3b4
+pylint
+pytest
+pytest-cov
+pytest-bdd >= 3.1.0
+pytest-runner
+rinohtype
+six==1.14.0
+sphinx
+sphinx-argparse
+tox

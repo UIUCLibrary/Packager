@@ -28,6 +28,7 @@ recursive-include tests *.py
 
 # Behave tests
 recursive-include tests/features *.py *.feature
+include tests/package_names.csv
 
 # Documentation
 include docs/Makefile

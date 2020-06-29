@@ -1,0 +1,10 @@
+[run]
+branch = True
+source = uiucprescon
+
+[paths]
+source = uiucprescon
+
+[report]
+exclude_lines =
+    if TYPE_CHECKING:

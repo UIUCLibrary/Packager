@@ -11,7 +11,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.6-windowsservercore",
+            test_docker_image: [
+                windows: "python:3.6-windowsservercore",
+                linux: "python:3.6"
+            ],
             tox_env: "py36",
             devpi_wheel_regex: "cp36"
 
@@ -25,7 +28,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.7",
+            test_docker_image: [
+                windows: "python:3.7",
+                linux: "python:3.7"
+            ],
             tox_env: "py37",
             devpi_wheel_regex: "cp37"
         ],
@@ -38,7 +44,10 @@ def CONFIGURATIONS = [
                     pkgRegex: "*.zip",
                 ]
             ],
-            test_docker_image: "python:3.8",
+            test_docker_image: [
+                windows: "python:3.8",
+                linux: "python:3.8"
+            ],
             tox_env: "py38",
             devpi_wheel_regex: "cp38"
         ]
@@ -142,12 +151,6 @@ pipeline {
         stage('Build') {
             parallel {
                 stage("Python Package"){
-//                     agent {
-//                         dockerfile {
-//                             filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-//                             label "windows && docker"
-//                         }
-//                     }
                     agent {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
@@ -221,7 +224,7 @@ pipeline {
             }
 //             agent {
 //                 dockerfile {
-//                     filename 'ci/docker/python/windows/build/msvc/Dockerfile'
+//                     filename 'ci/docker/python/windows/Dockerfile'
 //                     label "windows && docker"
 //                 }
 //             }
@@ -332,19 +335,22 @@ pipeline {
                         }
                         stage("Run Pylint Static Analysis") {
                             steps{
-                                catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
+                                withEnv(['PYLINTHOME=.']) {
+                                    catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
+                                        sh(
+                                            script: '''mkdir -p logs
+                                                       mkdir -p reports
+                                                       pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt
+                                                       ''',
+                                            label: "Running pylint"
+                                        )
+                                    }
                                     sh(
-                                        script: '''mkdir -p logs
-                                                   mkdir -p reports
-                                                   pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt''',
-                                        label: "Running pylint"
+                                        script: 'pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt',
+                                        label: "Running pylint for sonarqube",
+                                        returnStatus: true
                                     )
                                 }
-                                sh(
-                                    script: 'pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt',
-                                    label: "Running pylint for sonarqube",
-                                    returnStatus: true
-                                )
                             }
                             post{
                                 always{
@@ -505,6 +511,13 @@ pipeline {
                 agent none
                 axes{
                     axis {
+                        name "PLATFORM"
+                        values(
+                            "windows",
+                            "linux"
+                        )
+                    }
+                    axis {
                         name "PYTHON_VERSION"
                         values(
                             "3.7",
@@ -523,24 +536,31 @@ pipeline {
                     stage("Testing Package"){
                         agent {
                             dockerfile {
-                                filename 'ci/docker/python/windows/build/msvc/Dockerfile'
-                                label "windows && docker"
-                                additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
+                                filename "ci/docker/python/${PLATFORM}/Dockerfile"
+                                label "${PLATFORM} && docker"
+                                additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
                             }
                         }
                         steps{
                             unstash "PYTHON_PACKAGES"
-                            bat(
-                                label: "Checking Python version",
-                                script: "python --version"
-                            )
                             script{
                                 findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
                                     timeout(15){
-                                        bat(
-                                            script: "tox --installpkg=${WORKSPACE}\\${it} -e py",
-                                            label: "Testing ${it}"
-                                        )
+                                        if(PLATFORM == "windows"){
+                                            bat(
+                                                script: """python --version
+                                                           tox --installpkg=${it.path} -e py -vv
+                                                           """,
+                                                label: "Testing ${it}"
+                                            )
+                                        } else {
+                                            sh(
+                                                script: """python --version
+                                                           tox --installpkg=${it.path} -e py -vv
+                                                           """,
+                                                label: "Testing ${it}"
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -548,6 +568,7 @@ pipeline {
                         post{
                             cleanup{
                                 cleanWs(
+                                    notFailBuild: true,
                                     deleteDirs: true,
                                     patterns: [
                                         [pattern: 'dist/', type: 'INCLUDE'],
