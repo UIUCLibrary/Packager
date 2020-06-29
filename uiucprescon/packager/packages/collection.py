@@ -8,6 +8,8 @@ from uiucprescon.packager.common import InstantiationTypes
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
+from uiucprescon.packager.errors import ZipFileException
+
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
     def __init__(self, parent=None) -> None:
@@ -141,11 +143,15 @@ class Instantiation(AbsPackageComponent):
                                              self.metadata[Metadata.PATH],
                                              f)
 
-                    zip_file.extract(
-                        os.path.normpath(
-                            os.path.join(self.metadata[Metadata.PATH], f)
-                        ),
-                        path=temp_dir.name)
+                    try:
+                        zip_file.extract(
+                            os.path.normpath(
+                                os.path.join(self.metadata[Metadata.PATH], f)
+                            ),
+                            path=temp_dir.name)
+                    except KeyError as e:
+
+                        raise ZipFileException(e, src=zip_file_name)
                     yield temp_file
             else:
                 yield os.path.join(self.metadata[Metadata.PATH], f)

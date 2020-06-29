@@ -1,10 +1,13 @@
 import csv
 import os
+import sys
 import tempfile
+import zipfile
 
 import pytest
 import shutil
 from uiucprescon import packager
+from uiucprescon.packager import errors
 from uiucprescon.packager.common import Metadata
 from uiucprescon.packager import InstantiationTypes
 from uiucprescon.packager.packages.collection_builder import \
@@ -67,7 +70,14 @@ def test_convert(hathi_limited_view_sample_packages, monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         for package in hathi_limited_view_sample_packages:
-            digital_library_compound_builder.transform(package, dest=tmp_dir)
+            try:
+                digital_library_compound_builder.transform(package, dest=tmp_dir)
+            except errors.ZipFileException as e:
+                print(f"{e.src} had a problem", file=sys.stderr)
+                problem_file = zipfile.ZipFile(e.src)
+                print(problem_file.namelist(), file=sys.stderr)
+                raise
+
 
         assert len(list(os.scandir(tmp_dir))) == 1
 
