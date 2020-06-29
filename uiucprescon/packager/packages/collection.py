@@ -143,7 +143,7 @@ class Instantiation(AbsPackageComponent):
                                              self.metadata[Metadata.PATH],
                                              f)
 
-                    file_to_extract = os.path.normcase(os.path.join(self.metadata[Metadata.PATH], f))
+                    file_to_extract = f"{self.metadata[Metadata.PATH]}/{f}"
                     try:
                         zip_file.extract(file_to_extract, path=temp_dir.name)
                     except KeyError as e:
