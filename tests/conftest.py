@@ -229,10 +229,7 @@ def hathi_limited_view_sample_packages(tmpdir_factory, request):
 
     hathi_limited_view_packager = packager.PackageFactory(
         packager.packages.HathiLimitedView())
-    with tempfile.TemporaryDirectory() as tmp_package_dir:
 
+    with tempfile.TemporaryDirectory() as tmp_package_dir:
         shutil.copytree(tmp_dir, os.path.join(tmp_package_dir, request.param))
         yield list(hathi_limited_view_packager.locate_packages(path=str(test_dir)))
-
-    shutil.rmtree(test_dir)
-
