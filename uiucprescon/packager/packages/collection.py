@@ -148,8 +148,8 @@ class Instantiation(AbsPackageComponent):
                         yield zip_file.extract(file_to_extract,
                                                path=temp_dir.name)
 
-                    except KeyError as e:
-                        raise ZipFileException(e, zip_file=zip_file_name,
+                    except KeyError as error:
+                        raise ZipFileException(error, zip_file=zip_file_name,
                                                problem_files=[file_to_extract])
 
             else:
