@@ -108,10 +108,6 @@ pipeline {
     triggers {
        parameterizedCron '@daily % DEPLOY_DEVPI=true; TEST_RUN_TOX=true'
     }
-//     options {
-//         disableConcurrentBuilds()  //each branch has 1 job running at a time
-//     }
-
     parameters {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
@@ -222,12 +218,6 @@ pipeline {
                     label 'linux && docker'
                 }
             }
-//             agent {
-//                 dockerfile {
-//                     filename 'ci/docker/python/windows/Dockerfile'
-//                     label "windows && docker"
-//                 }
-//             }
             stages{
                 stage("Configuring Testing Environment"){
                     steps{
@@ -240,15 +230,6 @@ pipeline {
                                 mkdir -p reports/mypy/html
                             """
                         )
-//                         bat(
-//                             label: "Creating logging and report directories",
-//                             script: """
-//                                 if not exist logs mkdir logs
-//                                 if not exist reports\\coverage mkdir reports\\coverage
-//                                 if not exist reports\\doctests mkdir reports\\doctests
-//                                 if not exist reports\\mypy\\html mkdir reports\\mypy\\html
-//                             """
-//                         )
                     }
                 }
                 stage("Running Tests"){
@@ -256,11 +237,9 @@ pipeline {
                         stage("Run PyTest Unit Tests"){
                             steps{
                                 sh "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest"
-//                                 bat "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest "
                             }
                             post {
                                 always {
-        //                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'reports/pytestcoverage', reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                                     junit "reports/pytest/junit-pytest.xml"
                                     stash includes: "reports/pytest/*.xml", name: 'PYTEST_REPORT'
                                 }
@@ -268,8 +247,7 @@ pipeline {
                         }
                         stage("Run Doctest Tests"){
                             steps {
-                                sh "python -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
-//                                 bat "sphinx-build.exe -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
+                                sh "coverage run --parallel-mode --source uiucprescon -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"
                             }
                             post{
                                 always {
@@ -285,7 +263,6 @@ pipeline {
                                 catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
                                     sh "mypy -p uiucprescon --html-report reports/mypy/html/  | tee logs/mypy.log"
                                 }
-
                             }
                             post {
                                 always {
@@ -381,7 +358,6 @@ pipeline {
                     post{
                         always{
                             sh "coverage combine && coverage xml -o reports/coverage.xml && coverage html -d reports/coverage"
-//                             bat "coverage combine && coverage xml -o reports\\coverage.xml && coverage html -d reports\\coverage"
                             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
