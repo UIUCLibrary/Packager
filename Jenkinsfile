@@ -635,7 +635,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                           dockerfile {
                             filename 'ci/docker/python/windows/Dockerfile'
                             additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
-                            label 'windows && docker'
+                            label "${PLATFORM} && docker"
                           }
                         }
                         stages{
