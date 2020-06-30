@@ -616,6 +616,13 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                     matrix {
                         axes {
                             axis {
+                                name "PLATFORM"
+                                values(
+                                    "windows",
+//                                     "linux"
+                                )
+                            }
+                            axis {
                                 name 'FORMAT'
                                 values 'zip', "whl"
                             }
@@ -627,7 +634,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         agent {
                           dockerfile {
                             filename 'ci/docker/python/windows/Dockerfile'
-                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image['windows']}"
+                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
                             label 'windows && docker'
                           }
                         }
@@ -638,14 +645,25 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                         unstash "DIST-INFO"
                                         def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                         timeout(10){
-                                            bat(
-                                                label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
-                                                script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
-                                                           devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
-                                                           devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\
-                                                           devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${test_docker_image[PYTHON_VERSION].tox_env} -v
-                                                           """
-                                            )
+                                            if(isUnix()){
+                                                sh(
+                                                    label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
+                                                    script: """devpi use https://devpi.library.illinois.edu --clientdir certs
+                                                               devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir certs
+                                                               devpi use ${env.BRANCH_NAME}_staging --clientdir certs
+                                                               devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs -e ${test_docker_image[PYTHON_VERSION].tox_env} -v
+                                                               """
+                                                )
+                                            }else{
+                                                bat(
+                                                    label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
+                                                    script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
+                                                               devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
+                                                               devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\
+                                                               devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${test_docker_image[PYTHON_VERSION].tox_env} -v
+                                                               """
+                                                )
+                                            }
                                         }
                                     }
                                 }
