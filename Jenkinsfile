@@ -619,7 +619,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                 name "PLATFORM"
                                 values(
                                     "windows",
-//                                     "linux"
+                                    "linux"
                                 )
                             }
                             axis {
