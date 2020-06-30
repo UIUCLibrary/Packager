@@ -626,8 +626,8 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         }
                         agent {
                           dockerfile {
-                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image}"
                             filename 'ci/docker/python/windows/Dockerfile'
+                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image['windows']}"
                             label 'windows && docker'
                           }
                         }
@@ -643,7 +643,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                                 script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
                                                            devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
                                                            devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\
-                                                           devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
+                                                           devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${test_docker_image[PYTHON_VERSION].tox_env} -v
                                                            """
                                             )
                                         }
