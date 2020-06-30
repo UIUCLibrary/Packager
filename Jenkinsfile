@@ -236,7 +236,7 @@ pipeline {
                     parallel {
                         stage("Run PyTest Unit Tests"){
                             steps{
-                                sh "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml --junit-prefix=${env.NODE_NAME}-pytest"
+                                sh "coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml "
                             }
                             post {
                                 always {
