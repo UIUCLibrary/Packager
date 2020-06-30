@@ -633,7 +633,7 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         }
                         agent {
                           dockerfile {
-                            filename 'ci/docker/python/windows/Dockerfile'
+                            filename "ci/docker/python/${PLATFORM}/Dockerfile"
                             additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
                             label "${PLATFORM} && docker"
                           }
