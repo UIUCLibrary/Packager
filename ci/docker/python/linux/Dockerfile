@@ -14,11 +14,11 @@ RUN python -m pip install --upgrade pip &&  \
     pip install wheel && \
     pip install conan
 
-ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
+ADD requirements.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
 RUN pip wheel --wheel-dir=/wheels  \
     -r /tmp/requirements.txt \
     -r /tmp/requirements-ci.txt && \
-    pip wheel --wheel-dir=/wheels  "six>=1.9.0"
+    pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt
 
 FROM ${PYTHON_DOCKER_IMAGE_BASE}
 ARG USER_ID=1000
