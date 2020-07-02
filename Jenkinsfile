@@ -590,15 +590,16 @@ pipeline {
                     steps {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
-                        sh(
-                                label: "Connecting to DevPi Server",
-                                script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
+                        script{
+                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            sh(label: "Uploading to DevPi Staging",
+                               script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
+                                          devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
+                                          devpi use /${env.DEVPI_USR}/${devpiStagingIndex} --clientdir ./devpi
+                                          devpi upload --from-dir dist --clientdir ./devpi
+                                          """
                             )
-                        sh(
-                            label: "Uploading to DevPi Staging",
-                            script: """devpi use /${env.DEVPI_USR}/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}/devpi
-devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
-                        )
+                        }
                     }
                     post{
                         cleanup{
@@ -645,14 +646,15 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                     script{
                                         unstash "DIST-INFO"
                                         def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
+                                        def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
                                         timeout(10){
                                             if(isUnix()){
                                                 sh(
                                                     label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
                                                     script: """devpi use https://devpi.library.illinois.edu --clientdir certs
                                                                devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir certs
-                                                               devpi use ${env.BRANCH_NAME}_staging --clientdir certs
-                                                               devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
+                                                               devpi use ${devpiStagingIndex} --clientdir certs
+                                                               devpi test --index ${devpiStagingIndex} ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
                                                                """
                                                 )
                                             }else{
@@ -660,8 +662,8 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                                     label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
                                                     script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
                                                                devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
-                                                               devpi use ${env.BRANCH_NAME}_staging --clientdir certs\\
-                                                               devpi test --index ${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
+                                                               devpi use ${devpiStagingIndex} --clientdir certs\\
+                                                               devpi test --index ${devpiStagingIndex} ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
                                                                """
                                                 )
                                             }
@@ -714,10 +716,11 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                         unstash "DIST-INFO"
                         script{
                             def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
+                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
                             sh(label: "Pushing to production index",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-                                          devpi push --index DS_Jenkins/${env.BRANCH_NAME}_staging ${props.Name}==${props.Version} production/release --clientdir ./devpi
+                                          devpi push --index DS_Jenkins/${devpiStagingIndex} ${props.Name}==${props.Version} production/release --clientdir ./devpi
                                        """
                             )
                         }
@@ -728,6 +731,9 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                 success{
                     node('linux && docker') {
                        script{
+                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiIndex = "${env.BRANCH_NAME}"
+
                             docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                 unstash "DIST-INFO"
                                 def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
@@ -737,11 +743,11 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                                 )
                                 sh(
                                     label: "Selecting to DevPi index",
-                                    script: "devpi use /DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}/devpi"
+                                    script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
                                 )
                                 sh(
                                     label: "Pushing package to DevPi index",
-                                    script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${env.BRANCH_NAME} --clientdir ${WORKSPACE}/devpi"
+                                    script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
                                 )
                             }
                        }
@@ -750,20 +756,17 @@ devpi upload --from-dir dist --clientdir ${WORKSPACE}/devpi"""
                 cleanup{
                     node('linux && docker') {
                        script{
+                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
                             docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                 unstash "DIST-INFO"
                                 def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                 sh(
-                                    label: "Connecting to DevPi Server",
-                                    script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
-                                )
-                                sh(
-                                    label: "Selecting to DevPi index",
-                                    script: "devpi use /DS_Jenkins/${env.BRANCH_NAME}_staging --clientdir ${WORKSPACE}/devpi"
-                                )
-                                sh(
                                     label: "Removing package to DevPi index",
-                                    script: "devpi remove -y ${props.Name}==${props.Version} --clientdir ${WORKSPACE}/devpi"
+                                    script: """devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi
+                                               devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi
+                                               devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi
+                                               devpi remove -y ${props.Name}==${props.Version} --clientdir ${WORKSPACE}/devpi
+                                               """
                                 )
                                 cleanWs(
                                     deleteDirs: true,
