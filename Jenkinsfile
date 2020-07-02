@@ -103,7 +103,11 @@ def get_package_name(stashName, metadataFile){
     }
 }
 def getDevPiStagingIndex(){
-    return "${env.BRANCH_NAME}_staging"
+    if (env.tagging_staging?.trim()){
+        return "tagging_staging"
+    } else{
+        return "${env.BRANCH_NAME}_staging"
+    }
 }
 pipeline {
     agent none
