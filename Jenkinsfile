@@ -102,7 +102,14 @@ def get_package_name(stashName, metadataFile){
         }
     }
 }
+def getDevPiStagingIndex(){
 
+    if (env.TAG_NAME?.trim()){
+        return "tag_staging"
+    } else{
+        return "${env.BRANCH_NAME}_staging"
+    }
+}
 pipeline {
     agent none
     triggers {
@@ -110,6 +117,7 @@ pipeline {
     }
     parameters {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
+        booleanParam(name: "USE_SONARQUBE", defaultValue: true, description: "Send data test data to SonarQube")
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
         booleanParam(name: "DEPLOY_ADD_TAG", defaultValue: false, description: "Tag commit to current version")
@@ -402,6 +410,11 @@ pipeline {
             options{
                 lock("uiucprescon.packager-sonarscanner")
             }
+            when{
+                equals expected: true, actual: params.USE_SONARQUBE
+                beforeAgent true
+                beforeOptions true
+            }
             steps{
                 checkout scm
                 sh "git fetch --all"
@@ -591,7 +604,7 @@ pipeline {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
                         script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             sh(label: "Uploading to DevPi Staging",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
@@ -646,7 +659,7 @@ pipeline {
                                     script{
                                         unstash "DIST-INFO"
                                         def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                        def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                                        def devpiStagingIndex = getDevPiStagingIndex()
                                         timeout(10){
                                             if(isUnix()){
                                                 sh(
@@ -716,7 +729,7 @@ pipeline {
                         unstash "DIST-INFO"
                         script{
                             def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             sh(label: "Pushing to production index",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
@@ -731,24 +744,26 @@ pipeline {
                 success{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
-                            def devpiIndex = "${env.BRANCH_NAME}"
+                           if (!env.TAG_NAME?.trim()){
+                                def devpiStagingIndex = getDevPiStagingIndex()
+                                def devpiIndex = "${env.BRANCH_NAME}"
 
-                            docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                unstash "DIST-INFO"
-                                def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                sh(
-                                    label: "Connecting to DevPi Server",
-                                    script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
-                                )
-                                sh(
-                                    label: "Selecting to DevPi index",
-                                    script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
-                                )
-                                sh(
-                                    label: "Pushing package to DevPi index",
-                                    script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
-                                )
+                                docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
+                                    unstash "DIST-INFO"
+                                    def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
+                                    sh(
+                                        label: "Connecting to DevPi Server",
+                                        script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
+                                    )
+                                    sh(
+                                        label: "Selecting to DevPi index",
+                                        script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
+                                    )
+                                    sh(
+                                        label: "Pushing package to DevPi index",
+                                        script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
+                                    )
+                                }
                             }
                        }
                     }
@@ -756,7 +771,7 @@ pipeline {
                 cleanup{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                 unstash "DIST-INFO"
                                 def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
