@@ -1,3 +1,5 @@
+"""Compound objects for the Medusa Digital Library"""
+
 import logging
 import os
 
@@ -80,11 +82,13 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
     @staticmethod
     def get_file_base_name(item_name, object_name):
+        """Get the base name of a file, without an extension"""
         new_base_name = f"{object_name}_{item_name}"
         return new_base_name
 
 
 class Transform:
+    """Helper for transforming files """
     _strategies = {
         'CopyFile': transformations.CopyFile(),
         'ConvertJp2Standard': transformations.ConvertJp2Standard(),
@@ -173,6 +177,7 @@ class Transform:
         access_file_maker.transform(src, access_file_full_path)
 
     def transform_preservation_file(self, src, item_name, object_name):
+        """Transform the source file into a preservation file"""
 
         preservation_path = os.path.join(
             self.destination_root,
