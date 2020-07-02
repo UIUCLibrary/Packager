@@ -42,6 +42,11 @@ class DigitalLibraryCompound(AbsPackageBuilder):
         for package in builder.build_batch(path):
             yield package
 
+    @staticmethod
+    def _get_transformer(logger, package_builder, destination_root):
+        return Transform(logger, package_builder,
+                         destination_root=destination_root)
+
     def transform(self, package: Package, dest: str) -> None:
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
@@ -50,7 +55,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
 
-            transformer = Transform(logger, self, destination_root=dest)
+            transformer = self._get_transformer(logger, self,
+                                                destination_root=dest)
+
             for inst in item:
                 if len(inst.files) != 1:
                     raise AssertionError(
@@ -78,6 +85,11 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
 
 class Transform:
+    _strategies = {
+        'CopyFile': transformations.CopyFile(),
+        'ConvertJp2Standard': transformations.ConvertJp2Standard(),
+        'ConvertTiff': transformations.ConvertTiff()
+    }
 
     def __init__(self, logger, package_builder: DigitalLibraryCompound,
                  destination_root) -> None:
@@ -85,6 +97,7 @@ class Transform:
         self._package_builder = package_builder
         self.logger = logger
         self.destination_root = destination_root
+
 
     def transform_supplementary_data(self, src: str, item_name: str,
                                      object_name: str):
@@ -114,7 +127,7 @@ class Transform:
         new_file = os.path.join(supplementary_dir, f"{base_name}{ext}")
 
         copier = transformations.Transformers(
-            strategy=transformations.CopyFile(),
+            strategy=self._strategies['CopyFile'],
             logger=self.logger
         )
         copier.transform(src, new_file)
@@ -148,12 +161,12 @@ class Transform:
         ext = os.path.splitext(src)[1]
         if ext.lower() == ".jp2":
             access_file_maker = transformations.Transformers(
-                strategy=transformations.CopyFile(),
+                strategy=self._strategies['CopyFile'],
                 logger=self.logger)
 
         elif ext.lower() == ".tif":
             access_file_maker = transformations.Transformers(
-                strategy=transformations.ConvertJp2Standard(),
+                strategy=self._strategies['ConvertJp2Standard'],
                 logger=self.logger)
         else:
             raise ValueError("Unknown extension {}".format(ext))
@@ -184,13 +197,13 @@ class Transform:
         if ext.lower() == ".jp2":
 
             preservation_file_copier = transformations.Transformers(
-                strategy=transformations.ConvertTiff(),
+                strategy=self._strategies['ConvertTiff'],
                 logger=self.logger
             )
 
         elif ext.lower() == ".tif":
             preservation_file_copier = transformations.Transformers(
-                strategy=transformations.CopyFile(),
+                strategy=self._strategies['CopyFile'],
                 logger=self.logger)
         else:
             raise ValueError("Unknown extension {}".format(ext))
