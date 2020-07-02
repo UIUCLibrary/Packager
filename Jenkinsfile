@@ -413,6 +413,7 @@ pipeline {
             when{
                 equals expected: true, actual: params.USE_SONARQUBE
                 beforeAgent true
+                beforeOptions true
             }
             steps{
                 checkout scm
@@ -743,24 +744,26 @@ pipeline {
                 success{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            def devpiIndex = "${env.BRANCH_NAME}"
+                           if (!env.TAG_NAME?.trim()){
+                                def devpiStagingIndex = getDevPiStagingIndex()
+                                def devpiIndex = "${env.BRANCH_NAME}"
 
-                            docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                unstash "DIST-INFO"
-                                def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                sh(
-                                    label: "Connecting to DevPi Server",
-                                    script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
-                                )
-                                sh(
-                                    label: "Selecting to DevPi index",
-                                    script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
-                                )
-                                sh(
-                                    label: "Pushing package to DevPi index",
-                                    script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
-                                )
+                                docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
+                                    unstash "DIST-INFO"
+                                    def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
+                                    sh(
+                                        label: "Connecting to DevPi Server",
+                                        script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
+                                    )
+                                    sh(
+                                        label: "Selecting to DevPi index",
+                                        script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
+                                    )
+                                    sh(
+                                        label: "Pushing package to DevPi index",
+                                        script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
+                                    )
+                                }
                             }
                        }
                     }
