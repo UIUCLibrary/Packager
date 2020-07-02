@@ -102,7 +102,9 @@ def get_package_name(stashName, metadataFile){
         }
     }
 }
-
+def getDevPiStagingIndex(){
+    return "${env.BRANCH_NAME}_staging"
+}
 pipeline {
     agent none
     triggers {
@@ -591,7 +593,7 @@ pipeline {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
                         script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             sh(label: "Uploading to DevPi Staging",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
@@ -646,7 +648,7 @@ pipeline {
                                     script{
                                         unstash "DIST-INFO"
                                         def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                        def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                                        def devpiStagingIndex = getDevPiStagingIndex()
                                         timeout(10){
                                             if(isUnix()){
                                                 sh(
@@ -716,7 +718,7 @@ pipeline {
                         unstash "DIST-INFO"
                         script{
                             def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             sh(label: "Pushing to production index",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
@@ -731,7 +733,7 @@ pipeline {
                 success{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             def devpiIndex = "${env.BRANCH_NAME}"
 
                             docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
@@ -756,7 +758,7 @@ pipeline {
                 cleanup{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = "${env.BRANCH_NAME}_staging"
+                            def devpiStagingIndex = getDevPiStagingIndex()
                             docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                 unstash "DIST-INFO"
                                 def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
