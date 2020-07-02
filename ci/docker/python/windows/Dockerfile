@@ -15,8 +15,8 @@ ADD requirements.txt requirements-freeze.txt ci/docker/python/shared/requirement
 RUN pip wheel --wheel-dir=c:\temp\wheels `
                         -r c:/temp/requirements.txt `
                         -r c:/temp/requirements-ci.txt `
-                        -r c:/temp/requirements-freeze.txt
-
+                        -r c:/temp/requirements-freeze.txt ;`
+    pip wheel --wheel-dir=c:\temp\wheels "six>=1.9.0"
 
 FROM ${PYTHON_DOCKER_IMAGE_BASE}
 RUN certutil -generateSSTFromWU roots.sst ; `
