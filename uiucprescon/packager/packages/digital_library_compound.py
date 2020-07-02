@@ -98,7 +98,6 @@ class Transform:
         self.logger = logger
         self.destination_root = destination_root
 
-
     def transform_supplementary_data(self, src: str, item_name: str,
                                      object_name: str):
         """Transform the supplementary file
