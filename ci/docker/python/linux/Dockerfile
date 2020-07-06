@@ -16,9 +16,10 @@ RUN python -m pip install --upgrade pip &&  \
 
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
 RUN pip wheel --wheel-dir=/wheels  \
-    -r /tmp/requirements.txt \
-    -r /tmp/requirements-ci.txt && \
-    pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt
+        -r /tmp/requirements.txt \
+        -r /tmp/requirements-ci.txt && \
+    pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt && \
+    rm -rf  /root/.cache
 
 FROM ${PYTHON_DOCKER_IMAGE_BASE}
 ARG USER_ID=1000
