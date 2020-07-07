@@ -6,7 +6,7 @@ devpi-client
 flake8
 lxml
 mypy
-pykdu-compress>=0.1.3b4
+pykdu-compress>=0.1.3b10
 pylint
 pytest
 pytest-cov
