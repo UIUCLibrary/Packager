@@ -112,9 +112,6 @@ def getDevPiStagingIndex(){
 }
 pipeline {
     agent none
-    triggers {
-       parameterizedCron '@daily % DEPLOY_DEVPI=true; TEST_RUN_TOX=true'
-    }
     parameters {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
         booleanParam(name: "USE_SONARQUBE", defaultValue: true, description: "Send data test data to SonarQube")
