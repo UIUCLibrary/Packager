@@ -745,7 +745,7 @@ pipeline {
                                 def devpiStagingIndex = getDevPiStagingIndex()
                                 def devpiIndex = "${env.BRANCH_NAME}"
 
-                                docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
+                                docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                     unstash "DIST-INFO"
                                     def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                     sh(
@@ -769,7 +769,7 @@ pipeline {
                     node('linux && docker') {
                        script{
                             def devpiStagingIndex = getDevPiStagingIndex()
-                            docker.build("uiucpresconpackager:devpi.${env.BUILD_ID}",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
+                            docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
                                 unstash "DIST-INFO"
                                 def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                 sh(
