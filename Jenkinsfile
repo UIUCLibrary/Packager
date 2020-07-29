@@ -362,8 +362,7 @@ pipeline {
                     }
                     post{
                         always{
-                            sh "coverage combine && coverage xml -o reports/coverage.xml && coverage html -d reports/coverage"
-                            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: "reports/coverage", reportFiles: 'index.html', reportName: 'Coverage', reportTitles: ''])
+                            sh "coverage combine && coverage xml -o reports/coverage.xml"
                             publishCoverage adapters: [
                                             coberturaAdapter('reports/coverage.xml')
                                             ],
@@ -567,8 +566,8 @@ pipeline {
                     }
                 }
             }
-         }
-         stage("Deploy to DevPi") {
+        }
+        stage("Deploy to DevPi") {
             when {
                 allOf{
                     anyOf{
