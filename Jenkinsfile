@@ -525,6 +525,16 @@ pipeline {
                             }
                         }
                         steps{
+                            cleanWs(
+                                notFailBuild: true,
+                                deleteDirs: true,
+                                disableDeferredWipeout: true,
+                                patterns: [
+                                        [pattern: '.git/**', type: 'EXCLUDE'],
+                                        [pattern: 'tests/**', type: 'EXCLUDE'],
+                                        [pattern: 'tox.ini', type: 'EXCLUDE'],
+                                    ]
+                            )
                             unstash "PYTHON_PACKAGES"
                             script{
                                 findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
