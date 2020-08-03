@@ -536,6 +536,12 @@ pipeline {
                                     }
                                 }
                                 steps{
+                                    script{
+                                        if(PLATFORM != "windows"){
+                                            sh "ls -laR"
+                                        }
+
+                                    }
                                     cleanWs(
                                         deleteDirs: true,
                                         disableDeferredWipeout: true,
