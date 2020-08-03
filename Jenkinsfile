@@ -518,13 +518,6 @@ pipeline {
                                     "3.8"
                                 )
                             }
-//                             axis {
-//                                 name "PYTHON_PACKAGE_TYPE"
-//                                 values(
-//                                     "whl",
-//                                     "sdist"
-//                                 )
-//                             }
                         }
                         stages{
                             stage("Testing Wheel Package"){
@@ -574,6 +567,7 @@ pipeline {
                                             deleteDirs: true,
                                             patterns: [
                                                 [pattern: 'dist/', type: 'INCLUDE'],
+                                                [pattern: '**/__pycache__', type: 'INCLUDE'],
                                                 [pattern: 'build/', type: 'INCLUDE'],
                                                 [pattern: '.tox/', type: 'INCLUDE'],
                                                 ]
@@ -629,6 +623,7 @@ pipeline {
                                             patterns: [
                                                 [pattern: 'dist/', type: 'INCLUDE'],
                                                 [pattern: 'build/', type: 'INCLUDE'],
+                                                [pattern: '**/__pycache__', type: 'INCLUDE'],
                                                 [pattern: '.tox/', type: 'INCLUDE'],
                                                 ]
                                         )
