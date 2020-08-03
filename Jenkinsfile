@@ -536,10 +536,63 @@ pipeline {
                                     }
                                 }
                                 steps{
-
                                     unstash "PYTHON_PACKAGES"
                                     script{
                                         findFiles(glob: "**/*.whl").each{
+                                            cleanWs(
+                                                deleteDirs: true,
+                                                disableDeferredWipeout: true,
+                                                patterns: [
+                                                    [pattern: '.git/', type: 'EXCLUDE'],
+                                                    [pattern: 'tests/', type: 'EXCLUDE'],
+                                                    [pattern: 'dist/', type: 'EXCLUDE'],
+                                                    [pattern: 'tox.ini', type: 'EXCLUDE']
+                                                ]
+                                            )
+                                            timeout(15){
+                                                if(isUnix()){
+                                                    sh(label: "Testing ${it}",
+                                                        script: """python --version
+                                                                   tox --installpkg=${it.path} -e py -vv
+                                                                   """
+                                                    )
+                                                } else {
+                                                    bat(label: "Testing ${it}",
+                                                        script: """python --version
+                                                                   tox --installpkg=${it.path} -e py -vv
+                                                                   """
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                post{
+                                    cleanup{
+                                        cleanWs(
+                                            notFailBuild: true,
+                                            deleteDirs: true,
+                                            patterns: [
+                                                [pattern: 'dist/', type: 'INCLUDE'],
+                                                [pattern: 'build/', type: 'INCLUDE'],
+                                                [pattern: '.tox/', type: 'INCLUDE'],
+                                                ]
+                                        )
+                                    }
+                                }
+                            }
+                            stage("Testing sdist Package"){
+                                agent {
+                                    dockerfile {
+                                        filename "ci/docker/python/${PLATFORM}/Dockerfile"
+                                        label "${PLATFORM} && docker"
+                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
+                                    }
+                                }
+                                steps{
+                                    unstash "PYTHON_PACKAGES"
+                                    script{
+                                        findFiles(glob: "dist/*.tar.gz,dist/*.zip").each{
                                             cleanWs(
                                                 deleteDirs: true,
                                                 disableDeferredWipeout: true,
