@@ -526,14 +526,13 @@ pipeline {
                         }
                         steps{
                             cleanWs(
-                                notFailBuild: true,
                                 deleteDirs: true,
                                 disableDeferredWipeout: true,
                                 patterns: [
-                                        [pattern: '.git/**', type: 'EXCLUDE'],
-                                        [pattern: 'tests/**', type: 'EXCLUDE'],
-                                        [pattern: 'tox.ini', type: 'EXCLUDE'],
-                                    ]
+                                    [pattern: '.git/*', type: 'EXCLUDE'],
+                                    [pattern: 'tests/*', type: 'EXCLUDE'],
+                                    [pattern: 'tox.ini', type: 'EXCLUDE'],
+                                ]
                             )
                             unstash "PYTHON_PACKAGES"
                             script{
