@@ -548,6 +548,7 @@ pipeline {
                                                     [pattern: 'tests/', type: 'EXCLUDE'],
                                                     [pattern: 'dist/', type: 'EXCLUDE'],
                                                     [pattern: 'tox.ini', type: 'EXCLUDE'],
+                                                    [pattern: 'setup.cfg', type: 'EXCLUDE'],
                                                 ]
                                             )
                                             timeout(15){
