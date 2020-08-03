@@ -518,16 +518,16 @@ pipeline {
                                     "3.8"
                                 )
                             }
-                            axis {
-                                name "PYTHON_PACKAGE_TYPE"
-                                values(
-                                    "whl",
-                                    "sdist"
-                                )
-                            }
+//                             axis {
+//                                 name "PYTHON_PACKAGE_TYPE"
+//                                 values(
+//                                     "whl",
+//                                     "sdist"
+//                                 )
+//                             }
                         }
                         stages{
-                            stage("Testing Package"){
+                            stage("Testing Wheel Package"){
                                 agent {
                                     dockerfile {
                                         filename "ci/docker/python/${PLATFORM}/Dockerfile"
@@ -539,7 +539,7 @@ pipeline {
 
                                     unstash "PYTHON_PACKAGES"
                                     script{
-                                        findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
+                                        findFiles(glob: "**/*.whl").each{
                                             cleanWs(
                                                 deleteDirs: true,
                                                 disableDeferredWipeout: true,
