@@ -558,7 +558,8 @@ pipeline {
                                                     )
                                                 } else {
                                                     sh(
-                                                        script: """python --version
+                                                        script: """ls -laR
+                                                                   python --version
                                                                    tox --installpkg=${it.path} -e py -vv
                                                                    """,
                                                         label: "Testing ${it}"
