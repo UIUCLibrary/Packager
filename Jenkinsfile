@@ -536,39 +536,32 @@ pipeline {
                                     }
                                 }
                                 steps{
-                                    script{
-                                        if(PLATFORM != "windows"){
-                                            sh "ls -laR"
-                                        }
 
-                                    }
-                                    cleanWs(
-                                        deleteDirs: true,
-                                        disableDeferredWipeout: true,
-                                        patterns: [
-                                            [pattern: '.git/', type: 'EXCLUDE'],
-                                            [pattern: 'tests/', type: 'EXCLUDE'],
-                                            [pattern: 'tox.ini', type: 'EXCLUDE'],
-                                        ]
-                                    )
                                     unstash "PYTHON_PACKAGES"
                                     script{
                                         findFiles(glob: "**/${CONFIGURATIONS[PYTHON_VERSION].package_testing[PYTHON_PACKAGE_TYPE].pkgRegex}").each{
+                                            cleanWs(
+                                                deleteDirs: true,
+                                                disableDeferredWipeout: true,
+                                                patterns: [
+                                                    [pattern: '.git/', type: 'EXCLUDE'],
+                                                    [pattern: 'tests/', type: 'EXCLUDE'],
+                                                    [pattern: 'dist/', type: 'EXCLUDE'],
+                                                    [pattern: 'tox.ini', type: 'EXCLUDE'],
+                                                ]
+                                            )
                                             timeout(15){
-                                                if(PLATFORM == "windows"){
-                                                    bat(
+                                                if(isUnix()){
+                                                    sh(label: "Testing ${it}",
                                                         script: """python --version
                                                                    tox --installpkg=${it.path} -e py -vv
-                                                                   """,
-                                                        label: "Testing ${it}"
+                                                                   """
                                                     )
                                                 } else {
-                                                    sh(
-                                                        script: """ls -laR
-                                                                   python --version
+                                                    bat(label: "Testing ${it}",
+                                                        script: """python --version
                                                                    tox --installpkg=${it.path} -e py -vv
-                                                                   """,
-                                                        label: "Testing ${it}"
+                                                                   """
                                                     )
                                                 }
                                             }
