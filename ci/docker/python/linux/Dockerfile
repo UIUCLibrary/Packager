@@ -24,9 +24,10 @@ RUN groupadd -g $GROUP_ID user && \
 COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
 
-RUN pip install --no-index --find-links=/wheels \
-    -r /tmp/requirements.txt \
-    -r /tmp/requirements-ci.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --no-index --find-links=/wheels \
+        -r /tmp/requirements.txt \
+        -r /tmp/requirements-ci.txt
 
 USER user
 WORKDIR /home/user
