@@ -483,7 +483,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sh "python setup.py bdist_wheel -d dist sdist --format zip -d dist"
+                        sh "python -m pep517.build ."
                     }
                     post {
                         always{
