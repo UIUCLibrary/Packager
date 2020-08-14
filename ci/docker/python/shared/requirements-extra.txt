@@ -1,3 +1,5 @@
+pytest
+pytest-bdd
+pykdu-compress>=0.1.3b4
 six>=1.9.0
 setuptools
-pykdu-compress>=0.1.3b4
