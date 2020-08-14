@@ -2,6 +2,7 @@ mypy
 lxml
 wheel
 sphinx
+pep517
 pytest
 pytest-runner
 pytest-bdd >= 3.1.0

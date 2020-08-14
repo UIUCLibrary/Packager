@@ -1,21 +1,14 @@
 ARG PYTHON_DOCKER_IMAGE_BASE="python:3.8"
 FROM ${PYTHON_DOCKER_IMAGE_BASE} as wheel_builder
-
-ARG CMAKE_DOWNLOAD_URL=https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3-Linux-x86_64.sh
-RUN wget -O /tmp/install_cmake.sh $CMAKE_DOWNLOAD_URL
-RUN chmod +x /tmp/install_cmake.sh  && /tmp/install_cmake.sh  --skip-license
-RUN apt update && apt install -y ninja-build
-
-ARG PIP_EXTRA_INDEX_URL="https://devpi.library.illinois.edu/production/release"
-ARG PIP_TRUSTED_HOST="devpi.library.illinois.edu"
-
-RUN python -m pip install --upgrade pip &&  \
-    pip install setuptools && \
-    pip install wheel && \
-    pip install conan
-
+ARG PIP_INDEX_URL
+ARG PIP_EXTRA_INDEX_URL
+ARG PIP_TRUSTED_HOST
+ENV PIP_NO_CACHE_DIR=1
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
-RUN pip wheel --wheel-dir=/wheels  \
+RUN python -m pip install --upgrade pip &&  \
+    pip install setuptools --upgrade && \
+    pip install wheel && \
+    pip wheel --wheel-dir=/wheels  \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt && \
     pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt && \
@@ -26,19 +19,19 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 
 RUN groupadd -g $GROUP_ID user && \
-    useradd -u $USER_ID -s /bin/sh -m -d /home/user -g user user
-
-#RUN apt update -y && apt install -y libgl1-mesa-glx
+    useradd -u $USER_ID -s /bin/sh -m -d /home/user -g user user && \
+    mkdir -p /.cache/pip && chgrp -R  user /.cache/ && \
+    chmod -R g+w /.cache/
 
 COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
-ENV PIP_EXTRA_INDEX_URL="https://devpi.library.illinois.edu/production/release"
-ENV PIP_TRUSTED_HOST="devpi.library.illinois.edu"
-ENV PIP_FIND_LINKS=/wheels
 
-RUN pip install --no-index --find-links=/wheels \
-    -r /tmp/requirements.txt \
-    -r /tmp/requirements-ci.txt
-
+RUN python -m pip install --upgrade pip && \
+    pip install wheel && \
+    pip install setuptools --upgrade && \
+    pip install --no-index --find-links=/wheels \
+        -r /tmp/requirements.txt \
+        -r /tmp/requirements-ci.txt
+ENV PIP_FIND_LINKS=/wheels/
 USER user
 WORKDIR /home/user
