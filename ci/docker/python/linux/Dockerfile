@@ -27,6 +27,7 @@ COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
 
 RUN python -m pip install --upgrade pip && \
+    pip install wheel && \
     pip install --no-index --find-links=/wheels \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt
