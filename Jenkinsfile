@@ -128,6 +128,7 @@ pipeline {
                 dockerfile {
                     filename 'ci/docker/python/linux/Dockerfile'
                     label 'linux && docker'
+                    additionalBuildArgs "--build-arg PIP_EXTRA_INDEX_URL"
                 }
             }
             steps{
@@ -157,6 +158,7 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
                             label 'linux && docker'
+                            additionalBuildArgs "--build-arg PIP_EXTRA_INDEX_URL"
                         }
                     }
                     steps {
@@ -179,6 +181,7 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
                             label 'linux && docker'
+                            additionalBuildArgs "--build-arg PIP_EXTRA_INDEX_URL"
                         }
                     }
                     steps {
@@ -222,6 +225,7 @@ pipeline {
                 dockerfile {
                     filename 'ci/docker/python/linux/Dockerfile'
                     label 'linux && docker'
+                    additionalBuildArgs "--build-arg PIP_EXTRA_INDEX_URL"
                 }
             }
             stages{
@@ -475,6 +479,7 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
                             label 'linux && docker'
+                            additionalBuildArgs "--build-arg PIP_EXTRA_INDEX_URL"
                         }
                     }
                     steps {
@@ -525,7 +530,7 @@ pipeline {
                                     dockerfile {
                                         filename "ci/docker/python/${PLATFORM}/Dockerfile"
                                         label "${PLATFORM} && docker"
-                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
+                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_EXTRA_INDEX_URL"
                                     }
                                 }
                                 steps{
@@ -580,7 +585,7 @@ pipeline {
                                     dockerfile {
                                         filename "ci/docker/python/${PLATFORM}/Dockerfile"
                                         label "${PLATFORM} && docker"
-                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
+                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_EXTRA_INDEX_URL"
                                     }
                                 }
                                 steps{
@@ -713,7 +718,7 @@ pipeline {
                         agent {
                           dockerfile {
                             filename "ci/docker/python/${PLATFORM}/Dockerfile"
-                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]}"
+                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_EXTRA_INDEX_URL"
                             label "${PLATFORM} && docker"
                           }
                         }
@@ -869,7 +874,7 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/python/linux/Dockerfile'
                             label 'linux && docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg PIP_EXTRA_INDEX_URL'
                         }
                     }
                     when{
