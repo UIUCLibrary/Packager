@@ -19,7 +19,9 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 
 RUN groupadd -g $GROUP_ID user && \
-    useradd -u $USER_ID -s /bin/sh -m -d /home/user -g user user
+    useradd -u $USER_ID -s /bin/sh -m -d /home/user -g user user && \
+    mkdir -p /.cache/pip && chgrp -R  user /.cache/ && \
+    chmod -R g+w /.cache/
 
 COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
