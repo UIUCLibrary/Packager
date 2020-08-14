@@ -32,6 +32,6 @@ RUN python -m pip install --upgrade pip && \
     pip install --no-index --find-links=/wheels \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt
-
+ENV PIP_FIND_LINKS=/wheels/
 USER user
 WORKDIR /home/user
