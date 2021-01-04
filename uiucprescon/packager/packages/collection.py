@@ -1,13 +1,13 @@
 import abc
 import collections
 import os
+from tempfile import TemporaryDirectory
 import typing
 import warnings
-from uiucprescon.packager.common import Metadata, CollectionEnums
-from uiucprescon.packager.common import InstantiationTypes
-from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
+from uiucprescon.packager.common import Metadata, CollectionEnums
+from uiucprescon.packager.common import InstantiationTypes
 from uiucprescon.packager.errors import ZipFileException
 
 
