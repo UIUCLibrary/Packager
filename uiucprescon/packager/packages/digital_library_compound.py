@@ -97,7 +97,13 @@ class Transform:
 
     def __init__(self, logger, package_builder: DigitalLibraryCompound,
                  destination_root) -> None:
+        """Create a new Helper object for transforming files.
 
+        Args:
+            logger: System logger to use
+            package_builder:
+            destination_root:
+        """
         self._package_builder = package_builder
         self.logger = logger
         self.destination_root = destination_root

@@ -734,6 +734,11 @@ class HathiLimitedViewPackageBuilder:
     mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
     def __init__(self, path) -> None:
+        """HathiLimitedViewPackageBuilder.
+
+        Args:
+            path: Path that the package is located in
+        """
         self.path = path
 
     @classmethod

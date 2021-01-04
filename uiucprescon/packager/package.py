@@ -10,6 +10,11 @@ class PackageFactory:
     """Use for getting the correct type of file package."""
 
     def __init__(self, package_type: AbsPackageBuilder) -> None:
+        """PackageFactory.
+
+        Args:
+            package_type: Package type used
+        """
         self._package_type = package_type
 
     def locate_packages(self, path) -> typing.Iterator[collection.Package]:

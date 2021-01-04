@@ -15,6 +15,11 @@ from uiucprescon.packager.errors import ZipFileException
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
     def __init__(self, parent=None) -> None:
+        """AbsPackageComponent.
+
+        Args:
+            parent: The parent this package component belongs to
+        """
         self.parent = parent
         if parent is not None:
             self.add_to_parent(child=self)
@@ -77,6 +82,12 @@ class Batch(AbsPackageComponent):
         return self.packages
 
     def __init__(self, path=None, parent=None):
+        """Batch.
+
+        Args:
+            path:
+            parent: The parent this batch belongs to
+        """
         super().__init__(parent)
         self.path = path
         self.packages: typing.List[Package] = []
@@ -84,6 +95,12 @@ class Batch(AbsPackageComponent):
 
 class Package(AbsPackageComponent):
     def __init__(self, path=None, parent=None):
+        """Create a new Package object.
+
+        Args:
+            path:
+            parent: The parent this package belongs to
+        """
         super().__init__(parent)
         self.path = path
         self.objects: typing.List[PackageObject] = []
@@ -100,6 +117,11 @@ class Package(AbsPackageComponent):
 
 class PackageObject(AbsPackageComponent):
     def __init__(self, parent: typing.Optional[Package] = None) -> None:
+        """PackageObject.
+
+        Args:
+             parent: The parent this package object belongs to
+        """
         super().__init__(parent)
         self.package_files: typing.List[str] = []
         self.items: typing.List[Item] = []
@@ -111,6 +133,11 @@ class PackageObject(AbsPackageComponent):
 
 class Item(AbsPackageComponent):
     def __init__(self, parent: typing.Optional[PackageObject] = None) -> None:
+        """Item.
+
+        Args:
+             parent: parent this item belongs to
+        """
         super().__init__(parent)
         self.instantiations = dict()  # type: typing.Dict[str, Instantiation]
 
@@ -123,7 +150,12 @@ class Instantiation(AbsPackageComponent):
     def __init__(self,
                  category: InstantiationTypes = InstantiationTypes.GENERIC,
                  parent: typing.Optional[Item] = None) -> None:
+        """Create a new instantiation object.
 
+        Args:
+            category: File category type
+            parent: The parent this instance belongs to
+        """
         self.category = category
         super().__init__(parent)
         self.component_metadata[Metadata.CATEGORY] = category

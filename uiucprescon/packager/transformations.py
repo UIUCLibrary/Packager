@@ -94,6 +94,12 @@ class ConvertJp2Hathi(AbsTransformation):
 class Transformers:
     def __init__(self, strategy: AbsTransformation,
                  logger: logging.Logger = None) -> None:
+        """Create a new Transformers object.
+
+        Args:
+            strategy: Strategy used to transform the packages
+            logger: System logger to store information such as debug info
+        """
         self._strategy = strategy
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
 
