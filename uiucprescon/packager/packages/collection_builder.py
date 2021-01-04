@@ -381,7 +381,9 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
         sidecar_files = []
         main_files = []
-        for key, value in itertools.groupby(matching_files, key=_organize_files):
+        for key, value in itertools.groupby(
+                matching_files, key=_organize_files
+        ):
             if key == "sidecar":
                 for file_ in value:
                     sidecar_files.append(file_)
@@ -544,7 +546,10 @@ class HathiJp2Builder(AbsCollectionBuilder):
         sidecar_files = []
 
         main_files = []
-        for key, value in itertools.groupby(matching_files, key=cls._organize_files):
+        for key, value in itertools.groupby(
+                matching_files,
+                key=cls._organize_files
+        ):
             if key == "sidecar":
                 for file_ in value:
                     sidecar_files.append(file_)
