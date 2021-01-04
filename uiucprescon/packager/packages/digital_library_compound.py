@@ -177,7 +177,7 @@ class Transform:
         access_file_maker.transform(src, access_file_full_path)
 
     def transform_preservation_file(self, src, item_name, object_name):
-        """Transform the source file into a preservation file"""
+        """Transform the source file into a preservation file."""
 
         preservation_path = os.path.join(
             self.destination_root,

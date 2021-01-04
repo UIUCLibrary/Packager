@@ -1,4 +1,4 @@
-"""Package generated from the lab using Capture One"""
+"""Package generated from the lab using Capture One."""
 
 import logging
 import os
@@ -11,7 +11,7 @@ from .abs_package_builder import AbsPackageBuilder
 
 
 class CaptureOnePackage(AbsPackageBuilder):
-    """Package generated from the lab using Capture One
+    """Package generated from the lab using Capture One.
 
   + batch folder
       - uniqueID1_00000001.tif
