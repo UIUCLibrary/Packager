@@ -136,6 +136,7 @@ class PackageObject(AbsPackageComponent):
 
     @property
     def children(self):
+        """Objects's children."""
         return self.items
 
 
@@ -153,6 +154,7 @@ class Item(AbsPackageComponent):
 
     @property
     def children(self):
+        """Item's children."""
         return self.instantiations.values()
 
 
@@ -180,6 +182,14 @@ class Instantiation(AbsPackageComponent):
         return self._files
 
     def get_files(self):
+        """Make the files contained available.
+
+        If source is a zip file, files are extracted
+
+        Yields:
+            File path to files located in instance
+
+        """
         temp_dir = TemporaryDirectory()
         for pkg_file in self._files:
             if ".zip" in self.parent.metadata[Metadata.PATH]:
@@ -203,7 +213,14 @@ class Instantiation(AbsPackageComponent):
 
     @property
     def children(self):
+        """Instances has no children."""
         return []
 
     def add_to_parent(self, child):
+        """Add child to parent.
+
+        Args:
+            child:
+
+        """
         self.parent.instantiations[self.category] = child

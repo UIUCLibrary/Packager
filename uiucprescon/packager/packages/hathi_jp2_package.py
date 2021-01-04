@@ -15,12 +15,28 @@ class HathiJp2(AbsPackageBuilder):
     """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
+        """Locate Hathi jp2 packages on a given file path.
+
+        Args:
+            path: File path to search for Hathi jp2 packages
+
+        Yields:
+            Hathi Jpeg2000 packages
+
+        """
         builder = collection_builder.HathiJp2Builder()
         batch = builder.build_batch(path)
         for package in batch:
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
+        """Transform package into a Hathi jp2k package.
+
+        Args:
+            package: Source package to transform
+            dest: File path to save the transformed package
+
+        """
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
@@ -29,6 +45,14 @@ class HathiJp2(AbsPackageBuilder):
 
     @staticmethod
     def transform_one(item, dest, logger=None):
+        """Transform a single item one.
+
+        Args:
+            item:
+            dest:
+            logger:
+
+        """
         item_name = item.metadata[Metadata.ITEM_NAME]
         object_name = item.metadata[Metadata.ID]
         new_item_path = os.path.join(dest, object_name)

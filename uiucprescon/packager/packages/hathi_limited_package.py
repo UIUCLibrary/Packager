@@ -37,10 +37,28 @@ class HathiLimitedView(AbsPackageBuilder):
     """limited-view content received from HathiTrust."""
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
+        """Locate Hathi tiff packages on a given file path.
+
+        Args:
+            path: File path to search for Hathi limited view packages
+
+        Yields:
+            Hathi limited view packages
+
+        """
         builder = collection_builder.HathiLimitedViewBuilder()
         batch = builder.build_batch(path)
         for package in batch:
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
+        """Invalid.
+
+        This raises an exception. This is a read only format for now
+
+        Args:
+            package:
+            dest:
+
+        """
         raise NotImplementedError("This package format can't be created")

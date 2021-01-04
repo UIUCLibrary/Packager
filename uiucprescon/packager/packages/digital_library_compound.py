@@ -38,6 +38,15 @@ class DigitalLibraryCompound(AbsPackageBuilder):
     """
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
+        """Locate Digital Library packages on a given file path.
+
+        Args:
+            path: File path to search for Digital Library packages
+
+        Yields:
+            Digital Library packages
+
+        """
         builder = collection_builder.DigitalLibraryCompoundBuilder()
 
         for package in builder.build_batch(path):
@@ -49,6 +58,13 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                          destination_root=destination_root)
 
     def transform(self, package: Package, dest: str) -> None:
+        """Transform package into a Digital library package.
+
+        Args:
+            package: Source package to transform
+            dest: File path to save the transformed package
+
+        """
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 

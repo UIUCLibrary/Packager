@@ -13,12 +13,22 @@ except ImportError:
 
 
 class AbsTransformation(metaclass=abc.ABCMeta):
-    """Abstract base class for creating transformation classes."""
+    """Abstract base class for creating transformation classes.
+
+    Perform some form of operation on a file, such as convert or copy
+    """
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
-        pass
+        """Perform some transformation.
+
+        Args:
+            source: File path to source file
+            destination: File path to save new file
+            logger: System logger. For debugging or passing processing data
+
+        """
 
 
 class CopyFile(AbsTransformation):
@@ -26,7 +36,14 @@ class CopyFile(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Perform the transform.
 
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         dest = os.path.abspath(os.path.dirname(destination))
         source_name = os.path.basename(source)
 
@@ -41,6 +58,14 @@ class ConvertTiff(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform tiff.
+
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.tif"
         dest = os.path.abspath(os.path.dirname(destination))
@@ -55,7 +80,14 @@ class ConvertJp2Standard(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform standard jp200.
 
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.jp2"
 
@@ -69,6 +101,14 @@ class ConvertJp2Hathi(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform jp2 hathi.
+
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         dest = os.path.abspath(os.path.dirname(destination))
 
         base_name = os.path.splitext(os.path.basename(source))[0]
@@ -112,6 +152,13 @@ class Transformers:
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
 
     def transform(self, source, destination) -> None:
+        """Transform one entity into another.
+
+        Args:
+            source:
+            destination:
+
+        """
         new_name = self._strategy.transform(source, destination,
                                             logger=self._logger)
 
