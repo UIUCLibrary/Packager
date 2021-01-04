@@ -1,4 +1,4 @@
-"""limited-view content received from HathiTrust
+"""limited-view content received from HathiTrust.
 
 The three versions are as follows:
 
@@ -34,7 +34,7 @@ from .collection import Package
 
 
 class HathiLimitedView(AbsPackageBuilder):
-    """limited-view content received from HathiTrust"""
+    """limited-view content received from HathiTrust."""
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiLimitedViewBuilder()

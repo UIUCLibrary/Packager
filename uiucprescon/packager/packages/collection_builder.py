@@ -113,7 +113,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def build_batch(cls, root):
-        """Build a new batch of a given packaging type"""
+        """Build a new batch of a given packaging type."""
 
     @classmethod
     @abc.abstractmethod

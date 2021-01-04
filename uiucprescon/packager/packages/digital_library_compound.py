@@ -1,4 +1,4 @@
-"""Compound objects for the Medusa Digital Library"""
+"""Compound objects for the Medusa Digital Library."""
 
 import logging
 import os
@@ -81,7 +81,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
     @staticmethod
     def get_file_base_name(item_name, object_name):
-        """Get the base name of a file, without an extension"""
+        """Get the base name of a file, without an extension."""
         new_base_name = f"{object_name}_{item_name}"
         return new_base_name
 
@@ -104,7 +104,7 @@ class Transform:
 
     def transform_supplementary_data(self, src: str, item_name: str,
                                      object_name: str):
-        """Transform the supplementary file
+        """Transform the supplementary file.
 
        Args:
             src: supplementary file to be used
@@ -136,7 +136,7 @@ class Transform:
 
     def transform_access_file(self, src: str, item_name: str,
                               object_name: str):
-        """Transform the file into an access file
+        """Transform the file into an access file.
 
         Args:
             src: file to be used to generate the access file
