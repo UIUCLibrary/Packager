@@ -13,6 +13,7 @@ from .abs_package_builder import AbsPackageBuilder
 
 class HathiJp2(AbsPackageBuilder):
     """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
+
     def locate_packages(self, path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiJp2Builder()
         batch = builder.build_batch(path)

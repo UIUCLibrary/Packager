@@ -761,7 +761,6 @@ class HathiLimitedViewPackageBuilder:
 
         Returns: key for the file
         """
-
         key = os.path.splitext(os.path.split(file_name)[-1])[0]
         return key
 

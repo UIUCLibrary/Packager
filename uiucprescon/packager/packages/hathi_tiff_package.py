@@ -12,8 +12,8 @@ from .abs_package_builder import AbsPackageBuilder
 
 
 class HathiTiff(AbsPackageBuilder):
-    """Packaged files for submitting to HathiTrust containing only Tiff
-    files"""
+    """Packaged files for submitting to HathiTrust containing Tiff files."""
+
     def locate_packages(self, path) -> typing.Iterator[Package]:
         builder = collection_builder.HathiTiffBuilder()
         for package in builder.build_batch(path):

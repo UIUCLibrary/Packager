@@ -13,8 +13,7 @@ from .abs_package_builder import AbsPackageBuilder
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
-    """Packaged files for submitting to UIUC Digital library with the compound
-    object profile
+    """For submitting to UIUC Digital library with the compound object profile.
 
      + uniqueID1 (folder)
          + preservation (folder)
@@ -88,7 +87,8 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
 
 class Transform:
-    """Helper for transforming files """
+    """Helper for transforming files."""
+
     _strategies = {
         'CopyFile': transformations.CopyFile(),
         'ConvertJp2Standard': transformations.ConvertJp2Standard(),
@@ -114,7 +114,6 @@ class Transform:
         Returns:
 
         """
-
         supplementary_dir = os.path.join(
             self.destination_root,
             object_name,
@@ -147,7 +146,6 @@ class Transform:
         Returns:
 
         """
-
         access_path = os.path.join(
             self.destination_root,
             object_name,
@@ -178,7 +176,6 @@ class Transform:
 
     def transform_preservation_file(self, src, item_name, object_name):
         """Transform the source file into a preservation file."""
-
         preservation_path = os.path.join(
             self.destination_root,
             object_name,

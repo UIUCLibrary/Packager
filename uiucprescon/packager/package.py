@@ -8,6 +8,7 @@ from .packages.abs_package_builder import AbsPackageBuilder
 
 class PackageFactory:
     """Use for getting the correct type of file package"""
+
     def __init__(self, package_type: AbsPackageBuilder) -> None:
         self._package_type = package_type
 
