@@ -52,7 +52,14 @@ def _build_ds_object(parent_batch, path):
 
 
 def build_ds_batch(root):
+    """Build a ds batch.
 
+    Args:
+        root: Root path where the batch is located.
+    Returns:
+        DS Batch
+
+    """
     warnings.warn("Use DSBuilder.build_batch instead ",
                   PendingDeprecationWarning)
 
@@ -67,6 +74,17 @@ def build_ds_batch(root):
 
 
 def build_bb_instance(new_item, path, name):
+    """Build a brittle books instance.
+
+    Args:
+        new_item:
+        path: Root path where the instance is located.
+        name:
+
+    Returns:
+        Brittle books instance
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_instance instead ",
                   PendingDeprecationWarning)
     new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
@@ -78,6 +96,16 @@ def build_bb_instance(new_item, path, name):
 
 
 def build_bb_package(new_package, path):
+    """Build a brittle books new_package.
+
+    Args:
+        new_package:
+        path: Root path where the package is located.
+
+    Returns:
+        Brittle books package
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_package instead ",
                   PendingDeprecationWarning)
     logger = logging.getLogger(__name__)
@@ -90,7 +118,15 @@ def build_bb_package(new_package, path):
 
 
 def build_bb_batch(root) -> Package:
+    """Build a brittle books batch.
 
+    Args:
+        root: Root path where the batch is located.
+
+    Returns:
+        Brittle books batch
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_batch instead ",
                   PendingDeprecationWarning)
 
@@ -110,6 +146,8 @@ def build_bb_batch(root) -> Package:
 
 
 class AbsCollectionBuilder(metaclass=abc.ABCMeta):
+    """AbsCollectionBuilder."""
+
     @classmethod
     @abc.abstractmethod
     def build_batch(cls, root):
@@ -153,6 +191,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
 
 class DSBuilder(AbsCollectionBuilder):
+    """DSBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -200,6 +239,7 @@ class DSBuilder(AbsCollectionBuilder):
 
 
 class BrittleBooksBuilder(AbsCollectionBuilder):
+    """BrittleBooksBuilder."""
 
     @classmethod
     def build_instance(cls, parent, path, filename, *args, **kwargs):
@@ -242,6 +282,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
 
 
 class CaptureOneBuilder(AbsCollectionBuilder):
+    """CaptureOneBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -329,6 +370,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
 
 class HathiTiffBuilder(AbsCollectionBuilder):
+    """HathiTiffBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -401,6 +443,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
 
 class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
+    """DigitalLibraryCompoundBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -493,6 +536,8 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
 
 
 class HathiJp2Builder(AbsCollectionBuilder):
+    """HathiJp2Builder."""
+
     @classmethod
     def build_batch(cls, root):
 
@@ -567,6 +612,8 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
 
 class HathiLimitedViewBuilder(AbsCollectionBuilder):
+    """HathiLimitedViewBuilder."""
+
     BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
     METS_FILE_REGEX = r"\.mets\.xml"
     ZIP_FILE_REGEX = r"\.zip"
@@ -724,6 +771,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
 
 class HathiLimitedViewPackageBuilder:
+    """HathiLimitedViewPackageBuilder."""
+
     BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
     METS_FILE_REGEX = r"\.mets\.xml"
     ZIP_FILE_REGEX = r"\.zip"

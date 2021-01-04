@@ -13,6 +13,7 @@ except ImportError:
 
 
 class AbsTransformation(metaclass=abc.ABCMeta):
+    """Abstract base class for creating transformation classes."""
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
@@ -21,6 +22,8 @@ class AbsTransformation(metaclass=abc.ABCMeta):
 
 
 class CopyFile(AbsTransformation):
+    """CopyFile."""
+
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
 
@@ -34,6 +37,7 @@ class CopyFile(AbsTransformation):
 
 
 class ConvertTiff(AbsTransformation):
+    """ConvertTiff."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
@@ -47,6 +51,7 @@ class ConvertTiff(AbsTransformation):
 
 
 class ConvertJp2Standard(AbsTransformation):
+    """ConvertJp2Standard."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
@@ -60,6 +65,7 @@ class ConvertJp2Standard(AbsTransformation):
 
 
 class ConvertJp2Hathi(AbsTransformation):
+    """ConvertJp2Hathi."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
@@ -92,6 +98,8 @@ class ConvertJp2Hathi(AbsTransformation):
 
 
 class Transformers:
+    """Transformers."""
+
     def __init__(self, strategy: AbsTransformation,
                  logger: logging.Logger = None) -> None:
         """Create a new Transformers object.

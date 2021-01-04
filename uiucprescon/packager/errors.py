@@ -2,6 +2,7 @@
 
 
 class ZipFileException(KeyError):
+    """Problem with the zip file or the files contained in the zip file."""
 
     def __init__(self, *args: object, zip_file, problem_files=None) -> None:
         """ZipFileException.

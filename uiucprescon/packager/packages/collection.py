@@ -14,6 +14,8 @@ from uiucprescon.packager.errors import ZipFileException
 
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
+    """Abstract base class for creating package components."""
+
     def __init__(self, parent=None) -> None:
         """AbsPackageComponent.
 
@@ -77,6 +79,8 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
 
 class Batch(AbsPackageComponent):
+    """Batch."""
+
     @property
     def children(self):
         return self.packages
@@ -94,6 +98,8 @@ class Batch(AbsPackageComponent):
 
 
 class Package(AbsPackageComponent):
+    """Package."""
+
     def __init__(self, path=None, parent=None):
         """Create a new Package object.
 
@@ -116,6 +122,8 @@ class Package(AbsPackageComponent):
 
 
 class PackageObject(AbsPackageComponent):
+    """Package Object."""
+
     def __init__(self, parent: typing.Optional[Package] = None) -> None:
         """PackageObject.
 
@@ -132,6 +140,8 @@ class PackageObject(AbsPackageComponent):
 
 
 class Item(AbsPackageComponent):
+    """Collection item."""
+
     def __init__(self, parent: typing.Optional[PackageObject] = None) -> None:
         """Item.
 
@@ -147,6 +157,8 @@ class Item(AbsPackageComponent):
 
 
 class Instantiation(AbsPackageComponent):
+    """File Instantiation."""
+
     def __init__(self,
                  category: InstantiationTypes = InstantiationTypes.GENERIC,
                  parent: typing.Optional[Item] = None) -> None:
