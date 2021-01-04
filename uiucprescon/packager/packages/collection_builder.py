@@ -319,7 +319,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                             cls.get_group_items(x, group_id),
                             non_system_files):
 
-            group_part, item_part = file_.name.split("_")
+            _, item_part = file_.name.split("_")
             item_part, _ = os.path.splitext(item_part)
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
@@ -381,12 +381,12 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
         sidecar_files = []
         main_files = []
-        for k, v in itertools.groupby(matching_files, key=_organize_files):
-            if k == "sidecar":
-                for file_ in v:
+        for key, value in itertools.groupby(matching_files, key=_organize_files):
+            if key == "sidecar":
+                for file_ in value:
                     sidecar_files.append(file_)
-            elif k == "main_files":
-                for file_ in v:
+            elif key == "main_files":
+                for file_ in value:
                     main_files.append(file_)
 
         for file_ in main_files:
@@ -544,12 +544,12 @@ class HathiJp2Builder(AbsCollectionBuilder):
         sidecar_files = []
 
         main_files = []
-        for k, v in itertools.groupby(matching_files, key=cls._organize_files):
-            if k == "sidecar":
-                for file_ in v:
+        for key, value in itertools.groupby(matching_files, key=cls._organize_files):
+            if key == "sidecar":
+                for file_ in value:
                     sidecar_files.append(file_)
-            elif k == "main_files":
-                for file_ in v:
+            elif key == "main_files":
+                for file_ in value:
                     main_files.append(file_)
 
         for file_ in main_files:
