@@ -1,3 +1,5 @@
+"""Shared utility functions."""
+
 import enum
 
 

@@ -1,3 +1,4 @@
+"""Abstract class for package builder."""
 import abc
 import logging
 import typing

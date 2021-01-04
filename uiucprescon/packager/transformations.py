@@ -1,3 +1,5 @@
+"""Transforming one collection type into another."""
+
 import abc
 import logging
 import os

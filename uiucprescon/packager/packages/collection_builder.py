@@ -1,3 +1,5 @@
+"""Collection builder."""
+
 import abc
 import itertools
 import logging

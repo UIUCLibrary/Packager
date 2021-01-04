@@ -1,3 +1,6 @@
+"""Custom exceptions."""
+
+
 class ZipFileException(KeyError):
 
     def __init__(self, *args: object, zip_file, problem_files=None) -> None:

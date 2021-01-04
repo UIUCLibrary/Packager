@@ -1,3 +1,5 @@
+"""Packaged files for submitting to HathiTrust containing only Tiff files."""
+
 import logging
 import os
 import typing

@@ -1,3 +1,5 @@
+"""Package level."""
+
 # This is the abstract factory
 import typing
 from .packages import collection

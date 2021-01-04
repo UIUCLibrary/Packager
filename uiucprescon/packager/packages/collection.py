@@ -1,3 +1,5 @@
+"""Manage the collection components."""
+
 import abc
 import collections
 import os

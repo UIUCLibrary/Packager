@@ -1,3 +1,5 @@
+"""Packaged files for submitting to HathiTrust with JPEG 2000 files."""
+
 import logging
 import os
 import typing
