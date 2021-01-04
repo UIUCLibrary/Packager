@@ -111,8 +111,6 @@ class Transform:
             item_name: Item name of that the file belongs to
             object_name: Object name of that the file belongs to
 
-        Returns:
-
         """
         supplementary_dir = os.path.join(
             self.destination_root,
@@ -142,8 +140,6 @@ class Transform:
             src: file to be used to generate the access file
             item_name: Item name of that the file belongs to
             object_name: Object name of that the file belongs to
-
-        Returns:
 
         """
         access_path = os.path.join(
