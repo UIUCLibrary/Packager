@@ -106,7 +106,7 @@ class Transform:
                                      object_name: str):
         """Transform the supplementary file.
 
-       Args:
+        Args:
             src: supplementary file to be used
             item_name: Item name of that the file belongs to
             object_name: Object name of that the file belongs to

@@ -13,13 +13,13 @@ from .abs_package_builder import AbsPackageBuilder
 class CaptureOnePackage(AbsPackageBuilder):
     """Package generated from the lab using Capture One.
 
-  + batch folder
-      - uniqueID1_00000001.tif
-      - uniqueID1_00000002.tif
-      - uniqueID1_00000003.tif
-      - uniqueID2_00000001.tif
-      - uniqueID2_00000002.tif
-"""
+    + batch folder
+        - uniqueID1_00000001.tif
+        - uniqueID1_00000002.tif
+        - uniqueID1_00000003.tif
+        - uniqueID2_00000001.tif
+        - uniqueID2_00000002.tif
+    """
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
 
