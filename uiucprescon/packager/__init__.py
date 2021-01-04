@@ -1,4 +1,4 @@
-"""Converting package types
+"""Converting package types.
 
 Changes:
 ++++++++

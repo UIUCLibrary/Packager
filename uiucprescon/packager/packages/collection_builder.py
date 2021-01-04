@@ -1,3 +1,5 @@
+"""Collection builder."""
+
 import abc
 import itertools
 import logging
@@ -50,7 +52,14 @@ def _build_ds_object(parent_batch, path):
 
 
 def build_ds_batch(root):
+    """Build a ds batch.
 
+    Args:
+        root: Root path where the batch is located.
+    Returns:
+        DS Batch
+
+    """
     warnings.warn("Use DSBuilder.build_batch instead ",
                   PendingDeprecationWarning)
 
@@ -65,6 +74,17 @@ def build_ds_batch(root):
 
 
 def build_bb_instance(new_item, path, name):
+    """Build a brittle books instance.
+
+    Args:
+        new_item:
+        path: Root path where the instance is located.
+        name:
+
+    Returns:
+        Brittle books instance
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_instance instead ",
                   PendingDeprecationWarning)
     new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
@@ -76,6 +96,16 @@ def build_bb_instance(new_item, path, name):
 
 
 def build_bb_package(new_package, path):
+    """Build a brittle books new_package.
+
+    Args:
+        new_package:
+        path: Root path where the package is located.
+
+    Returns:
+        Brittle books package
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_package instead ",
                   PendingDeprecationWarning)
     logger = logging.getLogger(__name__)
@@ -88,7 +118,15 @@ def build_bb_package(new_package, path):
 
 
 def build_bb_batch(root) -> Package:
+    """Build a brittle books batch.
 
+    Args:
+        root: Root path where the batch is located.
+
+    Returns:
+        Brittle books batch
+
+    """
     warnings.warn("Use BrittleBooksBuilder.build_batch instead ",
                   PendingDeprecationWarning)
 
@@ -108,10 +146,12 @@ def build_bb_batch(root) -> Package:
 
 
 class AbsCollectionBuilder(metaclass=abc.ABCMeta):
+    """AbsCollectionBuilder."""
+
     @classmethod
     @abc.abstractmethod
     def build_batch(cls, root):
-        """Build a new batch of a given packaging type"""
+        """Build a new batch of a given packaging type."""
 
     @classmethod
     @abc.abstractmethod
@@ -151,6 +191,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
 
 class DSBuilder(AbsCollectionBuilder):
+    """DSBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -198,6 +239,7 @@ class DSBuilder(AbsCollectionBuilder):
 
 
 class BrittleBooksBuilder(AbsCollectionBuilder):
+    """BrittleBooksBuilder."""
 
     @classmethod
     def build_instance(cls, parent, path, filename, *args, **kwargs):
@@ -240,6 +282,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
 
 
 class CaptureOneBuilder(AbsCollectionBuilder):
+    """CaptureOneBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -319,7 +362,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                             cls.get_group_items(x, group_id),
                             non_system_files):
 
-            group_part, item_part = file_.name.split("_")
+            _, item_part = file_.name.split("_")
             item_part, _ = os.path.splitext(item_part)
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
@@ -327,6 +370,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
 
 class HathiTiffBuilder(AbsCollectionBuilder):
+    """HathiTiffBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -381,12 +425,14 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
         sidecar_files = []
         main_files = []
-        for k, v in itertools.groupby(matching_files, key=_organize_files):
-            if k == "sidecar":
-                for file_ in v:
+        for key, value in itertools.groupby(
+                matching_files, key=_organize_files
+        ):
+            if key == "sidecar":
+                for file_ in value:
                     sidecar_files.append(file_)
-            elif k == "main_files":
-                for file_ in v:
+            elif key == "main_files":
+                for file_ in value:
                     main_files.append(file_)
 
         for file_ in main_files:
@@ -397,6 +443,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
 
 class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
+    """DigitalLibraryCompoundBuilder."""
 
     @classmethod
     def build_batch(cls, root):
@@ -489,6 +536,8 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
 
 
 class HathiJp2Builder(AbsCollectionBuilder):
+    """HathiJp2Builder."""
+
     @classmethod
     def build_batch(cls, root):
 
@@ -544,12 +593,15 @@ class HathiJp2Builder(AbsCollectionBuilder):
         sidecar_files = []
 
         main_files = []
-        for k, v in itertools.groupby(matching_files, key=cls._organize_files):
-            if k == "sidecar":
-                for file_ in v:
+        for key, value in itertools.groupby(
+                matching_files,
+                key=cls._organize_files
+        ):
+            if key == "sidecar":
+                for file_ in value:
                     sidecar_files.append(file_)
-            elif k == "main_files":
-                for file_ in v:
+            elif key == "main_files":
+                for file_ in value:
                     main_files.append(file_)
 
         for file_ in main_files:
@@ -560,6 +612,8 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
 
 class HathiLimitedViewBuilder(AbsCollectionBuilder):
+    """HathiLimitedViewBuilder."""
+
     BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
     METS_FILE_REGEX = r"\.mets\.xml"
     ZIP_FILE_REGEX = r"\.zip"
@@ -717,6 +771,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
 
 class HathiLimitedViewPackageBuilder:
+    """HathiLimitedViewPackageBuilder."""
+
     BIB_ID_REGEX = r"([0-9]*)(v[0-9]*)?(m[0-9])?(i[0-9]*)?(_[0-9]*(i[0-9])?)?"
     METS_FILE_REGEX = r"\.mets\.xml"
     ZIP_FILE_REGEX = r"\.zip"
@@ -727,6 +783,11 @@ class HathiLimitedViewPackageBuilder:
     mets_file_matcher = re.compile(f"^{BIB_ID_REGEX}({METS_FILE_REGEX})$")
 
     def __init__(self, path) -> None:
+        """HathiLimitedViewPackageBuilder.
+
+        Args:
+            path: Path that the package is located in
+        """
         self.path = path
 
     @classmethod
@@ -754,7 +815,6 @@ class HathiLimitedViewPackageBuilder:
 
         Returns: key for the file
         """
-
         key = os.path.splitext(os.path.split(file_name)[-1])[0]
         return key
 

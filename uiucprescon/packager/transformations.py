@@ -1,3 +1,5 @@
+"""Transforming one collection type into another."""
+
 import abc
 import logging
 import os
@@ -11,17 +13,37 @@ except ImportError:
 
 
 class AbsTransformation(metaclass=abc.ABCMeta):
+    """Abstract base class for creating transformation classes.
+
+    Perform some form of operation on a file, such as convert or copy
+    """
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
-        pass
+        """Perform some transformation.
+
+        Args:
+            source: File path to source file
+            destination: File path to save new file
+            logger: System logger. For debugging or passing processing data
+
+        """
 
 
 class CopyFile(AbsTransformation):
+    """CopyFile."""
+
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Perform the transform.
 
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         dest = os.path.abspath(os.path.dirname(destination))
         source_name = os.path.basename(source)
 
@@ -32,9 +54,18 @@ class CopyFile(AbsTransformation):
 
 
 class ConvertTiff(AbsTransformation):
+    """ConvertTiff."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform tiff.
+
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.tif"
         dest = os.path.abspath(os.path.dirname(destination))
@@ -45,10 +76,18 @@ class ConvertTiff(AbsTransformation):
 
 
 class ConvertJp2Standard(AbsTransformation):
+    """ConvertJp2Standard."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform standard jp200.
 
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.jp2"
 
@@ -58,9 +97,18 @@ class ConvertJp2Standard(AbsTransformation):
 
 
 class ConvertJp2Hathi(AbsTransformation):
+    """ConvertJp2Hathi."""
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
+        """Transform jp2 hathi.
+
+        Args:
+            source:
+            destination:
+            logger: System logger. For debugging or passing processing data
+
+        """
         dest = os.path.abspath(os.path.dirname(destination))
 
         base_name = os.path.splitext(os.path.basename(source))[0]
@@ -90,12 +138,27 @@ class ConvertJp2Hathi(AbsTransformation):
 
 
 class Transformers:
+    """Transformers."""
+
     def __init__(self, strategy: AbsTransformation,
                  logger: logging.Logger = None) -> None:
+        """Create a new Transformers object.
+
+        Args:
+            strategy: Strategy used to transform the packages
+            logger: System logger to store information such as debug info
+        """
         self._strategy = strategy
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
 
     def transform(self, source, destination) -> None:
+        """Transform one entity into another.
+
+        Args:
+            source:
+            destination:
+
+        """
         new_name = self._strategy.transform(source, destination,
                                             logger=self._logger)
 

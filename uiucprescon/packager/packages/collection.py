@@ -1,18 +1,27 @@
+"""Manage the collection components."""
+
 import abc
 import collections
 import os
+from tempfile import TemporaryDirectory
 import typing
 import warnings
-from uiucprescon.packager.common import Metadata, CollectionEnums
-from uiucprescon.packager.common import InstantiationTypes
-from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
+from uiucprescon.packager.common import Metadata, CollectionEnums
+from uiucprescon.packager.common import InstantiationTypes
 from uiucprescon.packager.errors import ZipFileException
 
 
 class AbsPackageComponent(metaclass=abc.ABCMeta):
+    """Abstract base class for creating package components."""
+
     def __init__(self, parent=None) -> None:
+        """AbsPackageComponent.
+
+        Args:
+            parent: The parent this package component belongs to
+        """
         self.parent = parent
         if parent is not None:
             self.add_to_parent(child=self)
@@ -70,18 +79,34 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
 
 class Batch(AbsPackageComponent):
+    """Batch."""
+
     @property
     def children(self):
         return self.packages
 
     def __init__(self, path=None, parent=None):
+        """Batch.
+
+        Args:
+            path:
+            parent: The parent this batch belongs to
+        """
         super().__init__(parent)
         self.path = path
         self.packages: typing.List[Package] = []
 
 
 class Package(AbsPackageComponent):
+    """Package."""
+
     def __init__(self, path=None, parent=None):
+        """Create a new Package object.
+
+        Args:
+            path:
+            parent: The parent this package belongs to
+        """
         super().__init__(parent)
         self.path = path
         self.objects: typing.List[PackageObject] = []
@@ -97,31 +122,54 @@ class Package(AbsPackageComponent):
 
 
 class PackageObject(AbsPackageComponent):
+    """Package Object."""
+
     def __init__(self, parent: typing.Optional[Package] = None) -> None:
+        """PackageObject.
+
+        Args:
+             parent: The parent this package object belongs to
+        """
         super().__init__(parent)
         self.package_files: typing.List[str] = []
         self.items: typing.List[Item] = []
 
     @property
     def children(self):
+        """Objects's children."""
         return self.items
 
 
 class Item(AbsPackageComponent):
+    """Collection item."""
+
     def __init__(self, parent: typing.Optional[PackageObject] = None) -> None:
+        """Item.
+
+        Args:
+             parent: parent this item belongs to
+        """
         super().__init__(parent)
         self.instantiations = dict()  # type: typing.Dict[str, Instantiation]
 
     @property
     def children(self):
+        """Item's children."""
         return self.instantiations.values()
 
 
 class Instantiation(AbsPackageComponent):
+    """File Instantiation."""
+
     def __init__(self,
                  category: InstantiationTypes = InstantiationTypes.GENERIC,
                  parent: typing.Optional[Item] = None) -> None:
+        """Create a new instantiation object.
 
+        Args:
+            category: File category type
+            parent: The parent this instance belongs to
+        """
         self.category = category
         super().__init__(parent)
         self.component_metadata[Metadata.CATEGORY] = category
@@ -134,6 +182,14 @@ class Instantiation(AbsPackageComponent):
         return self._files
 
     def get_files(self):
+        """Make the files contained available.
+
+        If source is a zip file, files are extracted
+
+        Yields:
+            File path to files located in instance
+
+        """
         temp_dir = TemporaryDirectory()
         for pkg_file in self._files:
             if ".zip" in self.parent.metadata[Metadata.PATH]:
@@ -157,7 +213,14 @@ class Instantiation(AbsPackageComponent):
 
     @property
     def children(self):
+        """Instances has no children."""
         return []
 
     def add_to_parent(self, child):
+        """Add child to parent.
+
+        Args:
+            child:
+
+        """
         self.parent.instantiations[self.category] = child

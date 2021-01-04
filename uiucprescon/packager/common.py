@@ -1,11 +1,15 @@
+"""Shared utility functions."""
+
 import enum
 
 
 class CollectionEnums(enum.Enum):
-    pass
+    """CollectionEnums."""
 
 
 class Metadata(enum.Enum):
+    """Metadata."""
+
     ITEM_NAME = "item_name"
     ID = "id"
     PATH = "path"
@@ -15,6 +19,8 @@ class Metadata(enum.Enum):
 
 
 class PackageTypes(CollectionEnums):
+    """PackageTypes."""
+
     DIGITAL_LIBRARY_COMPOUND = "Digital Library Compound Object"
     CAPTURE_ONE_SESSION = "Capture One Session Package"
 
@@ -27,6 +33,8 @@ class PackageTypes(CollectionEnums):
 
 
 class InstantiationTypes(CollectionEnums):
+    """InstantiationTypes."""
+
     ACCESS = "access"
     PRESERVATION = "preservation"
     UNKNOWN = "unknown"

@@ -1,4 +1,4 @@
-"""Compound objects for the Medusa Digital Library"""
+"""Compound objects for the Medusa Digital Library."""
 
 import logging
 import os
@@ -13,8 +13,7 @@ from .abs_package_builder import AbsPackageBuilder
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
-    """Packaged files for submitting to UIUC Digital library with the compound
-    object profile
+    """For submitting to UIUC Digital library with the compound object profile.
 
      + uniqueID1 (folder)
          + preservation (folder)
@@ -39,6 +38,15 @@ class DigitalLibraryCompound(AbsPackageBuilder):
     """
 
     def locate_packages(self, path) -> typing.Iterator[Package]:
+        """Locate Digital Library packages on a given file path.
+
+        Args:
+            path: File path to search for Digital Library packages
+
+        Yields:
+            Digital Library packages
+
+        """
         builder = collection_builder.DigitalLibraryCompoundBuilder()
 
         for package in builder.build_batch(path):
@@ -50,6 +58,13 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                          destination_root=destination_root)
 
     def transform(self, package: Package, dest: str) -> None:
+        """Transform package into a Digital library package.
+
+        Args:
+            package: Source package to transform
+            dest: File path to save the transformed package
+
+        """
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
@@ -82,13 +97,14 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
     @staticmethod
     def get_file_base_name(item_name, object_name):
-        """Get the base name of a file, without an extension"""
+        """Get the base name of a file, without an extension."""
         new_base_name = f"{object_name}_{item_name}"
         return new_base_name
 
 
 class Transform:
-    """Helper for transforming files """
+    """Helper for transforming files."""
+
     _strategies = {
         'CopyFile': transformations.CopyFile(),
         'ConvertJp2Standard': transformations.ConvertJp2Standard(),
@@ -97,24 +113,27 @@ class Transform:
 
     def __init__(self, logger, package_builder: DigitalLibraryCompound,
                  destination_root) -> None:
+        """Create a new Helper object for transforming files.
 
+        Args:
+            logger: System logger to use
+            package_builder:
+            destination_root:
+        """
         self._package_builder = package_builder
         self.logger = logger
         self.destination_root = destination_root
 
     def transform_supplementary_data(self, src: str, item_name: str,
                                      object_name: str):
-        """Transform the supplementary file
+        """Transform the supplementary file.
 
-       Args:
+        Args:
             src: supplementary file to be used
             item_name: Item name of that the file belongs to
             object_name: Object name of that the file belongs to
 
-        Returns:
-
         """
-
         supplementary_dir = os.path.join(
             self.destination_root,
             object_name,
@@ -137,17 +156,14 @@ class Transform:
 
     def transform_access_file(self, src: str, item_name: str,
                               object_name: str):
-        """Transform the file into an access file
+        """Transform the file into an access file.
 
         Args:
             src: file to be used to generate the access file
             item_name: Item name of that the file belongs to
             object_name: Object name of that the file belongs to
 
-        Returns:
-
         """
-
         access_path = os.path.join(
             self.destination_root,
             object_name,
@@ -177,8 +193,7 @@ class Transform:
         access_file_maker.transform(src, access_file_full_path)
 
     def transform_preservation_file(self, src, item_name, object_name):
-        """Transform the source file into a preservation file"""
-
+        """Transform the source file into a preservation file."""
         preservation_path = os.path.join(
             self.destination_root,
             object_name,
