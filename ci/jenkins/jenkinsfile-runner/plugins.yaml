@@ -1,0 +1,114 @@
+plugins:
+  - artifactId: analysis-model-api
+    source:
+      version: 9.4.0
+  - artifactId: code-coverage-api
+    source:
+      version: 1.2.0
+  - artifactId: branch-api
+    source:
+      version: 2.6.2
+  - artifactId: cobertura
+    source:
+      version: 1.16
+#  - artifactId: configuration-as-code
+#    source:
+#      version: 1.46
+#  - artifactId: display-url-api
+#    source:
+#      version: 2.3.4
+  - artifactId: docker-commons
+    source:
+      version: 1.17
+  - artifactId: docker-workflow
+    source:
+      version: 1.24
+  - artifactId: docker-plugin
+    source:
+      version: 1.2.1
+  - artifactId: git
+    source:
+      version: 4.4.5
+  - artifactId: git-client
+    source:
+      version: 3.5.1
+  - artifactId: htmlpublisher
+    source:
+      version: latest
+  - artifactId: junit
+    source:
+      version: latest
+  - artifactId: lockable-resources
+    source:
+      version: latest
+  - artifactId: pipeline-build-step
+    source:
+      version: latest
+  - artifactId: pipeline-graph-analysis
+    source:
+      version: latest
+  - artifactId: pipeline-input-step
+    source:
+      version: latest
+  - artifactId: pipeline-milestone-step
+    source:
+      version: latest
+  - artifactId: pipeline-model-api
+    source:
+      version: latest
+  - artifactId: pipeline-model-definition
+    source:
+      version: 1.7.2
+  - artifactId: pipeline-model-extensions
+    source:
+      version: 1.7.2
+  - artifactId: pipeline-rest-api
+    source:
+      version: latest
+  - artifactId: pipeline-stage-step
+    source:
+      version: latest
+  - artifactId: pipeline-stage-tags-metadata
+    source:
+      version: latest
+  - artifactId: pipeline-stage-view
+    source:
+      version: latest
+  - artifactId: pipeline-utility-steps
+    source:
+      version: latest
+  - artifactId: scm-api
+  - artifactId: ssh-agent
+    source:
+      version: 1.20
+  - artifactId: sonar
+  - artifactId: ssh-slaves
+  - artifactId: token-macro
+    source:
+      version: 2.12
+  - artifactId: workflow-multibranch
+    source:
+      version: 2.22
+  - artifactId: warnings-ng
+    source:
+      version: 8.5.0
+  - artifactId: workflow-api
+  - artifactId: workflow-basic-steps
+    source:
+      version: 2.22
+  - artifactId: workflow-cps-global-lib
+    source:
+      version: 2.17
+#  - artifactId: workflow-cps
+#    source:
+#      version: 2.84
+  - artifactId: ws-cleanup
+    source:
+      version: latest
+  - artifactId: xunit
+    source:
+      version: latest
+  - artifactId: matrix-project
+    source:
+      version: 1.18
+  - artifactId: display-url-api

@@ -18,10 +18,16 @@ FROM ${PYTHON_DOCKER_IMAGE_BASE}
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
-RUN groupadd -g $GROUP_ID user && \
-    useradd -u $USER_ID -s /bin/sh -m -d /home/user -g user user && \
-    mkdir -p /.cache/pip && chgrp -R  user /.cache/ && \
-    chmod -R g+w /.cache/
+RUN if id $USER_ID ; then \
+        echo 'Existing user id found: Creating an alias' ;\
+        groupadd --non-unique --gid $GROUP_ID user ; \
+        useradd  --non-unique --uid $USER_ID -s /bin/sh -m -d /home/user -g user user  ; \
+    else \
+        groupadd -g $GROUP_ID user ; \
+        useradd  -u $USER_ID -s /bin/sh -m -d /home/user -g user user ;\
+    fi && \
+    mkdir -p /.cache/pip && chown -R user /.cache/pip
+
 
 USER user
 ENV SONAR_SCANNER_VERSION=4.4.0.2170
