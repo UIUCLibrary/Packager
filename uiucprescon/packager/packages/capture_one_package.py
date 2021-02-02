@@ -13,6 +13,9 @@ from .abs_package_builder import AbsPackageBuilder
 class CaptureOnePackage(AbsPackageBuilder):
     """Package generated from the lab using Capture One.
 
+    This package generator splits filename using a delimiter that defaults to
+    an underscore.
+
     + batch folder
         - uniqueID1_00000001.tif
         - uniqueID1_00000002.tif
@@ -21,10 +24,35 @@ class CaptureOnePackage(AbsPackageBuilder):
         - uniqueID2_00000002.tif
     """
 
+    delimiter_splitters = {
+        '_': collection_builder.underscore_splitter,
+        '-': collection_builder.dash_splitter
+    }
+
+    def __init__(self, delimiter="_") -> None:
+        """Generate a new package factory.
+
+        Args:
+            delimiter: the character uses to separate the text of the filename
+                to identify the part and group the file belongs to.
+
+                Defaults to an underscore.
+        """
+        self.delimiter = delimiter
+        splitter = CaptureOnePackage.delimiter_splitters.get(delimiter)
+        if splitter is None:
+            def splitter(filename):
+                return collection_builder.delimiter_splitter(
+                    file_name=filename,
+                    delimiter=delimiter
+                )
+
+        self.package_builder = collection_builder.CaptureOneBuilder()
+        self.package_builder.splitter = splitter
+
     def locate_packages(self, path) -> typing.Iterator[Package]:
 
-        builder = collection_builder.CaptureOneBuilder()
-        for package in builder.build_batch(path):
+        for package in self.package_builder.build_batch(path):
             yield package
 
     def transform(self, package: Package, dest: str) -> None:
