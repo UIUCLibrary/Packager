@@ -824,6 +824,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             contents[i[0]] = dict(files)
         return contents
 
+    # pylint: disable=unused-argument
     def build_item(self, parent, *args, **kwargs):
         """Build item and add to parent.
 
