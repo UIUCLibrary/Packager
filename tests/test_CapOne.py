@@ -185,6 +185,32 @@ def capture_one_batch_with_dashes(tmpdir_factory):
     base_level.remove()
 
 
+@pytest.fixture(scope="session")
+def capture_one_batch_with_underscores(tmpdir_factory):
+    base_level = tmpdir_factory.mktemp("package")
+    included_files = [
+        f"000002_{str(x).zfill(8)}.tif" for x in range(20)
+    ]
+
+    for dummy_file in included_files:
+        (base_level / dummy_file).ensure()
+
+    yield base_level.strpath, included_files
+
+    base_level.remove()
+
+
+def test_capture_one_underscore(capture_one_batch_with_underscores):
+    batch_dir, source_files = capture_one_batch_with_underscores
+
+    capture_one_packages_factory = packager.PackageFactory(
+        packager.packages.CaptureOnePackage()
+    )
+
+    res = next(capture_one_packages_factory.locate_packages(batch_dir))
+    assert len(res) == len(source_files)
+
+
 def test_capture_one_dashes(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
 
