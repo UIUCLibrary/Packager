@@ -67,8 +67,8 @@ class CaptureOnePackage(AbsPackageBuilder):
                     raise AssertionError("More than one file found")
                 for file_ in inst.files:
                     _, ext = os.path.splitext(file_)
-                    new_file_name = "{}_{}{}".format(object_name, item_name,
-                                                     ext)
+                    new_file_name = \
+                        f"{object_name}{self.delimiter}{item_name}{ext}"
 
                     copy = transformations.Transformers(
                         strategy=transformations.CopyFile(),
