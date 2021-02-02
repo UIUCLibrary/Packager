@@ -231,6 +231,7 @@ sample_underscore_file_names = [
     ('asdfsadfasdf.tif', False, None, None),
 ]
 
+
 @pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_underscore_file_names)
 def test_underscore_splitter(file_path, is_valid, expected_group, expected_item):
     result = collection_builder.underscore_splitter(file_path)
@@ -248,6 +249,7 @@ def test_splitter(file_path, is_valid, expected_group, expected_item):
         assert is_valid is False
         return
     assert result['group'] == expected_group and result['part'] == expected_item
+
 
 sample_dashed_file_names = [
     ('000001_00000001.tif', False, None, None),
