@@ -93,6 +93,31 @@ def test_capture_one_tiff_package_size(capture_one_fixture):
     assert len(capture_one_packages) == 2
 
 
+@pytest.fixture()
+def capture_one_fixture_plus(tmpdir_factory):
+    base = tmpdir_factory.mktemp("base")
+    (base / "000001+00000001.tif").ensure()
+    (base / "000001+00000002.tif").ensure()
+    (base / "000001+00000003.tif").ensure()
+    (base / "000002+00000001.tif").ensure()
+    (base / "000002+00000002.tif").ensure()
+    yield base.strpath
+    base.remove()
+
+
+def test_capture_one_tiff_package_plus(capture_one_fixture_plus):
+
+    capture_one_packages_factory = \
+        packager.PackageFactory(packager.packages.CaptureOnePackage(delimiter='+'))
+
+    # find all Capture One organized packages
+    capture_one_packages = \
+        list(capture_one_packages_factory.locate_packages(path=capture_one_fixture_plus))
+
+    # There should be 2 packages in this sample batch
+    assert len(capture_one_packages) == 2
+
+
 def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
 
     def dummy_kdu_command(args):

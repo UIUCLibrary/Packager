@@ -313,7 +313,7 @@ def delimiter_splitter(file_name: str,
     """
     result = re.match(r'^'
                       r'(?P<group>\d*)'
-                      f'{delimiter}'
+                      f'[{delimiter}]'
                       r'(?P<part>[0-9]*)'
                       r'(?P<extension>\.[A-Za-z0-9]*)?'
                       r'$', file_name)
