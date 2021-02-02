@@ -318,3 +318,24 @@ def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
         assert is_valid is False
         return
     assert result['group'] == expected_group and result['part'] == expected_item
+
+
+def test_transform_into_hathi(capture_one_batch_with_dashes, tmpdir):
+    batch_dir, source_files = capture_one_batch_with_dashes
+    source_type = packager.PackageFactory(
+        packager.packages.CaptureOnePackage(delimiter="-")
+    )
+
+    packages = source_type.locate_packages(batch_dir)
+
+    destination_type = packager.PackageFactory(packager.packages.HathiTiff())
+    output = tmpdir / "output"
+    output.ensure_dir()
+    for package in packages:
+        destination_type.transform(package, dest=output.strpath)
+
+    assert (output / "99423682912205899").exists()
+
+    for expected_file in [f"{str(x).zfill(8)}.tif" for x in range(20)]:
+        assert (output / "99423682912205899" / expected_file).exists()
+    output.remove()
