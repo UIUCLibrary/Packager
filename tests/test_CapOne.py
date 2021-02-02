@@ -191,8 +191,8 @@ def test_capture_one_dashes(capture_one_batch_with_dashes):
     capture_one_packages_factory = packager.PackageFactory(
         packager.packages.CaptureOnePackage(delimiter="-"))
 
-    res = capture_one_packages_factory.locate_packages(batch_dir)
-    list(res)
+    res = next(capture_one_packages_factory.locate_packages(batch_dir))
+    assert len(res) == len(source_files)
 
 
 def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
