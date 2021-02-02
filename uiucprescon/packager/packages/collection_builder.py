@@ -388,6 +388,9 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         """
 
         if self.splitter is not None:
+            # pylint: disable=not-callable
+            # This is a callable via dependency injection by assigning splitter
+            #   to a function.
             return self.splitter(file_name)
         return underscore_splitter(file_name)
 
