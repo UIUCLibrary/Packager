@@ -822,6 +822,14 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         return contents
 
     def build_item(self, parent, *args, **kwargs):
+        """Build item and add to parent.
+
+        Args:
+            parent:
+            *args:
+            **kwargs:
+
+        """
         path_name = kwargs.get("path")
         new_item = Item(parent)
         new_item.component_metadata[Metadata.PATH] = path_name
