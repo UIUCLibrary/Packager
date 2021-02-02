@@ -303,7 +303,14 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
 
 def delimiter_splitter(file_name: str,
                        delimiter: str) -> Optional[Dict[str, str]]:
+    """Split the group and part of a given file based on character delimiter.
 
+    Args:
+        file_name: the name of a given file
+        delimiter: string that splits the group from the part in the file name
+
+    Returns: Dictionary containing the identified components
+    """
     result = re.match(r'^'
                       r'(?P<group>\d*)'
                       f'{delimiter}'
@@ -316,6 +323,14 @@ def delimiter_splitter(file_name: str,
 
 
 def dash_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use a dash to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
     result = re.match(r'^'
                       r'(?P<group>\d*)'
                       r'-'
@@ -328,6 +343,14 @@ def dash_splitter(file_name: str) -> Optional[Dict[str, str]]:
 
 
 def underscore_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use an underscore to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
     result = re.match(r'^'
                       r'(?P<group>\d*)'
                       r'_'
