@@ -376,11 +376,20 @@ class CaptureOneBuilder(AbsCollectionBuilder):
             Optional[Callable[[str], Optional[Dict[str, str]]]] = None
 
     def identify_file_name_parts(self,
-                                 file_path: str) -> Optional[Dict[str, str]]:
+                                 file_name: str) -> Optional[Dict[str, str]]:
+        """Identify the components that make up the file name.
+
+        Args:
+            file_name: the name of a given file
+
+        Returns:
+            Dictionary of all the identified components in the file
+
+        """
 
         if self.splitter is not None:
-            return self.splitter(file_path)
-        return underscore_splitter(file_path)
+            return self.splitter(file_name)
+        return underscore_splitter(file_name)
 
     def build_batch(self, root):
         new_batch = Package(root)
