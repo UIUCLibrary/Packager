@@ -402,7 +402,8 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         def filter_only_tiff(item: os.DirEntry):
             return item.name.lower().endswith(".tif")
 
-        for file_ in filter(filter_only_tiff, filter(self.filter_nonsystem_files_only,
+        for file_ in filter(filter_only_tiff, filter(
+                self.filter_nonsystem_files_only,
                             os.scandir(root))):
             files.append(file_)
 
