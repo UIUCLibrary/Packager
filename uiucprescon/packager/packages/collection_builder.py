@@ -399,8 +399,11 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
-        for file_ in filter(self.filter_nonsystem_files_only,
-                            os.scandir(root)):
+        def filter_only_tiff(item: os.DirEntry):
+            return item.name.lower().endswith(".tif")
+
+        for file_ in filter(filter_only_tiff, filter(self.filter_nonsystem_files_only,
+                            os.scandir(root))):
             files.append(file_)
 
         files.sort(key=lambda f: f.name)
@@ -458,6 +461,8 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         for file in filter(is_it_an_instance,
                            filter(self.filter_nonsystem_files_only,
                                   os.scandir(path))):
+            if not file.name.lower().endswith(".tif"):
+                continue
             new_instantiation.files.append(file.path)
 
     def build_package(self, parent, path):
@@ -477,6 +482,8 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                     "File does not match expected naming pattern {}".format(
                         file_.path)
                 )
+            if file_name_parts['extension'].lower() != ".tif":
+                continue
             item_part = file_name_parts['part']
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
