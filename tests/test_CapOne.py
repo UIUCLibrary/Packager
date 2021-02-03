@@ -108,11 +108,17 @@ def capture_one_fixture_plus(tmpdir_factory):
 def test_capture_one_tiff_package_plus(capture_one_fixture_plus):
 
     capture_one_packages_factory = \
-        packager.PackageFactory(packager.packages.CaptureOnePackage(delimiter='+'))
+        packager.PackageFactory(
+            packager.packages.CaptureOnePackage(delimiter='+')
+        )
 
     # find all Capture One organized packages
     capture_one_packages = \
-        list(capture_one_packages_factory.locate_packages(path=capture_one_fixture_plus))
+        list(
+            capture_one_packages_factory.locate_packages(
+                path=capture_one_fixture_plus
+            )
+        )
 
     # There should be 2 packages in this sample batch
     assert len(capture_one_packages) == 2
@@ -133,7 +139,9 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
         pass
 
     monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli', dummy_kdu_command)
-    monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli2', dummy_kdu_compress_cli2)
+    monkeypatch.setattr(
+        pykdu_compress, 'kdu_compress_cli2', dummy_kdu_compress_cli2
+    )
 
     source = os.path.join(capture_one_fixture, CAPTURE_ONE_BATCH_NAME)
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
@@ -270,7 +278,9 @@ def test_builder2_build_instance(capture_one_batch_with_dashes):
     builder.splitter = collection_builder.dash_splitter
     sample_item = collection.Item()
     sample_item.component_metadata[Metadata.ID] = "00001"
-    builder.build_instance(parent=sample_item, path=batch_dir, filename=source_files[0])
+    builder.build_instance(
+        parent=sample_item, path=batch_dir, filename=source_files[0]
+    )
     assert len(sample_item) == 1
 
 
@@ -289,7 +299,9 @@ def test_underscore_splitter(file_path, is_valid, expected_group, expected_item)
     if result is None:
         assert is_valid is False
         return
-    assert result['group'] == expected_group and result['part'] == expected_item
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
 
 
 @pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_underscore_file_names)
@@ -299,7 +311,9 @@ def test_splitter(file_path, is_valid, expected_group, expected_item):
     if result is None:
         assert is_valid is False
         return
-    assert result['group'] == expected_group and result['part'] == expected_item
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
 
 
 sample_dashed_file_names = [
@@ -309,6 +323,8 @@ sample_dashed_file_names = [
     ('000001-00000001.jp2', False, "000001", '00000001'),
     ('asdfsadfasdf.tif', False, None, None),
 ]
+
+
 @pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_dashed_file_names)
 def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
     builder = collection_builder.CaptureOneBuilder()
@@ -317,7 +333,9 @@ def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
     if result is None:
         assert is_valid is False
         return
-    assert result['group'] == expected_group and result['part'] == expected_item
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
 
 
 def test_transform_into_hathi(capture_one_batch_with_dashes, tmpdir):
