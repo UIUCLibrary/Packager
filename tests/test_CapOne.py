@@ -293,8 +293,10 @@ sample_underscore_file_names = [
 ]
 
 
-@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_underscore_file_names)
-def test_underscore_splitter(file_path, is_valid, expected_group, expected_item):
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_underscore_file_names)
+def test_underscore_splitter(file_path, is_valid, expected_group,
+                             expected_item):
     result = collection_builder.underscore_splitter(file_path)
     if result is None:
         assert is_valid is False
@@ -304,7 +306,8 @@ def test_underscore_splitter(file_path, is_valid, expected_group, expected_item)
         result['part'] == expected_item
 
 
-@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_underscore_file_names)
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_underscore_file_names)
 def test_splitter(file_path, is_valid, expected_group, expected_item):
     builder = collection_builder.CaptureOneBuilder()
     result = builder.identify_file_name_parts(file_path)
@@ -325,7 +328,8 @@ sample_dashed_file_names = [
 ]
 
 
-@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item", sample_dashed_file_names)
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_dashed_file_names)
 def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
     builder = collection_builder.CaptureOneBuilder()
     builder.splitter = collection_builder.dash_splitter
