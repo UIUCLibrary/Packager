@@ -3,6 +3,8 @@ import shutil
 import sys
 
 from uiucprescon import packager
+from uiucprescon.packager import Metadata
+from uiucprescon.packager.packages import collection_builder, collection
 import pytest
 import pykdu_compress
 
@@ -47,7 +49,7 @@ def test_capture_one_tiff_to_hathi_tiff(capture_one_fixture):
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
 
     capture_one_packages_factory = packager.PackageFactory(
-        packager.packages.CaptureOnePackage())
+        packager.packages.CaptureOnePackage(delimiter="_"))
 
     # find all Capture One organized packages
     capture_one_packages = \
@@ -91,6 +93,37 @@ def test_capture_one_tiff_package_size(capture_one_fixture):
     assert len(capture_one_packages) == 2
 
 
+@pytest.fixture()
+def capture_one_fixture_plus(tmpdir_factory):
+    base = tmpdir_factory.mktemp("base")
+    (base / "000001+00000001.tif").ensure()
+    (base / "000001+00000002.tif").ensure()
+    (base / "000001+00000003.tif").ensure()
+    (base / "000002+00000001.tif").ensure()
+    (base / "000002+00000002.tif").ensure()
+    yield base.strpath
+    base.remove()
+
+
+def test_capture_one_tiff_package_plus(capture_one_fixture_plus):
+
+    capture_one_packages_factory = \
+        packager.PackageFactory(
+            packager.packages.CaptureOnePackage(delimiter='+')
+        )
+
+    # find all Capture One organized packages
+    capture_one_packages = \
+        list(
+            capture_one_packages_factory.locate_packages(
+                path=capture_one_fixture_plus
+            )
+        )
+
+    # There should be 2 packages in this sample batch
+    assert len(capture_one_packages) == 2
+
+
 def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
 
     def dummy_kdu_command(args):
@@ -101,14 +134,14 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
         pass
 
     def dummy_kdu_compress_cli2(infile, outfile, in_args=None, out_args=None):
-        # split_args = args.split()
-        # output_arg = os.path.abspath(split_args[3].strip('"'))
         with open(outfile, "w") as f:
             pass
         pass
 
     monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli', dummy_kdu_command)
-    monkeypatch.setattr(pykdu_compress, 'kdu_compress_cli2', dummy_kdu_compress_cli2)
+    monkeypatch.setattr(
+        pykdu_compress, 'kdu_compress_cli2', dummy_kdu_compress_cli2
+    )
 
     source = os.path.join(capture_one_fixture, CAPTURE_ONE_BATCH_NAME)
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
@@ -168,3 +201,163 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
     #  some_root/000002/access/
     assert os.path.exists(
         os.path.join(dest, "000002", "access"))
+
+
+@pytest.fixture(scope="session")
+def capture_one_batch_with_dashes(tmpdir_factory):
+    base_level = tmpdir_factory.mktemp("package")
+    included_files = [
+        f"99423682912205899-{str(x).zfill(8)}.tif" for x in range(20)
+    ]
+
+    for dummy_file in included_files:
+        (base_level / dummy_file).ensure()
+
+    yield base_level.strpath, included_files
+
+    base_level.remove()
+
+
+@pytest.fixture(scope="session")
+def capture_one_batch_with_underscores(tmpdir_factory):
+    base_level = tmpdir_factory.mktemp("package")
+    included_files = [
+        f"000002_{str(x).zfill(8)}.tif" for x in range(20)
+    ]
+
+    for dummy_file in included_files:
+        (base_level / dummy_file).ensure()
+
+    yield base_level.strpath, included_files
+
+    base_level.remove()
+
+
+def test_capture_one_underscore(capture_one_batch_with_underscores):
+    batch_dir, source_files = capture_one_batch_with_underscores
+
+    capture_one_packages_factory = packager.PackageFactory(
+        packager.packages.CaptureOnePackage()
+    )
+
+    res = next(capture_one_packages_factory.locate_packages(batch_dir))
+    assert len(res) == len(source_files)
+
+
+def test_capture_one_dashes(capture_one_batch_with_dashes):
+    batch_dir, source_files = capture_one_batch_with_dashes
+
+    capture_one_packages_factory = packager.PackageFactory(
+        packager.packages.CaptureOnePackage(delimiter="-"))
+
+    res = next(capture_one_packages_factory.locate_packages(batch_dir))
+    assert len(res) == len(source_files)
+
+
+def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
+    batch_dir, source_files = capture_one_batch_with_dashes
+    builder = collection_builder.CaptureOneBuilder()
+    builder.splitter = collection_builder.dash_splitter
+    batch = builder.build_batch(batch_dir)
+    assert batch.path == batch_dir
+
+
+def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
+    batch_dir, source_files = capture_one_batch_with_dashes
+    builder = collection_builder.CaptureOneBuilder()
+    builder.splitter = collection_builder.dash_splitter
+    sample_object = collection.PackageObject()
+    sample_object.component_metadata[Metadata.ID] = "99423682912205899"
+    builder.build_package(sample_object, batch_dir)
+    assert len(sample_object) == len(source_files)
+
+
+def test_builder2_build_instance(capture_one_batch_with_dashes):
+    batch_dir, source_files = capture_one_batch_with_dashes
+    builder = collection_builder.CaptureOneBuilder()
+    builder.splitter = collection_builder.dash_splitter
+    sample_item = collection.Item()
+    sample_item.component_metadata[Metadata.ID] = "00001"
+    builder.build_instance(
+        parent=sample_item, path=batch_dir, filename=source_files[0]
+    )
+    assert len(sample_item) == 1
+
+
+sample_underscore_file_names = [
+    ('000001_00000001.tif', True, "000001", "00000001"),
+    ('000001_00000001.jp2', True, "000001", "00000001"),
+    ('000001-00000001.tif', False, None, None),
+    ('000001-00000001.jp2', False, None, None),
+    ('asdfsadfasdf.tif', False, None, None),
+]
+
+
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_underscore_file_names)
+def test_underscore_splitter(file_path, is_valid, expected_group,
+                             expected_item):
+    result = collection_builder.underscore_splitter(file_path)
+    if result is None:
+        assert is_valid is False
+        return
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
+
+
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_underscore_file_names)
+def test_splitter(file_path, is_valid, expected_group, expected_item):
+    builder = collection_builder.CaptureOneBuilder()
+    result = builder.identify_file_name_parts(file_path)
+    if result is None:
+        assert is_valid is False
+        return
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
+
+
+sample_dashed_file_names = [
+    ('000001_00000001.tif', False, None, None),
+    ('000001_00000001.jp2', False, None, None),
+    ('000001-00000001.tif', True, "000001", "00000001"),
+    ('000001-00000001.jp2', False, "000001", '00000001'),
+    ('asdfsadfasdf.tif', False, None, None),
+]
+
+
+@pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
+                         sample_dashed_file_names)
+def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
+    builder = collection_builder.CaptureOneBuilder()
+    builder.splitter = collection_builder.dash_splitter
+    result = builder.identify_file_name_parts(file_path)
+    if result is None:
+        assert is_valid is False
+        return
+    assert \
+        result['group'] == expected_group and \
+        result['part'] == expected_item
+
+
+def test_transform_into_hathi(capture_one_batch_with_dashes, tmpdir):
+    batch_dir, source_files = capture_one_batch_with_dashes
+    source_type = packager.PackageFactory(
+        packager.packages.CaptureOnePackage(delimiter="-")
+    )
+
+    packages = source_type.locate_packages(batch_dir)
+
+    destination_type = packager.PackageFactory(packager.packages.HathiTiff())
+    output = tmpdir / "output"
+    output.ensure_dir()
+    for package in packages:
+        destination_type.transform(package, dest=output.strpath)
+
+    assert (output / "99423682912205899").exists()
+
+    for expected_file in [f"{str(x).zfill(8)}.tif" for x in range(20)]:
+        assert (output / "99423682912205899" / expected_file).exists()
+    output.remove()

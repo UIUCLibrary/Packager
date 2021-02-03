@@ -7,7 +7,7 @@ import os
 import re
 import warnings
 import zipfile
-from typing import Tuple, Optional, Iterator, Iterable
+from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
@@ -146,22 +146,49 @@ def build_bb_batch(root) -> Package:
 
 
 class AbsCollectionBuilder(metaclass=abc.ABCMeta):
-    """AbsCollectionBuilder."""
+    """AbsCollectionBuilder.
 
-    @classmethod
-    @abc.abstractmethod
-    def build_batch(cls, root):
-        """Build a new batch of a given packaging type."""
+    .. versionchanged :: 0.2.11
+        Many of the abstract methods are no longer class methods.
 
-    @classmethod
-    @abc.abstractmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
-        pass
+    """
 
-    @classmethod
     @abc.abstractmethod
-    def build_package(cls, parent, path):
-        pass
+    def build_batch(self, root):
+        """Build a new batch of a given packaging type.
+
+        .. versionchanged :: 0.2.11
+            Changed from a class method to an instanced method
+        """
+
+    @abc.abstractmethod
+    def build_instance(self, parent, path, filename, *args, **kwargs):
+        """Build an instance and add it to the parent.
+
+        Args:
+            parent:
+            path:
+            filename:
+            *args:
+            **kwargs:
+
+        .. versionchanged :: 0.2.11
+            Changed from a class method to an instanced method
+
+        """
+
+    @abc.abstractmethod
+    def build_package(self, parent, path):
+        """Build a pckage.
+
+        Args:
+            parent:
+            path:
+
+        .. versionchanged :: 0.2.11
+            Changed from a class method to an instanced method
+
+        """
 
     @staticmethod
     def filter_same_name_files(item: os.DirEntry, filename):
@@ -193,19 +220,17 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 class DSBuilder(AbsCollectionBuilder):
     """DSBuilder."""
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
 
         new_batch.component_metadata[Metadata.PACKAGE_TYPE] = \
             PackageTypes.DS_HATHI_TRUST_SUBMISSION
 
-        cls.build_package(parent=new_batch, path=root)
+        self.build_package(parent=new_batch, path=root)
         return new_batch
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
+    def build_instance(self, parent, path, filename, *args, **kwargs):
 
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
@@ -214,17 +239,15 @@ class DSBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
         for folder in filter(lambda i: i.is_dir(), os.scandir(path)):
             new_package = PackageObject(parent=parent)
             new_package.component_metadata[Metadata.PATH] = folder.path
             new_package.component_metadata[Metadata.ID] = folder.name
             new_package.component_metadata[Metadata.TITLE_PAGE] = None
-            cls._build_ds_items(new_package, path=folder.path)
+            self._build_ds_items(new_package, path=folder.path)
 
-    @classmethod
-    def _build_ds_items(cls, parent, path):
+    def _build_ds_items(self, parent, path):
         logger = logging.getLogger(__name__)
 
         files = sorted(set(
@@ -235,14 +258,13 @@ class DSBuilder(AbsCollectionBuilder):
             logger.debug(unique_item)
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = unique_item
-            cls.build_instance(new_item, filename=unique_item, path=path)
+            self.build_instance(new_item, filename=unique_item, path=path)
 
 
 class BrittleBooksBuilder(AbsCollectionBuilder):
     """BrittleBooksBuilder."""
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
+    def build_instance(self, parent, path, filename, *args, **kwargs):
         new_instantiation = Instantiation(
             category=InstantiationTypes.ACCESS,
             parent=parent)
@@ -251,8 +273,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
         logger = logging.getLogger(__name__)
 
         files = set(
@@ -262,10 +283,9 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
             logger.debug(unique_item)
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = unique_item
-            cls.build_instance(new_item, filename=unique_item, path=path)
+            self.build_instance(new_item, filename=unique_item, path=path)
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
         logger = logging.getLogger(__name__)
         new_batch = Package(root)
         for directory in filter(lambda i: i.is_dir(), os.scandir(root)):
@@ -277,20 +297,114 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
                 PackageTypes.BRITTLE_BOOKS_HATHI_TRUST_SUBMISSION
 
-            cls.build_package(new_object, path=directory.path)
+            self.build_package(new_object, path=directory.path)
         return new_batch
 
 
-class CaptureOneBuilder(AbsCollectionBuilder):
-    """CaptureOneBuilder."""
+def delimiter_splitter(file_name: str,
+                       delimiter: str) -> Optional[Dict[str, str]]:
+    """Split the group and part of a given file based on character delimiter.
 
-    @classmethod
-    def build_batch(cls, root):
+    Args:
+        file_name: the name of a given file
+        delimiter: string that splits the group from the part in the file name
+
+    Returns: Dictionary containing the identified components
+    """
+    result = re.match(r'^'
+                      r'(?P<group>\d*)'
+                      f'[{delimiter}]'
+                      r'(?P<part>[0-9]*)'
+                      r'(?P<extension>\.[A-Za-z0-9]*)?'
+                      r'$', file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
+def dash_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use a dash to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
+    result = re.match(r'^'
+                      r'(?P<group>\d*)'
+                      r'-'
+                      r'(?P<part>[0-9]*)'
+                      r'(?P<extension>\.[A-Za-z0-9]*)?'
+                      r'$', file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
+def underscore_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use an underscore to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
+    result = re.match(r'^'
+                      r'(?P<group>\d*)'
+                      r'_'
+                      r'(?P<part>[0-9]*)'
+                      r'(?P<extension>\.[A-Za-z0-9]*)?'
+                      r'$', file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
+class CaptureOneBuilder(AbsCollectionBuilder):
+    """CaptureOneBuilder.
+
+    .. versionadded:: 0.2.11
+        Identifying the components of the filename can be done modified by
+        adding a function to the splitter property
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.splitter: \
+            Optional[Callable[[str], Optional[Dict[str, str]]]] = None
+
+    def identify_file_name_parts(self,
+                                 file_name: str) -> Optional[Dict[str, str]]:
+        """Identify the components that make up the file name.
+
+        Args:
+            file_name: the name of a given file
+
+        Returns:
+            Dictionary of all the identified components in the file
+
+        """
+
+        if self.splitter is not None:
+            # pylint: disable=not-callable
+            # This is a callable via dependency injection by assigning splitter
+            #   to a function.
+            return self.splitter(file_name)
+        return underscore_splitter(file_name)
+
+    def build_batch(self, root):
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
-        for file_ in filter(cls.filter_nonsystem_files_only, os.scandir(root)):
+        def filter_only_tiff(item: os.DirEntry):
+            return item.name.lower().endswith(".tif")
+
+        for file_ in filter(filter_only_tiff, filter(
+                self.filter_nonsystem_files_only,
+                            os.scandir(root))):
             files.append(file_)
 
         files.sort(key=lambda f: f.name)
@@ -299,11 +413,17 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
         for file_ in files:
             try:
-                group_id, _ = file_.name.split("_")
+                file_name_parts = self.identify_file_name_parts(file_.name)
+                if file_name_parts is None:
+                    raise ValueError(
+                        f"File {file_.name} doesn't match expected pattern"
+                    )
+
+                group_id = file_name_parts['group']
                 group_ids.add(group_id)
             except ValueError:
                 raise ValueError(
-                    "Unable to split {} with underscore".format(file_.name))
+                    "Unable to split {}".format(file_.name))
 
         for object_name in sorted(group_ids):
             new_object = PackageObject(parent=new_batch)
@@ -311,12 +431,10 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
                 PackageTypes.CAPTURE_ONE_SESSION
-            cls.build_package(new_object, root)
+            self.build_package(new_object, root)
         return new_batch
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
-
+    def build_instance(self, parent, path, filename, *args, **kwargs):
         new_instantiation = \
             Instantiation(category=InstantiationTypes.PRESERVATION,
                           parent=parent)
@@ -326,9 +444,14 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         def is_it_an_instance(item: os.DirEntry):
             if not item.is_file():
                 return False
-
-            item_group, item_inst = item.name.split("_")
-            item_inst, _ = os.path.splitext(item_inst)
+            file_name_parts = self.identify_file_name_parts(item.name)
+            if file_name_parts is None:
+                raise ValueError(
+                    "File does not match expected naming pattern {}".format(
+                        item.path)
+                )
+            item_group = file_name_parts['group']
+            item_inst = file_name_parts['part']
             if item_inst != filename:
                 return False
 
@@ -337,43 +460,41 @@ class CaptureOneBuilder(AbsCollectionBuilder):
             return True
 
         for file in filter(is_it_an_instance,
-                           filter(cls.filter_nonsystem_files_only,
+                           filter(self.filter_nonsystem_files_only,
                                   os.scandir(path))):
-
+            if not file.name.lower().endswith(".tif"):
+                continue
             new_instantiation.files.append(file.path)
 
-    @staticmethod
-    def get_group_items(item: os.DirEntry, packages_group_id):
-        file_item_group, _ = item.name.split("_")
-
-        if file_item_group != packages_group_id:
-            return False
-
-        return True
-
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
         group_id = parent.metadata[Metadata.ID]
 
         non_system_files = \
-            filter(cls.filter_nonsystem_files_only, os.scandir(path))
+            filter(self.filter_nonsystem_files_only, os.scandir(path))
 
-        for file_ in filter(lambda x, group_id=group_id:
-                            cls.get_group_items(x, group_id),
-                            non_system_files):
+        def filter_by_group(candidate_file: os.DirEntry) -> bool:
+            parts = self.identify_file_name_parts(candidate_file.name)
+            return parts is not None and parts['group'] == group_id
 
-            _, item_part = file_.name.split("_")
-            item_part, _ = os.path.splitext(item_part)
+        for file_ in filter(filter_by_group, non_system_files):
+            file_name_parts = self.identify_file_name_parts(file_.name)
+            if file_name_parts is None:
+                raise ValueError(
+                    "File does not match expected naming pattern {}".format(
+                        file_.path)
+                )
+            if file_name_parts['extension'].lower() != ".tif":
+                continue
+            item_part = file_name_parts['part']
             new_item = Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
-            cls.build_instance(new_item, path, item_part)
+            self.build_instance(new_item, path, item_part)
 
 
 class HathiTiffBuilder(AbsCollectionBuilder):
     """HathiTiffBuilder."""
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
 
@@ -384,7 +505,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
                 PackageTypes.HATHI_TRUST_TIFF_SUBMISSION
-            cls.build_package(new_object, path=dir_.path)
+            self.build_package(new_object, path=dir_.path)
 
         return new_batch
 
@@ -398,17 +519,15 @@ class HathiTiffBuilder(AbsCollectionBuilder):
             return False
         return True
 
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
 
-        for file_ in filter(cls.filter_tiff_files, os.scandir(path)):
+        for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
             item_part, _ = os.path.splitext(file_.name)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
-            cls.build_instance(new_item, filename=item_part, path=path)
+            self.build_instance(new_item, path=path, filename=item_part)
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
+    def build_instance(self, parent, path, filename, *args, **kwargs):
 
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
@@ -421,7 +540,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
         matching_files = \
             filter(lambda x, file_name=filename:
-                   cls.filter_same_name_files(x, file_name), os.scandir(path))
+                   self.filter_same_name_files(x, file_name), os.scandir(path))
 
         sidecar_files = []
         main_files = []
@@ -445,8 +564,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
     """DigitalLibraryCompoundBuilder."""
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
 
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
@@ -459,11 +577,10 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
                 PackageTypes.DIGITAL_LIBRARY_COMPOUND
 
-            cls.build_package(new_object, path=dir_.path)
+            self.build_package(new_object, path=dir_.path)
         return new_batch
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
+    def build_instance(self, parent, path, filename, *args, **kwargs):
         access_file = os.path.join(path, "access", filename + ".jp2")
 
         preservation_file = os.path.join(path, "preservation",
@@ -495,8 +612,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             return False
         return True
 
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
 
@@ -508,12 +624,12 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
                 f"Preservation path {preservation_path} not found")
 
         access_files = sorted(
-            filter(lambda i: cls.file_type_filter(i, ".jp2"),
+            filter(lambda i: self.file_type_filter(i, ".jp2"),
                    os.scandir(access_path)),
             key=lambda f: f.name)
 
         preservation_files = sorted(
-            filter(lambda i: cls.file_type_filter(i, ".tif"),
+            filter(lambda i: self.file_type_filter(i, ".tif"),
                    os.scandir(preservation_path)),
             key=lambda f: f.name)
 
@@ -532,14 +648,13 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
 
             item_id = os.path.splitext(access_file.name)[0]
             new_item = Item(parent=parent)
-            cls.build_instance(new_item, filename=item_id, path=path)
+            self.build_instance(new_item, filename=item_id, path=path)
 
 
 class HathiJp2Builder(AbsCollectionBuilder):
     """HathiJp2Builder."""
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
 
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
@@ -552,7 +667,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
                 PackageTypes.HATHI_TRUST_JP2_SUBMISSION
 
-            cls.build_package(new_object, path=dir_.path)
+            self.build_package(new_object, path=dir_.path)
 
         return new_batch
 
@@ -566,13 +681,12 @@ class HathiJp2Builder(AbsCollectionBuilder):
             return False
         return True
 
-    @classmethod
-    def build_package(cls, parent, path):
-        for file_ in filter(cls.filter_tiff_files, os.scandir(path)):
+    def build_package(self, parent, path):
+        for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
             item_part, _ = os.path.splitext(file_.name)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
-            cls.build_instance(new_item, filename=item_part, path=path)
+            self.build_instance(new_item, path=path, filename=item_part)
 
     @staticmethod
     def _organize_files(item: os.DirEntry) -> str:
@@ -581,21 +695,20 @@ class HathiJp2Builder(AbsCollectionBuilder):
             return "main_files"
         return "sidecar"
 
-    @classmethod
-    def build_instance(cls, parent, path, filename, *args, **kwargs):
+    def build_instance(self, parent, path, filename, *args, **kwargs):
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
 
         matching_files = \
             filter(lambda x, file_name=filename:
-                   cls.filter_same_name_files(x, file_name), os.scandir(path))
+                   self.filter_same_name_files(x, file_name), os.scandir(path))
 
         sidecar_files = []
 
         main_files = []
         for key, value in itertools.groupby(
                 matching_files,
-                key=cls._organize_files
+                key=self._organize_files
         ):
             if key == "sidecar":
                 for file_ in value:
@@ -628,12 +741,11 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             return False
         return True
 
-    @classmethod
-    def build_batch(cls, root):
+    def build_batch(self, root):
         others = []
         for item in os.scandir(root):
 
-            if not item.is_dir() or not cls.is_package_dir_name(item.name):
+            if not item.is_dir() or not self.is_package_dir_name(item.name):
                 others.append((item.path, item.is_dir()))
                 continue
 
@@ -644,11 +756,10 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
             new_package.component_metadata[Metadata.PATH] = item.path
             new_package.component_metadata[Metadata.ITEM_NAME] = item.name
-            cls.build_package(parent=new_package, path=item.path)
+            self.build_package(parent=new_package, path=item.path)
             yield new_package
 
-    @classmethod
-    def build_instance(cls, parent, path, *args, **kwargs):
+    def build_instance(self, parent, path, *args, **kwargs):
         file_category = kwargs['file_category']
         new_instantiation = Instantiation(category=file_category,
                                           parent=parent)
@@ -689,8 +800,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             return False
         return True
 
-    @classmethod
-    def build_package(cls, parent, path):
+    def build_package(self, parent, path):
         package_builder = HathiLimitedViewPackageBuilder(path=path)
         zip_files, mets_files, invalid_files = package_builder.get_content()
 
@@ -704,14 +814,11 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         if len(invalid_files) != 1:
             print("Found invalid files {}".format(",".join(invalid_files)))
 
-        contents = cls.get_zip_content(package_builder, zip_files)
+        contents = self.get_zip_content(package_builder, zip_files)
 
         for k, files in contents['item'].items():
-            cls.build_item(parent,
-                           path=zip_files[0].path,
-                           item_name=k,
-                           files=files
-                           )
+            self.build_item(parent, path=zip_files[0].path, item_name=k,
+                            files=files)
 
     @classmethod
     def get_zip_content(cls, package_builder, zip_files):
@@ -725,8 +832,16 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             contents[i[0]] = dict(files)
         return contents
 
-    @classmethod
-    def build_item(cls, parent, *args, **kwargs):
+    # pylint: disable=unused-argument
+    def build_item(self, parent, *args, **kwargs):
+        """Build item and add to parent.
+
+        Args:
+            parent:
+            *args:
+            **kwargs:
+
+        """
         path_name = kwargs.get("path")
         new_item = Item(parent)
         new_item.component_metadata[Metadata.PATH] = path_name
@@ -738,8 +853,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         file_types = dict()
         for file_category, files in itertools.groupby(
                 sorted(kwargs['files'],
-                       key=lambda x: cls.get_file_type(x).value),
-                key=cls.get_file_type):
+                       key=lambda x: self.get_file_type(x).value),
+                key=self.get_file_type):
             file_types[file_category] = list(files)
 
         for archived_file in itertools.chain(
@@ -748,11 +863,12 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
                 file_types.get(InstantiationTypes.SUPPLEMENTARY, [])):
 
             path, file_name = os.path.split(archived_file)
-            cls.build_instance(parent=new_item,
-                               path=path,
-                               filename=file_name,
-                               file_category=cls.get_file_type(archived_file)
-                               )
+            self.build_instance(
+                parent=new_item,
+                path=path,
+                filename=file_name,
+                file_category=self.get_file_type(archived_file)
+            )
 
     @classmethod
     def get_file_type(cls, file_name) -> InstantiationTypes:
