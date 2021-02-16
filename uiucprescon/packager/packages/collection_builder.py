@@ -976,7 +976,7 @@ class HathiLimitedViewPackageBuilder:
                         key=cls.get_item_key),
                     cls.get_item_key):
                 files = list(file_group[1])
-                yield file_group[0], list(map(lambda d: str(d), files))
+                yield file_group[0], list(files)
 
     def get_content(self):
         zip_files = []
