@@ -2,8 +2,7 @@
 
 import logging
 import os
-import typing
-
+from typing import Iterator
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
 from uiucprescon.packager import transformations
@@ -14,7 +13,7 @@ from .abs_package_builder import AbsPackageBuilder
 class HathiTiff(AbsPackageBuilder):
     """Packaged files for submitting to HathiTrust containing Tiff files."""
 
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[Package]:
         """Locate Hathi tiff packages on a given file path.
 
         Args:
