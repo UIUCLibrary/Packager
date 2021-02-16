@@ -289,7 +289,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
         logger = logging.getLogger(__name__)
         new_batch = Package(root)
         for directory in filter(lambda i: i.is_dir(), os.scandir(root)):
-            logger.debug("scanning {}".format(directory.path))
+            logger.debug("scanning %s", directory.path)
             new_object = PackageObject(parent=new_batch)
             new_object.component_metadata[Metadata.PATH] = directory.path
             new_object.component_metadata[Metadata.ID] = directory.name
