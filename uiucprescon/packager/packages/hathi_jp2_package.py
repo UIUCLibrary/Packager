@@ -43,7 +43,11 @@ class HathiJp2(AbsPackageBuilder):
             self.transform_one(item, dest, logger)
 
     @staticmethod
-    def transform_one(item, dest: str, logger: Optional[logging.Logger]=None) -> None:
+    def transform_one(
+            item,
+            dest: str,
+            logger: Optional[logging.Logger] = None
+    ) -> None:
         """Transform a single item one.
 
         Args:

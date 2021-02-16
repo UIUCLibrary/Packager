@@ -11,7 +11,12 @@ from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
-from .collection import Instantiation, Item, Package, PackageObject, AbsPackageComponent
+from .collection import \
+    Instantiation, \
+    Item, \
+    Package, \
+    PackageObject, \
+    AbsPackageComponent
 
 
 def _build_ds_instance(item, name: str, path: str) -> None:
@@ -182,7 +187,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def build_package(self, parent, path: str):
+    def build_package(self, parent, path: str) -> None:
         """Build a pckage.
 
         Args:

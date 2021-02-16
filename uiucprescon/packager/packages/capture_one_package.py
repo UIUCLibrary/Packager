@@ -24,7 +24,8 @@ class CaptureOnePackage(AbsPackageBuilder):
         - uniqueID2_00000002.tif
     """
 
-    delimiter_splitters: Dict[str, Callable[[str], Optional[Dict[str, str]]]] = {
+    delimiter_splitters: Dict[str,
+                              Callable[[str], Optional[Dict[str, str]]]] = {
         '_': collection_builder.underscore_splitter,
         '-': collection_builder.dash_splitter
     }
