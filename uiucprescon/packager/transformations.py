@@ -151,7 +151,7 @@ class Transformers:
         self._strategy = strategy
         self._logger: logging.Logger = logger or logging.getLogger(__name__)
 
-    def transform(self, source, destination) -> None:
+    def transform(self, source: str, destination: str) -> None:
         """Transform one entity into another.
 
         Args:
@@ -159,8 +159,8 @@ class Transformers:
             destination:
 
         """
-        new_name = self._strategy.transform(source, destination,
-                                            logger=self._logger)
+        new_name = \
+            self._strategy.transform(source, destination, logger=self._logger)
 
         path, filename = os.path.split(new_name)
         self._logger.info("Added %s in %s", filename, path)

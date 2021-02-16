@@ -41,7 +41,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             uniqueID2/access/00000001.jp2
 
     """
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> typing.Iterator[Package]:
         """Locate Digital Library packages on a given file path.
 
         Args:
@@ -100,7 +100,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                       object_name)
 
     @staticmethod
-    def get_file_base_name(item_name):
+    def get_file_base_name(item_name: str) -> str:
         """Get the base name of a file, without an extension."""
         new_base_name = f"{item_name}"
         return new_base_name
@@ -115,8 +115,12 @@ class Transform:
         'ConvertTiff': transformations.ConvertTiff()
     }
 
-    def __init__(self, logger, package_builder: DigitalLibraryCompound,
-                 destination_root) -> None:
+    def __init__(
+            self,
+            logger: logging.Logger,
+            package_builder: DigitalLibraryCompound,
+            destination_root: str
+    ) -> None:
         """Create a new Helper object for transforming files.
 
         Args:
@@ -128,8 +132,12 @@ class Transform:
         self.logger = logger
         self.destination_root = destination_root
 
-    def transform_supplementary_data(self, src: str, item_name: str,
-                                     object_name: str):
+    def transform_supplementary_data(
+            self,
+            src: str,
+            item_name: str,
+            object_name: str
+    ) -> None:
         """Transform the supplementary file.
 
         Args:
@@ -157,8 +165,12 @@ class Transform:
         )
         copier.transform(src, new_file)
 
-    def transform_access_file(self, src: str, item_name: str,
-                              object_name: str):
+    def transform_access_file(
+            self,
+            src: str,
+            item_name: str,
+            object_name: str
+    ) -> None:
         """Transform the file into an access file.
 
         Args:
@@ -195,7 +207,12 @@ class Transform:
 
         access_file_maker.transform(src, access_file_full_path)
 
-    def transform_preservation_file(self, src, item_name, object_name):
+    def transform_preservation_file(
+            self,
+            src: str,
+            item_name: str,
+            object_name: str
+    ) -> None:
         """Transform the source file into a preservation file."""
         preservation_path = os.path.join(
             self.destination_root,

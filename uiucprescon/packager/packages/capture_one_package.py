@@ -2,7 +2,7 @@
 
 import logging
 import os
-import typing
+from typing import Optional, Dict, Callable, Iterator
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import Metadata
 from uiucprescon.packager.packages.collection import Package
@@ -24,12 +24,12 @@ class CaptureOnePackage(AbsPackageBuilder):
         - uniqueID2_00000002.tif
     """
 
-    delimiter_splitters = {
+    delimiter_splitters: Dict[str, Callable[[str], Optional[Dict[str, str]]]] = {
         '_': collection_builder.underscore_splitter,
         '-': collection_builder.dash_splitter
     }
 
-    def __init__(self, delimiter="_") -> None:
+    def __init__(self, delimiter: str = "_") -> None:
         """Generate a new package factory.
 
         Args:
@@ -41,7 +41,7 @@ class CaptureOnePackage(AbsPackageBuilder):
         self.delimiter = delimiter
         splitter = CaptureOnePackage.delimiter_splitters.get(delimiter)
         if splitter is None:
-            def splitter(filename):
+            def splitter(filename: str) -> Optional[Dict[str, str]]:
                 return collection_builder.delimiter_splitter(
                     file_name=filename,
                     delimiter=delimiter
@@ -50,7 +50,7 @@ class CaptureOnePackage(AbsPackageBuilder):
         self.package_builder = collection_builder.CaptureOneBuilder()
         self.package_builder.splitter = splitter
 
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[Package]:
 
         for package in self.package_builder.build_batch(path):
             yield package
