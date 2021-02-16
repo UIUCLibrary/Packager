@@ -17,26 +17,30 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
      + uniqueID1 (folder)
          + preservation (folder)
-             - uniqueID1_00000001.tif
-             - uniqueID1_00000002.tif
-             - uniqueID1_00000003.tif
+             - 00000001.tif
+             - 00000002.tif
+             - 00000003.tif
          + access (folder)
-             - uniqueID1_00000001.jp2
-             - uniqueID1_00000002.jp2
-             - uniqueID1_00000003.jp2
+             - 00000001.jp2
+             - 00000002.jp2
+             - 00000003.jp2
      + uniqueID2 (folder)
          + preservation (folder)
-             - uniqueID2_00000001.tif
-             - uniqueID2_00000002.tif
+             - 00000001.tif
+             - 00000002.tif
          + access (folder)
-             - uniqueID2_00000001.jp2
-             - uniqueID2_00000002.jp2
+             - 00000001.jp2
+             - 00000002.jp2
 
     .. versionchanged:: 0.1.3
         Possible to transform packages that contain images in a compressed file
 
-    """
+    .. versionchanged:: 0.2.11
+        Files in preservation and access don't have a group id in them.
+            Instead of uniqueID2/access/uniqueID2_00000001.jp2, it is
+            uniqueID2/access/00000001.jp2
 
+    """
     def locate_packages(self, path) -> typing.Iterator[Package]:
         """Locate Digital Library packages on a given file path.
 
@@ -96,9 +100,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                       object_name)
 
     @staticmethod
-    def get_file_base_name(item_name, object_name):
+    def get_file_base_name(item_name):
         """Get the base name of a file, without an extension."""
-        new_base_name = f"{object_name}_{item_name}"
+        new_base_name = f"{item_name}"
         return new_base_name
 
 
@@ -143,8 +147,7 @@ class Transform:
         if not os.path.exists(supplementary_dir):
             os.makedirs(supplementary_dir)
 
-        base_name = self._package_builder.get_file_base_name(
-            item_name, object_name)
+        base_name = self._package_builder.get_file_base_name(item_name)
         ext = os.path.splitext(src)[1]
         new_file = os.path.join(supplementary_dir, f"{base_name}{ext}")
 
@@ -173,7 +176,7 @@ class Transform:
             os.makedirs(access_path)
 
         access_file = "{}.jp2".format(
-            self._package_builder.get_file_base_name(item_name, object_name)
+            self._package_builder.get_file_base_name(item_name)
         )
 
         access_file_full_path = os.path.join(access_path, access_file)
@@ -203,8 +206,7 @@ class Transform:
         if not os.path.exists(preservation_path):
             os.makedirs(preservation_path)
 
-        new_base_name = self._package_builder.get_file_base_name(
-            item_name, object_name)
+        new_base_name = self._package_builder.get_file_base_name(item_name)
 
         new_preservation_file_path = \
             os.path.join(self.destination_root,
