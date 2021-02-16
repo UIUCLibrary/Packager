@@ -507,7 +507,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         non_system_files = \
             filter(self.filter_nonsystem_files_only, os.scandir(path))
 
-        def filter_by_group(candidate_file: os.DirEntry[str]) -> bool:
+        def filter_by_group(candidate_file: os.DirEntry) -> bool:
             parts = self.identify_file_name_parts(candidate_file.name)
             return parts is not None and parts['group'] == group_id
 
@@ -545,7 +545,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         return new_batch
 
     @staticmethod
-    def filter_tiff_files(item: os.DirEntry[str]) -> bool:
+    def filter_tiff_files(item: os.DirEntry) -> bool:
         if not item.is_file():
             return False
 
@@ -714,7 +714,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         return new_batch
 
     @staticmethod
-    def filter_tiff_files(item: os.DirEntry[str]) -> bool:
+    def filter_tiff_files(item: os.DirEntry) -> bool:
         if not item.is_file():
             return False
 
@@ -731,7 +731,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             self.build_instance(new_item, path=path, filename=item_part)
 
     @staticmethod
-    def _organize_files(item: os.DirEntry[str]) -> str:
+    def _organize_files(item: os.DirEntry) -> str:
         ext = os.path.splitext(item.name)[1]
         if ext.lower() == ".jp2":
             return "main_files"
