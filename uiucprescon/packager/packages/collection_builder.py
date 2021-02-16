@@ -7,7 +7,7 @@ import os
 import re
 import warnings
 import zipfile
-from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List, AnyStr
+from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
