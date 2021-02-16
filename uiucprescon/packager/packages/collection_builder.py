@@ -200,7 +200,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @staticmethod
-    def filter_same_name_files(item: os.DirEntry[AnyStr], filename: str) -> bool:
+    def filter_same_name_files(item: os.DirEntry, filename: str) -> bool:
 
         if not item.is_file():
             return False
