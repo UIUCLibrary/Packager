@@ -4,6 +4,7 @@ import abc
 import logging
 import os
 import shutil
+from typing import Optional
 from py3exiv2bind.core import set_dpi
 try:
     import pykdu_compress
@@ -140,8 +141,11 @@ class ConvertJp2Hathi(AbsTransformation):
 class Transformers:
     """Transformers."""
 
-    def __init__(self, strategy: AbsTransformation,
-                 logger: logging.Logger = None) -> None:
+    def __init__(
+            self,
+            strategy: AbsTransformation,
+            logger: Optional[logging.Logger] = None
+    ) -> None:
         """Create a new Transformers object.
 
         Args:

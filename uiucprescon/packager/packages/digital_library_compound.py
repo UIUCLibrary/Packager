@@ -57,7 +57,11 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             yield package
 
     @staticmethod
-    def _get_transformer(logger, package_builder, destination_root):
+    def _get_transformer(
+            logger: logging.Logger,
+            package_builder: "DigitalLibraryCompound",
+            destination_root: str
+    ) -> "Transform":
         return Transform(logger, package_builder,
                          destination_root=destination_root)
 
@@ -76,8 +80,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
 
-            transformer = self._get_transformer(logger, self,
-                                                destination_root=dest)
+            transformer = self._get_transformer(
+                logger, self, destination_root=dest
+            )
 
             for inst in item:
                 if len(inst.files) != 1:
