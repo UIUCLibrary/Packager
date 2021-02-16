@@ -1,9 +1,9 @@
 """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
 
+# pylint: disable=unsubscriptable-object
 import logging
 import os
-import typing
-
+from typing import Optional, Iterator
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
 from uiucprescon.packager.common import Metadata
@@ -14,7 +14,7 @@ from .abs_package_builder import AbsPackageBuilder
 class HathiJp2(AbsPackageBuilder):
     """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
 
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[Package]:
         """Locate Hathi jp2 packages on a given file path.
 
         Args:
@@ -44,7 +44,11 @@ class HathiJp2(AbsPackageBuilder):
             self.transform_one(item, dest, logger)
 
     @staticmethod
-    def transform_one(item, dest, logger=None):
+    def transform_one(
+            item,
+            dest: str,
+            logger: Optional[logging.Logger] = None
+    ) -> None:
         """Transform a single item one.
 
         Args:

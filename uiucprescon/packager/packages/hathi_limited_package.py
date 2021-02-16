@@ -26,8 +26,7 @@ UIUC.[BibID], e.g. 40
 
 
 """
-import typing
-
+from typing import Iterator
 from . import collection_builder
 from .abs_package_builder import AbsPackageBuilder
 from .collection import Package
@@ -36,7 +35,7 @@ from .collection import Package
 class HathiLimitedView(AbsPackageBuilder):
     """limited-view content received from HathiTrust."""
 
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[Package]:
         """Locate Hathi tiff packages on a given file path.
 
         Args:

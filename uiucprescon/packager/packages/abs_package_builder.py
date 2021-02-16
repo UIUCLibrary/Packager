@@ -11,7 +11,7 @@ class AbsPackageBuilder(metaclass=abc.ABCMeta):
     log_level = logging.INFO
 
     @abc.abstractmethod
-    def locate_packages(self, path) -> typing.Iterator[Package]:
+    def locate_packages(self, path: str) -> typing.Iterator[Package]:
         """Locate packages found at a given path."""
 
     @abc.abstractmethod

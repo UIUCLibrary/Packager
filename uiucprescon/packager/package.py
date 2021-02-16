@@ -17,7 +17,10 @@ class PackageFactory:
         """
         self._package_type = package_type
 
-    def locate_packages(self, path) -> typing.Iterator[collection.Package]:
+    def locate_packages(
+            self,
+            path: str
+    ) -> typing.Iterator[collection.Package]:
         """Locate packages for a given type.
 
         Args:
@@ -30,7 +33,7 @@ class PackageFactory:
         for package in self._package_type.locate_packages(path):
             yield package
 
-    def transform(self, package, dest: str):
+    def transform(self, package: collection.Package, dest: str) -> None:
         """Transform a given package into the current type.
 
         Args:
