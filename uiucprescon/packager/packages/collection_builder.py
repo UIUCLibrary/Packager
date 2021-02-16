@@ -424,7 +424,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
-        def filter_only_tiff(item: os.DirEntry[str]) -> bool:
+        def filter_only_tiff(item: os.DirEntry) -> bool:
             return item.name.lower().endswith(".tif")
 
         for file_ in filter(
@@ -476,7 +476,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
         group_id = parent.metadata[Metadata.ID]
 
-        def is_it_an_instance(item: os.DirEntry[str]) -> bool:
+        def is_it_an_instance(item: os.DirEntry) -> bool:
             if not item.is_file():
                 return False
             file_name_parts = self.identify_file_name_parts(item.name)
@@ -567,7 +567,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
                                           parent=parent)
 
-        def _organize_files(item: os.DirEntry[str]) -> str:
+        def _organize_files(item: os.DirEntry) -> str:
             ext = os.path.splitext(item.name)[1]
             if ext.lower() == ".tif":
                 return "main_files"
@@ -646,7 +646,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         preservation_instance.files.append(preservation_file)
 
     @staticmethod
-    def file_type_filter(item: os.DirEntry[str], file_extension: str) -> bool:
+    def file_type_filter(item: os.DirEntry, file_extension: str) -> bool:
         if not item.is_file():
             return False
         _, ext = os.path.splitext(item.name)
@@ -825,10 +825,10 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             os.path.splitext(file_name)[0]
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry[str]) -> \
-            Tuple[Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]]]:
+    def split_package_content(cls, item: os.DirEntry) -> \
+            Tuple[Optional[os.DirEntry],
+                  Optional[os.DirEntry],
+                  Optional[os.DirEntry]]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -956,10 +956,10 @@ class HathiLimitedViewPackageBuilder:
         self.path = path
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry[str]) -> \
-            Tuple[Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]]]:
+    def split_package_content(cls, item: os.DirEntry) -> \
+            Tuple[Optional[os.DirEntry],
+                  Optional[os.DirEntry],
+                  Optional[os.DirEntry]]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
