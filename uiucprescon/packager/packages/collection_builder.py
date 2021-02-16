@@ -7,7 +7,7 @@ import os
 import re
 import warnings
 import zipfile
-from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List
+from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List, AnyStr
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
@@ -200,7 +200,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @staticmethod
-    def filter_same_name_files(item: os.DirEntry[str], filename: str) -> bool:
+    def filter_same_name_files(item: os.DirEntry[AnyStr], filename: str) -> bool:
 
         if not item.is_file():
             return False
