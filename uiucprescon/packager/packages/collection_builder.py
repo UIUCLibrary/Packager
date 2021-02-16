@@ -212,7 +212,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         return True
 
     @staticmethod
-    def filter_nonsystem_files_only(item: os.DirEntry[str]) -> bool:
+    def filter_nonsystem_files_only(item: os.DirEntry) -> bool:
         system_files = [
             "Thumbs.db",
             "desktop.ini",
