@@ -1,6 +1,7 @@
 """Package generated from the lab using Capture One."""
 
 # pylint: disable=unsubscriptable-object
+from __future__ import annotations
 
 import logging
 import os
