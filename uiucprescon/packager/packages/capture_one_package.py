@@ -1,5 +1,7 @@
 """Package generated from the lab using Capture One."""
 
+# pylint: disable=unsubscriptable-object
+
 import logging
 import os
 from typing import Optional, Dict, Callable, Iterator

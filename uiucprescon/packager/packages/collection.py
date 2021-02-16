@@ -1,5 +1,5 @@
 """Manage the collection components."""
-
+# pylint: disable=unsubscriptable-object
 import abc
 import collections
 import os

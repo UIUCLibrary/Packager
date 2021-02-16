@@ -1,4 +1,5 @@
 """Custom exceptions."""
+# pylint: disable=unsubscriptable-object
 from typing import Optional, List
 
 

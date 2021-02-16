@@ -1,5 +1,5 @@
 """Collection builder."""
-
+# pylint: disable=unsubscriptable-object
 import abc
 import itertools
 import logging

@@ -1,5 +1,6 @@
 """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
 
+# pylint: disable=unsubscriptable-object
 import logging
 import os
 from typing import Optional, Iterator
