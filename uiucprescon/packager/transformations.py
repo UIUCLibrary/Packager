@@ -163,4 +163,4 @@ class Transformers:
                                             logger=self._logger)
 
         path, filename = os.path.split(new_name)
-        self._logger.info("Added {} in {}".format(filename, path))
+        self._logger.info("Added %s in %s", filename, path)
