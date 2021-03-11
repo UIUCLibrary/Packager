@@ -506,13 +506,13 @@ pipeline {
                 stage("Package") {
                     agent {
                         dockerfile {
-                            filename 'ci/docker/python/linux/jenkins/Dockerfile'
+                            filename 'ci/docker/python/linux/tox/Dockerfile'
                             label 'linux && docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
+                            additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                         }
                     }
                     steps {
-                        sh "python -m pep517.build ."
+                        sh "python -m build ."
                     }
                     post {
                         always{
