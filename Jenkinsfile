@@ -115,7 +115,8 @@ pipeline {
     parameters {
 //         todo make this false when done
         booleanParam(name: "TEST_RUN_TOX", defaultValue: true, description: "Run Tox Tests")
-        booleanParam(name: "RUN_CHECKS", defaultValue: true, description: "Run checks on code")
+//         todo make this true when done
+        booleanParam(name: "RUN_CHECKS", defaultValue: false, description: "Run checks on code")
         booleanParam(name: "USE_SONARQUBE", defaultValue: true, description: "Send data test data to SonarQube")
 //         todo make this false when done
         booleanParam(name: "BUILD_PACKAGES", defaultValue: true, description: "Build Python packages")
