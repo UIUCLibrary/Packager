@@ -17,20 +17,20 @@ class DigitalLibraryCompound(AbsPackageBuilder):
 
      + uniqueID1 (folder)
          + preservation (folder)
-             - 00000001.tif
-             - 00000002.tif
-             - 00000003.tif
+             - uniqueID1-00000001.tif
+             - uniqueID1-00000002.tif
+             - uniqueID1-00000003.tif
          + access (folder)
-             - 00000001.jp2
-             - 00000002.jp2
-             - 00000003.jp2
+             - uniqueID1-00000001.jp2
+             - uniqueID1-00000002.jp2
+             - uniqueID1-00000003.jp2
      + uniqueID2 (folder)
          + preservation (folder)
-             - 00000001.tif
-             - 00000002.tif
+             - uniqueID2-00000001.tif
+             - uniqueID2-00000002.tif
          + access (folder)
-             - 00000001.jp2
-             - 00000002.jp2
+             - uniqueID2=00000001.jp2
+             - uniqueID2-00000002.jp2
 
     .. versionchanged:: 0.1.3
         Possible to transform packages that contain images in a compressed file
@@ -38,7 +38,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
     .. versionchanged:: 0.2.11
         Files in preservation and access don't have a group id in them.
             Instead of uniqueID2/access/uniqueID2_00000001.jp2, it is
-            uniqueID2/access/00000001.jp2
+            uniqueID2/access/uniqueID2-00000001.jp2
 
     """
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
@@ -191,10 +191,8 @@ class Transform:
         )
         if not os.path.exists(access_path):
             os.makedirs(access_path)
-
-        access_file = "{}.jp2".format(
-            self._package_builder.get_file_base_name(item_name)
-        )
+        item_name_part = self._package_builder.get_file_base_name(item_name)
+        access_file = f"{object_name}-{item_name_part}.jp2"
 
         access_file_full_path = os.path.join(access_path, access_file)
         ext = os.path.splitext(src)[1]
@@ -234,7 +232,7 @@ class Transform:
             os.path.join(self.destination_root,
                          object_name,
                          "preservation",
-                         f"{new_base_name}.tif")
+                         f"{object_name}-{new_base_name}.tif")
 
         ext = os.path.splitext(src)[1]
         if ext.lower() == ".jp2":

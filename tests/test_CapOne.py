@@ -165,38 +165,38 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
 
     # This should result in the following files
     #
-    #  some_root/000001/preservation/00000001.tif
+    #  some_root/000001/preservation/000001-00000001.tif
     assert os.path.exists(
-        os.path.join(dest, "000001", 'preservation', "00000001.tif"))
+        os.path.join(dest, "000001", 'preservation', "000001-00000001.tif"))
 
     #  some_root/000001/access/
     assert os.path.exists(
-        os.path.join(dest, "000001", 'access', "00000001.jp2"))
+        os.path.join(dest, "000001", 'access', "000001-00000001.jp2"))
 
-    #  some_root/000001/preservation/00000002.tif
+    #  some_root/000001/preservation/000001-00000002.tif
     assert os.path.exists(
-        os.path.join(dest, "000001", 'preservation', "00000002.tif"))
+        os.path.join(dest, "000001", 'preservation', "000001-00000002.tif"))
     #  some_root/000001/access/
     assert os.path.exists(
-        os.path.join(dest, "000001", 'access', "00000002.jp2"))
+        os.path.join(dest, "000001", 'access', "000001-00000002.jp2"))
 
-    #  some_root/000001/preservation/00000003.tif
+    #  some_root/000001/preservation/000001-00000003.tif
     assert os.path.exists(
-        os.path.join(dest, "000001", 'preservation', "00000003.tif"))
+        os.path.join(dest, "000001", 'preservation', "000001-00000003.tif"))
     #  some_root/000001/access/
     assert os.path.exists(
-        os.path.join(dest, "000001", 'access', "00000003.jp2"))
+        os.path.join(dest, "000001", 'access', "000001-00000003.jp2"))
 
-    #  some_root/000002/preservation/00000001.tif
+    #  some_root/000002/preservation/000002-00000001.tif
     assert os.path.exists(
-        os.path.join(dest, "000002", "preservation", "00000001.tif"))
+        os.path.join(dest, "000002", "preservation", "000002-00000001.tif"))
     #  some_root/000002/access/
     assert os.path.exists(
-        os.path.join(dest, "000002", "access", "00000001.jp2"))
+        os.path.join(dest, "000002", "access", "000002-00000001.jp2"))
 
-    #  some_root/000002/preservation/00000001.tif
+    #  some_root/000002/preservation/000002-00000001.tif
     assert os.path.exists(
-        os.path.join(dest, "000002", "preservation", "00000001.tif"))
+        os.path.join(dest, "000002", "preservation", "000002-00000001.tif"))
 
     #  some_root/000002/access/
     assert os.path.exists(
