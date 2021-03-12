@@ -1093,7 +1093,7 @@ pipeline {
                                         agent: [
                                             dockerfile: [
                                                 filename: 'ci/docker/python/linux/tox/Dockerfile',
-                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL",
+                                                additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL',
                                                 label: 'linux && docker'
                                             ]
                                         ],
@@ -1132,7 +1132,7 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/python/linux/tox/Dockerfile'
                             label 'linux&&docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                            additionalBuildArgs '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
                           }
                     }
                     input {
@@ -1180,24 +1180,13 @@ pipeline {
                 cleanup{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                sh(
-                                    label: "Removing package to DevPi index",
-                                    script: """devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi
-                                               devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi
-                                               devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi
-                                               devpi remove -y ${props.Name}==${props.Version} --clientdir ${WORKSPACE}/devpi
-                                               """
-                                )
-                                cleanWs(
-                                    deleteDirs: true,
-                                    patterns: [
-                                        [pattern: "dist/", type: 'INCLUDE'],
-                                        [pattern: "devpi/", type: 'INCLUDE'],
-                                        [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                                        [pattern: 'build/', type: 'INCLUDE']
-                                    ]
+                            docker.build("uiucpresconpackager:devpi",'-f ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                devpi.removePackage(
+                                    pkgName: props.Name,
+                                    pkgVersion: props.Version,
+                                    index: DEVPI_CONFIG.index,
+                                    server: DEVPI_CONFIG.server,
+                                    credentialsId: DEVPI_CONFIG.credentialsId,
                                 )
                             }
                        }
