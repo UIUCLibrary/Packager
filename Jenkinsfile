@@ -1014,10 +1014,12 @@ pipeline {
                                                                 venv/bin/python -m pip install devpi_client
                                                                 '''
                                                 )
+                                                sh('venv/bin/pip wheel -r requirements.txt -w ./wheels')
                                             },
                                             toxEnv: "py${pythonVersion}".replace('.',''),
                                             teardown: {
                                                 sh( label: 'Remove Devpi client', script: 'rm -r venv')
+                                                sh( label: 'Remove wheels dir', script: 'rm -r wheels')
                                             }
                                         ]
                                     )
