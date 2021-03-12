@@ -7,6 +7,26 @@ SUPPORTED_MAC_VERSIONS = ['3.8', '3.9']
 SUPPORTED_LINUX_VERSIONS = [ '3.7', '3.8', '3.9']
 SUPPORTED_WINDOWS_VERSIONS = [ '3.7', '3.8', '3.9']
 
+
+def getDevPiStagingIndex(){
+
+    if (env.TAG_NAME?.trim()){
+        return "tag_staging"
+    } else{
+        return "${env.BRANCH_NAME}_staging"
+    }
+}
+
+DEVPI_CONFIG = [
+    index: getDevPiStagingIndex(),
+    server: 'https://devpi.library.illinois.edu',
+    credentialsId: 'DS_devpi',
+]
+defaultParameterValues = [
+    USE_SONARQUBE: false
+]
+
+
 CONFIGURATIONS = [
     "3.6": [
             package_testing: [
@@ -60,7 +80,7 @@ CONFIGURATIONS = [
 ]
 
 
-
+SONARQUBE_CREDENTIAL_ID = 'sonarcloud-uiucprescon.packager'
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
 
@@ -108,14 +128,68 @@ def get_package_name(stashName, metadataFile){
         }
     }
 }
-def getDevPiStagingIndex(){
-
-    if (env.TAG_NAME?.trim()){
-        return "tag_staging"
-    } else{
-        return "${env.BRANCH_NAME}_staging"
+def startup(){
+    def SONARQUBE_CREDENTIAL_ID = SONARQUBE_CREDENTIAL_ID
+    parallel(
+        [
+            failFast: true,
+            "Checking sonarqube Settings": {
+                node(){
+                    try{
+                        withCredentials([string(credentialsId: SONARQUBE_CREDENTIAL_ID, variable: 'dddd')]) {
+                            echo 'Found credentials for sonarqube'
+                        }
+                        defaultParameterValues.USE_SONARQUBE = true
+                    } catch(e){
+                        echo "Setting defaultValue for USE_SONARQUBE to false. Reason: ${e}"
+                        defaultParameterValues.USE_SONARQUBE = false
+                    }
+                }
+            },
+            "Getting Distribution Info": {
+                node('linux && docker') {
+                    timeout(2){
+                        ws{
+                            checkout scm
+                            try{
+                                docker.image('python').inside {
+                                    sh(
+                                       label: "Running setup.py with dist_info",
+                                       script: """python --version
+                                                  python setup.py dist_info
+                                               """
+                                    )
+                                    stash includes: "*.dist-info/**", name: 'DIST-INFO'
+                                    archiveArtifacts artifacts: "*.dist-info/**"
+                                }
+                            } finally{
+                                deleteDir()
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    )
+}
+def get_props(){
+    stage('Reading Package Metadata'){
+        node(){
+            unstash 'DIST-INFO'
+            def metadataFile = findFiles( glob: '*.dist-info/METADATA')[0]
+            def metadata = readProperties(interpolate: true, file: metadataFile.path )
+            echo """Version = ${metadata.Version}
+Name = ${metadata.Name}
+"""
+            return metadata
+        }
     }
 }
+
+
+startup()
+def props = get_props()
+
 pipeline {
     agent none
     parameters {
@@ -206,9 +280,7 @@ pipeline {
                         }
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
-                            unstash "DIST-INFO"
                             script{
-                                def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
                                 stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
@@ -456,8 +528,6 @@ pipeline {
                         unstash "FLAKE8_REPORT"
                         script{
                             withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
-                                unstash "DIST-INFO"
-                                def props = readProperties(interpolate: true, file: "uiucprescon.packager.dist-info/METADATA")
                                 if (env.CHANGE_ID){
                                     sh(
                                         label: "Running Sonar Scanner",
@@ -828,30 +898,26 @@ pipeline {
             options{
                 timestamps()
             }
-            environment{
-                DEVPI = credentials("DS_devpi")
-            }
             stages{
                 stage("Deploy to Devpi Staging") {
                     agent {
                         dockerfile {
                             filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
                             label 'linux&&docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                            additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                           }
                     }
                     steps {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
                         script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            sh(label: "Uploading to DevPi Staging",
-                               script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
-                                          devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-                                          devpi use /${env.DEVPI_USR}/${devpiStagingIndex} --clientdir ./devpi
-                                          devpi upload --from-dir dist --clientdir ./devpi
-                                          """
-                            )
+                            def devpi = load('ci/jenkins/scripts/devpi.groovy')
+                            devpi.upload(
+                                    server: DEVPI_CONFIG.server,
+                                    credentialsId: DEVPI_CONFIG.credentialsId,
+                                    index: DEVPI_CONFIG.index,
+                                    clientDir: './devpi'
+                                )
                         }
                     }
                     post{
@@ -868,75 +934,169 @@ pipeline {
                     }
                 }
                 stage("Test DevPi packages") {
-                    matrix {
-                        axes {
-                            axis {
-                                name "PLATFORM"
-                                values(
-                                    "windows",
-                                    "linux"
-                                )
+                    steps{
+                        script{
+                            def devpi
+                            node(){
+                                devpi = load('ci/jenkins/scripts/devpi.groovy')
                             }
-                            axis {
-                                name 'FORMAT'
-                                values 'zip', "whl"
-                            }
-                            axis {
-                                name 'PYTHON_VERSION'
-                                values '3.8', "3.7"
-                            }
-                        }
-                        agent {
-                          dockerfile {
-                            filename "ci/docker/python/${PLATFORM}/Dockerfile"
-                            additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL"
-                            label "${PLATFORM} && docker"
-                          }
-                        }
-                        stages{
-                            stage("Testing DevPi Package"){
-                                steps{
-                                    script{
-                                        unstash "DIST-INFO"
-                                        def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                        def devpiStagingIndex = getDevPiStagingIndex()
-                                        timeout(10){
-                                            if(isUnix()){
+                             def macPackages = [:]
+                            SUPPORTED_MAC_VERSIONS.each{pythonVersion ->
+                                macPackages["Test Python ${pythonVersion}: wheel Mac"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            label: "mac && python${pythonVersion}"
+                                        ],
+                                        devpi: [
+                                            index: DEVPI_CONFIG.index,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                            devpiExec: 'venv/bin/devpi'
+                                        ],
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'whl'
+                                        ],
+                                        test:[
+                                            setup: {
                                                 sh(
-                                                    label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
-                                                    script: """devpi use https://devpi.library.illinois.edu --clientdir certs
-                                                               devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir certs
-                                                               devpi use ${devpiStagingIndex} --clientdir certs
-                                                               devpi test --index ${devpiStagingIndex} ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
-                                                               """
+                                                    label:'Installing Devpi client',
+                                                    script: '''python3 -m venv venv
+                                                                venv/bin/python -m pip install pip --upgrade
+                                                                venv/bin/python -m pip install devpi_client
+                                                                '''
                                                 )
-                                            }else{
-                                                bat(
-                                                    label: "Testing ${FORMAT} package stored on DevPi with Python version ${PYTHON_VERSION}",
-                                                    script: """devpi use https://devpi.library.illinois.edu --clientdir certs\\
-                                                               devpi login %DEVPI_USR% --password %DEVPI_PSW% --clientdir certs\\
-                                                               devpi use ${devpiStagingIndex} --clientdir certs\\
-                                                               devpi test --index ${devpiStagingIndex} ${props.Name}==${props.Version} -s ${FORMAT} --clientdir certs\\ -e ${CONFIGURATIONS[PYTHON_VERSION].tox_env} -v
-                                                               """
-                                                )
+                                            },
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                            teardown: {
+                                                sh( label: 'Remove Devpi client', script: 'rm -r venv')
                                             }
-                                        }
-                                    }
+                                        ]
+                                    )
                                 }
-                                post{
-                                    cleanup{
-                                        cleanWs(
-                                            deleteDirs: true,
-                                            patterns: [
-                                                [pattern: "dist/", type: 'INCLUDE'],
-                                                [pattern: "certs/", type: 'INCLUDE'],
-                                                [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                                                [pattern: 'build/', type: 'INCLUDE']
-                                            ]
-                                        )
-                                    }
+                                macPackages["Test Python ${pythonVersion}: sdist Mac"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            label: "mac && python${pythonVersion}"
+                                        ],
+                                        devpi: [
+                                            index: DEVPI_CONFIG.index,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                            devpiExec: 'venv/bin/devpi'
+                                        ],
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'tar.gz'
+                                        ],
+                                        test:[
+                                            setup: {
+                                                checkout scm
+                                                sh(
+                                                    label:'Installing Devpi client',
+                                                    script: '''python3 -m venv venv
+                                                                venv/bin/python -m pip install pip --upgrade
+                                                                venv/bin/python -m pip install devpi_client
+                                                                '''
+                                                )
+                                            },
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                            teardown: {
+                                                sh( label: 'Remove Devpi client', script: 'rm -r venv')
+                                            }
+                                        ]
+                                    )
                                 }
                             }
+                            windowsPackages = [:]
+                            SUPPORTED_WINDOWS_VERSIONS.each{pythonVersion ->
+                                windowsPackages["Test Python ${pythonVersion}: sdist Windows"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/windows/tox/Dockerfile',
+                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
+                                                label: 'windows && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'tar.gz'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                                windowsPackages["Test Python ${pythonVersion}: wheel Windows"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/windows/tox/Dockerfile',
+                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
+                                                label: 'windows && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'whl'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                            }
+                            def linuxPackages = [:]
+                            SUPPORTED_LINUX_VERSIONS.each{pythonVersion ->
+                                linuxPackages["Test Python ${pythonVersion}: sdist Linux"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/linux/tox/Dockerfile',
+                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL",
+                                                label: 'linux && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'tar.gz'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                                linuxPackages["Test Python ${pythonVersion}: wheel Linux"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/linux/tox/Dockerfile',
+                                                additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL',
+                                                label: 'linux && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'whl'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                            }
+                            parallel(linuxPackages + windowsPackages + macPackages)
                         }
                     }
                 }
@@ -957,24 +1117,24 @@ pipeline {
                     }
                     agent {
                         dockerfile {
-                            filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
+                            filename 'ci/docker/python/linux/tox/Dockerfile'
                             label 'linux&&docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                            additionalBuildArgs '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
                           }
                     }
                     input {
                         message 'Release to DevPi Production?'
                     }
                     steps {
-                        unstash "DIST-INFO"
                         script{
-                            def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            sh(label: "Pushing to production index",
-                               script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
-                                          devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-                                          devpi push --index DS_Jenkins/${devpiStagingIndex} ${props.Name}==${props.Version} production/release --clientdir ./devpi
-                                       """
+                            def devpi = load('ci/jenkins/scripts/devpi.groovy')
+                            devpi.pushPackageToIndex(
+                                pkgName: props.Name,
+                                pkgVersion: props.Version,
+                                server: DEVPI_CONFIG.server,
+                                indexSource: DEVPI_CONFIG.index,
+                                indexDestination: 'production/release',
+                                credentialsId: DEVPI_CONFIG.credentialsId
                             )
                         }
                     }
@@ -983,54 +1143,36 @@ pipeline {
             post{
                 success{
                     node('linux && docker') {
-                       script{
-                           if (!env.TAG_NAME?.trim()){
-                                def devpiStagingIndex = getDevPiStagingIndex()
-                                def devpiIndex = "${env.BRANCH_NAME}"
-
-                                docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                    unstash "DIST-INFO"
-                                    def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                    sh(
-                                        label: "Connecting to DevPi Server",
-                                        script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
-                                    )
-                                    sh(
-                                        label: "Selecting to DevPi index",
-                                        script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
-                                    )
-                                    sh(
-                                        label: "Pushing package to DevPi index",
-                                        script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
+                        checkout scm
+                        script{
+                            if (!env.TAG_NAME?.trim()){
+                                docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                    def devpi = load('ci/jenkins/scripts/devpi.groovy')
+                                    devpi.pushPackageToIndex(
+                                        pkgName: props.Name,
+                                        pkgVersion: props.Version,
+                                        server: DEVPI_CONFIG.server,
+                                        indexSource: DEVPI_CONFIG.index,
+                                        indexDestination: "DS_Jenkins/${env.BRANCH_NAME}",
+                                        credentialsId: DEVPI_CONFIG.credentialsId
                                     )
                                 }
                             }
-                       }
+                        }
                     }
                 }
                 cleanup{
                     node('linux && docker') {
                        script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                unstash "DIST-INFO"
-                                def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
-                                sh(
-                                    label: "Removing package to DevPi index",
-                                    script: """devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi
-                                               devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi
-                                               devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi
-                                               devpi remove -y ${props.Name}==${props.Version} --clientdir ${WORKSPACE}/devpi
-                                               """
-                                )
-                                cleanWs(
-                                    deleteDirs: true,
-                                    patterns: [
-                                        [pattern: "dist/", type: 'INCLUDE'],
-                                        [pattern: "devpi/", type: 'INCLUDE'],
-                                        [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                                        [pattern: 'build/', type: 'INCLUDE']
-                                    ]
+                            checkout scm
+                            docker.build("uiucpresconpackager:devpi",'-f ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                def devpi = load('ci/jenkins/scripts/devpi.groovy')
+                                devpi.removePackage(
+                                    pkgName: props.Name,
+                                    pkgVersion: props.Version,
+                                    index: DEVPI_CONFIG.index,
+                                    server: DEVPI_CONFIG.server,
+                                    credentialsId: DEVPI_CONFIG.credentialsId,
                                 )
                             }
                        }
