@@ -4,8 +4,8 @@
 // Versions of python that are supported
 // ----------------------------------------------------------------------------
 SUPPORTED_MAC_VERSIONS = ['3.8', '3.9']
-SUPPORTED_LINUX_VERSIONS = ['3.6', '3.7', '3.8', '3.9']
-SUPPORTED_WINDOWS_VERSIONS = ['3.6', '3.7', '3.8', '3.9']
+SUPPORTED_LINUX_VERSIONS = [ '3.7', '3.8', '3.9']
+SUPPORTED_WINDOWS_VERSIONS = [ '3.7', '3.8', '3.9']
 
 CONFIGURATIONS = [
     "3.6": [
