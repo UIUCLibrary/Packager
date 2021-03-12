@@ -1,5 +1,11 @@
 #!groovy
 @Library(["devpi", "PythonHelpers"]) _
+// ============================================================================
+// Versions of python that are supported
+// ----------------------------------------------------------------------------
+SUPPORTED_MAC_VERSIONS = ['3.8', '3.9']
+SUPPORTED_LINUX_VERSIONS = ['3.6', '3.7', '3.8', '3.9']
+SUPPORTED_WINDOWS_VERSIONS = ['3.6', '3.7', '3.8', '3.9']
 
 CONFIGURATIONS = [
     "3.6": [
@@ -547,6 +553,38 @@ pipeline {
                                 checkout scm
                                 packages = load('ci/jenkins/scripts/packaging.groovy')
                             }
+                            def linuxTests = [:]
+                            SUPPORTED_LINUX_VERSIONS.each{ pythonVersion ->
+                                linuxTests["Linux - Python ${pythonVersion}: sdist"] = {
+                                    packages.testPkg(
+                                        agent: [
+                                            dockerfile: [
+                                                label: 'linux && docker',
+                                                filename: 'ci/docker/python/linux/tox/Dockerfile',
+                                                additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
+                                            ]
+                                        ],
+                                        glob: 'dist/*.tar.gz',
+                                        stash: 'PYTHON_PACKAGES',
+                                        pythonVersion: pythonVersion
+                                    )
+                                }
+                                linuxTests["Linux - Python ${pythonVersion}: wheel"] = {
+                                    packages.testPkg(
+                                        agent: [
+                                            dockerfile: [
+                                                label: 'linux && docker',
+                                                filename: 'ci/docker/python/linux/tox/Dockerfile',
+                                                additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
+                                            ]
+                                        ],
+                                        glob: 'dist/*.whl',
+                                        stash: 'PYTHON_PACKAGES',
+                                        pythonVersion: pythonVersion
+                                    )
+                                }
+                            }
+                            parallel(linuxTests)
                         }
                     }
                 }
