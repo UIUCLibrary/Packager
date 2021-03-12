@@ -22,6 +22,10 @@ DEVPI_CONFIG = [
     server: 'https://devpi.library.illinois.edu',
     credentialsId: 'DS_devpi',
 ]
+defaultParameterValues = [
+    USE_SONARQUBE: false
+]
+
 
 CONFIGURATIONS = [
     "3.6": [
