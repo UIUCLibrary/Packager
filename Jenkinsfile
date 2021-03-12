@@ -944,6 +944,49 @@ pipeline {
                             node(){
                                 devpi = load('ci/jenkins/scripts/devpi.groovy')
                             }
+                            windowsPackages = [:]
+                            SUPPORTED_WINDOWS_VERSIONS.each{pythonVersion ->
+                                windowsPackages["Test Python ${pythonVersion}: sdist Windows"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/windows/tox/Dockerfile',
+                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
+                                                label: 'windows && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'tar.gz'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                                windowsPackages["Test Python ${pythonVersion}: wheel Windows"] = {
+                                    devpi.testDevpiPackage(
+                                        agent: [
+                                            dockerfile: [
+                                                filename: 'ci/docker/python/windows/tox/Dockerfile',
+                                                additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
+                                                label: 'windows && docker'
+                                            ]
+                                        ],
+                                        devpi: DEVPI_CONFIG,
+                                        package:[
+                                            name: props.Name,
+                                            version: props.Version,
+                                            selector: 'whl'
+                                        ],
+                                        test:[
+                                            toxEnv: "py${pythonVersion}".replace('.',''),
+                                        ]
+                                    )
+                                }
+                            }
                             def linuxPackages = [:]
                             SUPPORTED_LINUX_VERSIONS.each{pythonVersion ->
                                 linuxPackages["Test Python ${pythonVersion}: sdist Linux"] = {
@@ -987,7 +1030,7 @@ pipeline {
                                     )
                                 }
                             }
-                            parallel(linuxPackages)
+                            parallel(linuxPackages + windowsPackages)
                         }
                     }
                 }
