@@ -898,9 +898,6 @@ pipeline {
             options{
                 timestamps()
             }
-//             environment{
-//                 DEVPI = credentials("DS_devpi")
-//             }
             stages{
                 stage("Deploy to Devpi Staging") {
                     agent {
@@ -922,17 +919,6 @@ pipeline {
                                     clientDir: './devpi'
                                 )
                         }
-//                         script{
-//
-//                             def devpiStagingIndex = getDevPiStagingIndex()
-//                             sh(label: "Uploading to DevPi Staging",
-//                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
-//                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-//                                           devpi use /${env.DEVPI_USR}/${devpiStagingIndex} --clientdir ./devpi
-//                                           devpi upload --from-dir dist --clientdir ./devpi
-//                                           """
-//                             )
-//                         }
                     }
                     post{
                         cleanup{
