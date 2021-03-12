@@ -128,6 +128,7 @@ pipeline {
         booleanParam(name: "BUILD_PACKAGES", defaultValue: true, description: "Build Python packages")
 //         todo make this false when done
         booleanParam(name: 'TEST_PACKAGES', defaultValue: true, description: 'Test packages')
+        booleanParam(name: 'TEST_PACKAGES_ON_MAC', defaultValue: false, description: 'Test Python packages on Mac')
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
@@ -553,6 +554,61 @@ pipeline {
                                 checkout scm
                                 packages = load('ci/jenkins/scripts/packaging.groovy')
                             }
+                            macTests = [:]
+                            SUPPORTED_MAC_VERSIONS.each{ pythonVersion ->
+                                macTests["Mac - Python ${pythonVersion}: sdist"] = {
+                                    packages.testPkg(
+                                            agent: [
+                                                label: "mac && python${pythonVersion}",
+                                            ],
+                                            glob: 'dist/*.tar.gz,dist/*.zip',
+                                            stash: 'PYTHON_PACKAGES',
+                                            pythonVersion: pythonVersion,
+                                            toxExec: 'venv/bin/tox',
+                                            testSetup: {
+                                                checkout scm
+                                                unstash 'PYTHON_PACKAGES'
+                                                sh(
+                                                    label:'Install Tox',
+                                                    script: '''python3 -m venv venv
+                                                               venv/bin/pip install pip --upgrade
+                                                               venv/bin/pip install tox
+                                                               '''
+                                                )
+                                            },
+                                            testTeardown: {
+                                                sh 'rm -r venv/'
+                                            }
+
+                                        )
+                                }
+                                macTests["Mac - Python ${pythonVersion}: wheel"] = {
+                                    packages.testPkg(
+                                            agent: [
+                                                label: "mac && python${pythonVersion}",
+                                            ],
+                                            glob: 'dist/*.whl',
+                                            stash: 'PYTHON_PACKAGES',
+                                            pythonVersion: pythonVersion,
+                                            toxExec: 'venv/bin/tox',
+                                            testSetup: {
+                                                checkout scm
+                                                unstash 'PYTHON_PACKAGES'
+                                                sh(
+                                                    label:'Install Tox',
+                                                    script: '''python3 -m venv venv
+                                                               venv/bin/pip install pip --upgrade
+                                                               venv/bin/pip install tox
+                                                               '''
+                                                )
+                                            },
+                                            testTeardown: {
+                                                sh 'rm -r venv/'
+                                            }
+
+                                        )
+                                }
+                            }
                             def linuxTests = [:]
                             SUPPORTED_LINUX_VERSIONS.each{ pythonVersion ->
                                 linuxTests["Linux - Python ${pythonVersion}: sdist"] = {
@@ -584,7 +640,12 @@ pipeline {
                                     )
                                 }
                             }
-                            parallel(linuxTests)
+                            def tests = windowsTests
+                            if(params.TEST_PACKAGES_ON_MAC == true){
+                                tests = tests + macTests
+                            }
+
+                            parallel(tests)
                         }
                     }
                 }
