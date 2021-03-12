@@ -671,7 +671,7 @@ pipeline {
                                         )
                                     }
                             }
-                            def tests = windowsTests
+                            def tests = windowsTests + linuxTests
                             if(params.TEST_PACKAGES_ON_MAC == true){
                                 tests = tests + macTests
                             }
