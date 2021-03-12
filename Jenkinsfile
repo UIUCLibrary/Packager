@@ -514,7 +514,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sh "python -m build ."
+                        sh "python3 -m build ."
                     }
                     post {
                         always{
