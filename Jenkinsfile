@@ -276,9 +276,7 @@ pipeline {
                         }
                         success{
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
-                            unstash "DIST-INFO"
                             script{
-                                def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                                 def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
                                 zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
                                 stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
@@ -526,8 +524,6 @@ pipeline {
                         unstash "FLAKE8_REPORT"
                         script{
                             withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
-                                unstash "DIST-INFO"
-                                def props = readProperties(interpolate: true, file: "uiucprescon.packager.dist-info/METADATA")
                                 if (env.CHANGE_ID){
                                     sh(
                                         label: "Running Sonar Scanner",
@@ -1137,8 +1133,6 @@ pipeline {
                        script{
                             def devpiStagingIndex = getDevPiStagingIndex()
                             docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                unstash "DIST-INFO"
-                                def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                 sh(
                                     label: "Removing package to DevPi index",
                                     script: """devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi
