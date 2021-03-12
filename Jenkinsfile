@@ -926,6 +926,7 @@ pipeline {
                                     )
                                 }
                             }
+                            parallel(linuxPackages)
                         }
                     }
                 }
