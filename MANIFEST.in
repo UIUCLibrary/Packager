@@ -18,8 +18,8 @@ include tox.ini
 # Pytest configuration setting
 recursive-include tests *.py
 
-# Behave tests
-recursive-include tests/features *.py *.feature
+# pytest bdd tests
+recursive-include tests/features *.feature
 include tests/package_names.csv
 
 # Documentation
