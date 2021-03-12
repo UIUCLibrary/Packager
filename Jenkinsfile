@@ -1086,9 +1086,7 @@ pipeline {
                         message 'Release to DevPi Production?'
                     }
                     steps {
-                        unstash "DIST-INFO"
                         script{
-                            def props = readProperties interpolate: true, file: "uiucprescon.packager.dist-info/METADATA"
                             def devpiStagingIndex = getDevPiStagingIndex()
                             sh(label: "Pushing to production index",
                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
@@ -1109,8 +1107,6 @@ pipeline {
                                 def devpiIndex = "${env.BRANCH_NAME}"
 
                                 docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                    unstash "DIST-INFO"
-                                    def props = readProperties interpolate: true, file: 'uiucprescon.packager.dist-info/METADATA'
                                     sh(
                                         label: "Connecting to DevPi Server",
                                         script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
