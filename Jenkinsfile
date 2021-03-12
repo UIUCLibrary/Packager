@@ -76,7 +76,7 @@ CONFIGURATIONS = [
 ]
 
 
-
+SONARQUBE_CREDENTIAL_ID = 'sonarcloud-uiucprescon.packager'
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
 
