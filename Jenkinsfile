@@ -366,15 +366,6 @@ pipeline {
                                         }
                                     }
                                 }
-                                stage("Run Tox test") {
-                                    when{
-                                        equals expected: true, actual: params.TEST_RUN_TOX
-                                    }
-                                    steps {
-                                        sh "tox -e py"
-
-                                    }
-                                }
                                 stage("Run Bandit Static Analysis") {
                                     steps{
                                         catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
