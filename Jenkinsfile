@@ -1141,6 +1141,7 @@ pipeline {
                     }
                     steps {
                         script{
+                            def devpi = load('ci/jenkins/scripts/devpi.groovy')
                             devpi.pushPackageToIndex(
                                 pkgName: props.Name,
                                 pkgVersion: props.Version,
@@ -1160,6 +1161,7 @@ pipeline {
                         script{
                             if (!env.TAG_NAME?.trim()){
                                 docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                    def devpi = load('ci/jenkins/scripts/devpi.groovy')
                                     devpi.pushPackageToIndex(
                                         pkgName: props.Name,
                                         pkgVersion: props.Version,
@@ -1176,7 +1178,9 @@ pipeline {
                 cleanup{
                     node('linux && docker') {
                        script{
+                            checkout scm
                             docker.build("uiucpresconpackager:devpi",'-f ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                def devpi = load('ci/jenkins/scripts/devpi.groovy')
                                 devpi.removePackage(
                                     pkgName: props.Name,
                                     pkgVersion: props.Version,
