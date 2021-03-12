@@ -124,6 +124,67 @@ def get_package_name(stashName, metadataFile){
         }
     }
 }
+def startup(){
+    def SONARQUBE_CREDENTIAL_ID = SONARQUBE_CREDENTIAL_ID
+    parallel(
+        [
+            failFast: true,
+            "Checking sonarqube Settings": {
+                node(){
+                    try{
+                        withCredentials([string(credentialsId: SONARQUBE_CREDENTIAL_ID, variable: 'dddd')]) {
+                            echo 'Found credentials for sonarqube'
+                        }
+                        defaultParameterValues.USE_SONARQUBE = true
+                    } catch(e){
+                        echo "Setting defaultValue for USE_SONARQUBE to false. Reason: ${e}"
+                        defaultParameterValues.USE_SONARQUBE = false
+                    }
+                }
+            },
+            "Getting Distribution Info": {
+                node('linux && docker') {
+                    timeout(2){
+                        ws{
+                            checkout scm
+                            try{
+                                docker.image('python').inside {
+                                    sh(
+                                       label: "Running setup.py with dist_info",
+                                       script: """python --version
+                                                  python setup.py dist_info
+                                               """
+                                    )
+                                    stash includes: "*.dist-info/**", name: 'DIST-INFO'
+                                    archiveArtifacts artifacts: "*.dist-info/**"
+                                }
+                            } finally{
+                                deleteDir()
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    )
+}
+def get_props(){
+    stage('Reading Package Metadata'){
+        node(){
+            unstash 'DIST-INFO'
+            def metadataFile = findFiles( glob: '*.dist-info/METADATA')[0]
+            def metadata = readProperties(interpolate: true, file: metadataFile.path )
+            echo """Version = ${metadata.Version}
+Name = ${metadata.Name}
+"""
+            return metadata
+        }
+    }
+}
+
+
+startup()
+def props = get_props()
 
 pipeline {
     agent none
