@@ -1141,12 +1141,13 @@ pipeline {
                     }
                     steps {
                         script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            sh(label: "Pushing to production index",
-                               script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
-                                          devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-                                          devpi push --index DS_Jenkins/${devpiStagingIndex} ${props.Name}==${props.Version} production/release --clientdir ./devpi
-                                       """
+                            devpi.pushPackageToIndex(
+                                pkgName: props.Name,
+                                pkgVersion: props.Version,
+                                server: DEVPI_CONFIG.server,
+                                indexSource: DEVPI_CONFIG.index,
+                                indexDestination: 'production/release',
+                                credentialsId: DEVPI_CONFIG.credentialsId
                             )
                         }
                     }
