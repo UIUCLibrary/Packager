@@ -989,7 +989,7 @@ pipeline {
                                         ]
                                     )
                                 }
-                                macPackages["Test Python ${pythonVersion}: sdist Mac"]= {
+                                macPackages["Test Python ${pythonVersion}: sdist Mac"] = {
                                     devpi.testDevpiPackage(
                                         agent: [
                                             label: "mac && python${pythonVersion}"
@@ -1015,12 +1015,10 @@ pipeline {
                                                                 venv/bin/python -m pip install devpi_client
                                                                 '''
                                                 )
-                                                sh('venv/bin/pip wheel -r requirements.txt -w ./wheels')
                                             },
                                             toxEnv: "py${pythonVersion}".replace('.',''),
                                             teardown: {
                                                 sh( label: 'Remove Devpi client', script: 'rm -r venv')
-                                                sh( label: 'Remove wheels dir', script: 'rm -r wheels')
                                             }
                                         ]
                                     )
@@ -1157,27 +1155,21 @@ pipeline {
             post{
                 success{
                     node('linux && docker') {
-                       script{
-                           if (!env.TAG_NAME?.trim()){
-                                def devpiStagingIndex = getDevPiStagingIndex()
-                                def devpiIndex = "${env.BRANCH_NAME}"
-
-                                docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/deploy/devpi/deploy/Dockerfile --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .').inside{
-                                    sh(
-                                        label: "Connecting to DevPi Server",
-                                        script: 'devpi use https://devpi.library.illinois.edu --clientdir ${WORKSPACE}/devpi && devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ${WORKSPACE}/devpi'
-                                    )
-                                    sh(
-                                        label: "Selecting to DevPi index",
-                                        script: "devpi use /DS_Jenkins/${devpiStagingIndex} --clientdir ${WORKSPACE}/devpi"
-                                    )
-                                    sh(
-                                        label: "Pushing package to DevPi index",
-                                        script:  "devpi push ${props.Name}==${props.Version} DS_Jenkins/${devpiIndex} --clientdir ${WORKSPACE}/devpi"
+                        checkout scm
+                        script{
+                            if (!env.TAG_NAME?.trim()){
+                                docker.build("uiucpresconpackager:devpi",'-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                    devpi.pushPackageToIndex(
+                                        pkgName: props.Name,
+                                        pkgVersion: props.Version,
+                                        server: DEVPI_CONFIG.server,
+                                        indexSource: DEVPI_CONFIG.index,
+                                        indexDestination: "DS_Jenkins/${env.BRANCH_NAME}",
+                                        credentialsId: DEVPI_CONFIG.credentialsId
                                     )
                                 }
                             }
-                       }
+                        }
                     }
                 }
                 cleanup{
