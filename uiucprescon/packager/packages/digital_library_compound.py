@@ -162,7 +162,10 @@ class Transform:
 
         base_name = self._package_builder.get_file_base_name(item_name)
         ext = os.path.splitext(src)[1]
-        new_file = os.path.join(supplementary_dir, f"{base_name}{ext}")
+        new_file = os.path.join(
+            supplementary_dir,
+            f"{object_name}-{base_name}{ext}"
+        )
 
         copier = transformations.Transformers(
             strategy=self._strategies['CopyFile'],
