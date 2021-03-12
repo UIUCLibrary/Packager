@@ -868,10 +868,12 @@ pipeline {
                     }
                 }
                 stage("Test DevPi packages") {
-                    script{
-                        def devpi
-                        node(){
-                            devpi = load('ci/jenkins/scripts/devpi.groovy')
+                    steps{
+                        script{
+                            def devpi
+                            node(){
+                                devpi = load('ci/jenkins/scripts/devpi.groovy')
+                            }
                         }
                     }
                 }
