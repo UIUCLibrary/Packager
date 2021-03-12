@@ -907,22 +907,32 @@ pipeline {
                         dockerfile {
                             filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
                             label 'linux&&docker'
-                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+                            additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                           }
                     }
                     steps {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
                         script{
-                            def devpiStagingIndex = getDevPiStagingIndex()
-                            sh(label: "Uploading to DevPi Staging",
-                               script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
-                                          devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
-                                          devpi use /${env.DEVPI_USR}/${devpiStagingIndex} --clientdir ./devpi
-                                          devpi upload --from-dir dist --clientdir ./devpi
-                                          """
-                            )
+                            def devpi = load('ci/jenkins/scripts/devpi.groovy')
+                            devpi.upload(
+                                    server: DEVPI_CONFIG.server,
+                                    credentialsId: DEVPI_CONFIG.credentialsId,
+                                    index: DEVPI_CONFIG.index,
+                                    clientDir: './devpi'
+                                )
                         }
+//                         script{
+//
+//                             def devpiStagingIndex = getDevPiStagingIndex()
+//                             sh(label: "Uploading to DevPi Staging",
+//                                script: """devpi use https://devpi.library.illinois.edu --clientdir ./devpi
+//                                           devpi login $DEVPI_USR --password $DEVPI_PSW --clientdir ./devpi
+//                                           devpi use /${env.DEVPI_USR}/${devpiStagingIndex} --clientdir ./devpi
+//                                           devpi upload --from-dir dist --clientdir ./devpi
+//                                           """
+//                             )
+//                         }
                     }
                     post{
                         cleanup{
@@ -1120,7 +1130,7 @@ pipeline {
                     }
                     agent {
                         dockerfile {
-                            filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
+                            filename 'ci/docker/python/linux/tox/Dockerfile'
                             label 'linux&&docker'
                             additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
                           }
