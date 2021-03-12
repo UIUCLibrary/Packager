@@ -898,9 +898,9 @@ pipeline {
             options{
                 timestamps()
             }
-            environment{
-                DEVPI = credentials("DS_devpi")
-            }
+//             environment{
+//                 DEVPI = credentials("DS_devpi")
+//             }
             stages{
                 stage("Deploy to Devpi Staging") {
                     agent {
