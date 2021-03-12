@@ -120,6 +120,8 @@ pipeline {
         booleanParam(name: "USE_SONARQUBE", defaultValue: true, description: "Send data test data to SonarQube")
 //         todo make this false when done
         booleanParam(name: "BUILD_PACKAGES", defaultValue: true, description: "Build Python packages")
+//         todo make this false when done
+        booleanParam(name: 'TEST_PACKAGES', defaultValue: true, description: 'Test packages')
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
@@ -532,141 +534,155 @@ pipeline {
                             )
                         }
                     }
-
                 }
-                stage('Testing all Package') {
-                    matrix{
-                        agent none
-                        axes{
-                            axis {
-                                name "PLATFORM"
-                                values(
-                                    "windows",
-                                    "linux"
-                                )
-                            }
-                            axis {
-                                name "PYTHON_VERSION"
-                                values(
-                                    "3.7",
-                                    "3.8"
-                                )
-                            }
-                        }
-                        stages{
-                            stage("Testing Wheel Package"){
-                                agent {
-                                    dockerfile {
-                                        filename "ci/docker/python/${PLATFORM}/Dockerfile"
-                                        label "${PLATFORM} && docker"
-                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL"
-                                    }
-                                }
-                                steps{
-                                    unstash "PYTHON_PACKAGES"
-                                    script{
-                                        findFiles(glob: "**/*.whl").each{
-                                            cleanWs(
-                                                deleteDirs: true,
-                                                disableDeferredWipeout: true,
-                                                patterns: [
-                                                    [pattern: '.git/', type: 'EXCLUDE'],
-                                                    [pattern: 'tests/', type: 'EXCLUDE'],
-                                                    [pattern: 'dist/', type: 'EXCLUDE'],
-                                                    [pattern: 'tox.ini', type: 'EXCLUDE']
-                                                ]
-                                            )
-                                            timeout(15){
-                                                if(isUnix()){
-                                                    sh(label: "Testing ${it}",
-                                                        script: """python --version
-                                                                   tox --installpkg=${it.path} -e py -vv
-                                                                   """
-                                                    )
-                                                } else {
-                                                    bat(label: "Testing ${it}",
-                                                        script: """python --version
-                                                                   tox --installpkg=${it.path} -e py -vv
-                                                                   """
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                post{
-                                    cleanup{
-                                        cleanWs(
-                                            notFailBuild: true,
-                                            deleteDirs: true,
-                                            patterns: [
-                                                [pattern: 'dist/', type: 'INCLUDE'],
-                                                [pattern: '**/__pycache__', type: 'INCLUDE'],
-                                                [pattern: 'build/', type: 'INCLUDE'],
-                                                [pattern: '.tox/', type: 'INCLUDE'],
-                                                ]
-                                        )
-                                    }
-                                }
-                            }
-                            stage("Testing sdist Package"){
-                                agent {
-                                    dockerfile {
-                                        filename "ci/docker/python/${PLATFORM}/Dockerfile"
-                                        label "${PLATFORM} && docker"
-                                        additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL"
-                                    }
-                                }
-                                steps{
-                                    unstash "PYTHON_PACKAGES"
-                                    script{
-                                        findFiles(glob: "dist/*.tar.gz,dist/*.zip").each{
-                                            cleanWs(
-                                                deleteDirs: true,
-                                                disableDeferredWipeout: true,
-                                                patterns: [
-                                                    [pattern: '.git/', type: 'EXCLUDE'],
-                                                    [pattern: 'tests/', type: 'EXCLUDE'],
-                                                    [pattern: 'dist/', type: 'EXCLUDE'],
-                                                    [pattern: 'tox.ini', type: 'EXCLUDE']
-                                                ]
-                                            )
-                                            timeout(15){
-                                                if(isUnix()){
-                                                    sh(label: "Testing ${it}",
-                                                        script: """python --version
-                                                                   tox --installpkg=${it.path} -e py -vv
-                                                                   """
-                                                    )
-                                                } else {
-                                                    bat(label: "Testing ${it}",
-                                                        script: """python --version
-                                                                   tox --installpkg=${it.path} -e py -vv
-                                                                   """
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                post{
-                                    cleanup{
-                                        cleanWs(
-                                            notFailBuild: true,
-                                            deleteDirs: true,
-                                            patterns: [
-                                                [pattern: 'dist/', type: 'INCLUDE'],
-                                                [pattern: 'build/', type: 'INCLUDE'],
-                                                [pattern: '**/__pycache__', type: 'INCLUDE'],
-                                                [pattern: '.tox/', type: 'INCLUDE'],
-                                                ]
-                                        )
-                                    }
-                                }
+                stage("Testing Packages"){
+                    when{
+                        equals expected: true, actual: params.TEST_PACKAGES
+                        beforeAgent true
+                    }
+                    steps{
+                        script{
+                            def packages
+                            node(){
+                                checkout scm
+                                packages = load('ci/jenkins/scripts/packaging.groovy')
                             }
                         }
                     }
                 }
+//                 stage('Testing all Package') {
+//                     matrix{
+//                         agent none
+//                         axes{
+//                             axis {
+//                                 name "PLATFORM"
+//                                 values(
+//                                     "windows",
+//                                     "linux"
+//                                 )
+//                             }
+//                             axis {
+//                                 name "PYTHON_VERSION"
+//                                 values(
+//                                     "3.7",
+//                                     "3.8"
+//                                 )
+//                             }
+//                         }
+//                         stages{
+//                             stage("Testing Wheel Package"){
+//                                 agent {
+//                                     dockerfile {
+//                                         filename "ci/docker/python/${PLATFORM}/Dockerfile"
+//                                         label "${PLATFORM} && docker"
+//                                         additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL"
+//                                     }
+//                                 }
+//                                 steps{
+//                                     unstash "PYTHON_PACKAGES"
+//                                     script{
+//                                         findFiles(glob: "**/*.whl").each{
+//                                             cleanWs(
+//                                                 deleteDirs: true,
+//                                                 disableDeferredWipeout: true,
+//                                                 patterns: [
+//                                                     [pattern: '.git/', type: 'EXCLUDE'],
+//                                                     [pattern: 'tests/', type: 'EXCLUDE'],
+//                                                     [pattern: 'dist/', type: 'EXCLUDE'],
+//                                                     [pattern: 'tox.ini', type: 'EXCLUDE']
+//                                                 ]
+//                                             )
+//                                             timeout(15){
+//                                                 if(isUnix()){
+//                                                     sh(label: "Testing ${it}",
+//                                                         script: """python --version
+//                                                                    tox --installpkg=${it.path} -e py -vv
+//                                                                    """
+//                                                     )
+//                                                 } else {
+//                                                     bat(label: "Testing ${it}",
+//                                                         script: """python --version
+//                                                                    tox --installpkg=${it.path} -e py -vv
+//                                                                    """
+//                                                     )
+//                                                 }
+//                                             }
+//                                         }
+//                                     }
+//                                 }
+//                                 post{
+//                                     cleanup{
+//                                         cleanWs(
+//                                             notFailBuild: true,
+//                                             deleteDirs: true,
+//                                             patterns: [
+//                                                 [pattern: 'dist/', type: 'INCLUDE'],
+//                                                 [pattern: '**/__pycache__', type: 'INCLUDE'],
+//                                                 [pattern: 'build/', type: 'INCLUDE'],
+//                                                 [pattern: '.tox/', type: 'INCLUDE'],
+//                                                 ]
+//                                         )
+//                                     }
+//                                 }
+//                             }
+//                             stage("Testing sdist Package"){
+//                                 agent {
+//                                     dockerfile {
+//                                         filename "ci/docker/python/${PLATFORM}/Dockerfile"
+//                                         label "${PLATFORM} && docker"
+//                                         additionalBuildArgs "--build-arg PYTHON_DOCKER_IMAGE_BASE=${CONFIGURATIONS[PYTHON_VERSION].test_docker_image[PLATFORM]} --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL"
+//                                     }
+//                                 }
+//                                 steps{
+//                                     unstash "PYTHON_PACKAGES"
+//                                     script{
+//                                         findFiles(glob: "dist/*.tar.gz,dist/*.zip").each{
+//                                             cleanWs(
+//                                                 deleteDirs: true,
+//                                                 disableDeferredWipeout: true,
+//                                                 patterns: [
+//                                                     [pattern: '.git/', type: 'EXCLUDE'],
+//                                                     [pattern: 'tests/', type: 'EXCLUDE'],
+//                                                     [pattern: 'dist/', type: 'EXCLUDE'],
+//                                                     [pattern: 'tox.ini', type: 'EXCLUDE']
+//                                                 ]
+//                                             )
+//                                             timeout(15){
+//                                                 if(isUnix()){
+//                                                     sh(label: "Testing ${it}",
+//                                                         script: """python --version
+//                                                                    tox --installpkg=${it.path} -e py -vv
+//                                                                    """
+//                                                     )
+//                                                 } else {
+//                                                     bat(label: "Testing ${it}",
+//                                                         script: """python --version
+//                                                                    tox --installpkg=${it.path} -e py -vv
+//                                                                    """
+//                                                     )
+//                                                 }
+//                                             }
+//                                         }
+//                                     }
+//                                 }
+//                                 post{
+//                                     cleanup{
+//                                         cleanWs(
+//                                             notFailBuild: true,
+//                                             deleteDirs: true,
+//                                             patterns: [
+//                                                 [pattern: 'dist/', type: 'INCLUDE'],
+//                                                 [pattern: 'build/', type: 'INCLUDE'],
+//                                                 [pattern: '**/__pycache__', type: 'INCLUDE'],
+//                                                 [pattern: '.tox/', type: 'INCLUDE'],
+//                                                 ]
+//                                         )
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
             }
         }
         stage("Deploy to DevPi") {
