@@ -53,8 +53,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
         """
         builder = collection_builder.DigitalLibraryCompoundBuilder()
 
-        for package in builder.build_batch(path):
-            yield package
+        yield from builder.build_batch(path)
 
     @staticmethod
     def _get_transformer(
@@ -107,8 +106,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
     @staticmethod
     def get_file_base_name(item_name: str) -> str:
         """Get the base name of a file, without an extension."""
-        new_base_name = f"{item_name}"
-        return new_base_name
+        return f"{item_name}"
 
 
 class Transform:

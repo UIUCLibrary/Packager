@@ -24,8 +24,7 @@ class HathiTiff(AbsPackageBuilder):
 
         """
         builder = collection_builder.HathiTiffBuilder()
-        for package in builder.build_batch(path):
-            yield package
+        yield from builder.build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
         """Transform package into a Hathi Tiff package.

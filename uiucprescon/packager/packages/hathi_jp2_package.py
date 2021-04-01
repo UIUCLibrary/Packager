@@ -26,8 +26,7 @@ class HathiJp2(AbsPackageBuilder):
         """
         builder = collection_builder.HathiJp2Builder()
         batch = builder.build_batch(path)
-        for package in batch:
-            yield package
+        yield from batch
 
     def transform(self, package: Package, dest: str) -> None:
         """Transform package into a Hathi jp2k package.
