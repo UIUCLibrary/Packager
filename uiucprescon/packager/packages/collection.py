@@ -65,11 +65,11 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
     def _gen_combined_metadata(self) -> ChainMap[Metadata, MetadataTypes]:
         if self.parent:
 
-            metadata = collections.ChainMap(self.component_metadata,
-                                            self.parent.metadata)
-        else:
-            metadata = collections.ChainMap(self.component_metadata)
-        return metadata
+            return collections.ChainMap(
+                self.component_metadata,
+                self.parent.metadata
+            )
+        return collections.ChainMap(self.component_metadata)
 
     @staticmethod
     def init_local_metadata() -> dict:

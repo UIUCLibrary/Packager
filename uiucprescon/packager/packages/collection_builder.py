@@ -207,9 +207,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
         base, _ = os.path.splitext(item.name)
 
-        if base != filename:
-            return False
-        return True
+        return base == filename
 
     @staticmethod
     def filter_nonsystem_files_only(item: os.DirEntry) -> bool:
@@ -221,9 +219,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
         if not item.is_file():
             return False
-        if item.name in system_files:
-            return False
-        return True
+        return item.name not in system_files
 
 
 class DSBuilder(AbsCollectionBuilder):
@@ -550,9 +546,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
             return False
 
         ext = os.path.splitext(item.name)[1]
-        if ext.lower() != ".tif":
-            return False
-        return True
+        return ext.lower() == ".tif"
 
     def build_package(self, parent, path: str) -> None:
 
@@ -650,9 +644,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         if not item.is_file():
             return False
         _, ext = os.path.splitext(item.name)
-        if ext.lower() != file_extension:
-            return False
-        return True
+        return ext.lower() == file_extension
 
     def build_package(self, parent, path: str) -> None:
         access_path = os.path.join(path, "access")
@@ -719,9 +711,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             return False
 
         ext = os.path.splitext(item.name)[1]
-        if ext.lower() != ".jp2":
-            return False
-        return True
+        return ext.lower() == ".jp2"
 
     def build_package(self, parent, path: str) -> None:
         for file_ in filter(self.filter_tiff_files, os.scandir(path)):
@@ -759,11 +749,10 @@ class HathiJp2Builder(AbsCollectionBuilder):
                 matching_files,
                 key=self._organize_files
         ):
-            if key == "sidecar":
-                for file_ in value:
+            for file_ in value:
+                if key == "sidecar":
                     sidecar_files.append(file_)
-            elif key == "main_files":
-                for file_ in value:
+                elif key == "main_files":
                     main_files.append(file_)
 
         for file_ in main_files:
@@ -786,9 +775,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def is_package_dir_name(cls, dirname: str) -> bool:
-        if not cls.package_matcher.match(dirname):
-            return False
-        return True
+        return bool(cls.package_matcher.match(dirname))
 
     def build_batch(self, root: str):
         others = []
@@ -845,9 +832,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             ".jp2"
         ]
         ext = os.path.splitext(file_name)[1]
-        if ext.lower() not in valid_images_extension:
-            return False
-        return True
+        return ext.lower() in valid_images_extension
 
     def build_package(self, parent, path: str) -> None:
         package_builder = HathiLimitedViewPackageBuilder(path=path)
@@ -899,12 +884,13 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         if item_name is not None:
             new_item.component_metadata[Metadata.ITEM_NAME] = item_name
 
-        file_types = dict()
-        for file_category, files in itertools.groupby(
-                sorted(kwargs['files'],
-                       key=lambda x: self.get_file_type(x).value),
-                key=self.get_file_type):
-            file_types[file_category] = list(files)
+        file_types = {
+            file_category: list(files)
+            for file_category, files in itertools.groupby(
+                sorted(kwargs['files'], key=lambda x: self.get_file_type(x).value),
+                key=self.get_file_type,
+            )
+        }
 
         for archived_file in itertools.chain(
                 file_types.get(InstantiationTypes.ACCESS, []),
@@ -980,8 +966,7 @@ class HathiLimitedViewPackageBuilder:
 
         Returns: key for the file
         """
-        key = os.path.splitext(os.path.split(file_name)[-1])[0]
-        return key
+        return os.path.splitext(os.path.split(file_name)[-1])[0]
 
     @staticmethod
     def filter_files_only(
@@ -989,9 +974,7 @@ class HathiLimitedViewPackageBuilder:
             file_name: str
     ) -> bool:
 
-        if zip_file_source.getinfo(file_name).is_dir():
-            return False
-        return True
+        return not zip_file_source.getinfo(file_name).is_dir()
 
     @classmethod
     def get_item_type(cls, item_group: Tuple[str, List[str]]) -> str:
@@ -1010,9 +993,7 @@ class HathiLimitedViewPackageBuilder:
             ".jp2"
         ]
         ext = os.path.splitext(file_name)[1]
-        if ext not in valid_images_extension:
-            return False
-        return True
+        return ext in valid_images_extension
 
     @classmethod
     def iter_items_from_archive(cls, zip_file: str) -> \
