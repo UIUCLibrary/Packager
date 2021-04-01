@@ -30,8 +30,7 @@ class PackageFactory:
             A new package if found
 
         """
-        for package in self._package_type.locate_packages(path):
-            yield package
+        yield from self._package_type.locate_packages(path)
 
     def transform(self, package: collection.Package, dest: str) -> None:
         """Transform a given package into the current type.

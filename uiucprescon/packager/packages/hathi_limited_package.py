@@ -47,8 +47,7 @@ class HathiLimitedView(AbsPackageBuilder):
         """
         builder = collection_builder.HathiLimitedViewBuilder()
         batch = builder.build_batch(path)
-        for package in batch:
-            yield package
+        yield from batch
 
     def transform(self, package: Package, dest: str) -> None:
         """Invalid.

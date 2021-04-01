@@ -56,8 +56,7 @@ class CaptureOnePackage(AbsPackageBuilder):
 
     def locate_packages(self, path: str) -> Iterator[Package]:
 
-        for package in self.package_builder.build_batch(path):
-            yield package
+        yield from self.package_builder.build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
         logger = logging.getLogger(__name__)
