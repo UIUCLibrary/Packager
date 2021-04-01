@@ -887,7 +887,10 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         file_types = {
             file_category: list(files)
             for file_category, files in itertools.groupby(
-                sorted(kwargs['files'], key=lambda x: self.get_file_type(x).value),
+                sorted(
+                    kwargs['files'],
+                    key=lambda x: self.get_file_type(x).value
+                ),
                 key=self.get_file_type,
             )
         }
