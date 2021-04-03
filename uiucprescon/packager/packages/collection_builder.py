@@ -815,10 +815,10 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             os.path.splitext(file_name)[0]
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry) -> \
-            Tuple[Optional[os.DirEntry],
-                  Optional[os.DirEntry],
-                  Optional[os.DirEntry]]:
+    def split_package_content(cls, item: os.DirEntry[str]) -> \
+            Tuple[Optional[os.DirEntry[str]],
+                  Optional[os.DirEntry[str]],
+                  Optional[os.DirEntry[str]]]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -849,7 +849,12 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
                                  f"found {len(mets_files)}")
         if len(invalid_files) != 1:
-            print("Found invalid files {}".format(",".join(invalid_files)))
+            print(
+                "Found invalid files {}".format(
+                    ",".join(file.path for file in invalid_files)
+                )
+            )
+
 
         contents = self.get_zip_content(package_builder, zip_files)
 
@@ -948,10 +953,11 @@ class HathiLimitedViewPackageBuilder:
         self.path = path
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry) -> \
-            Tuple[Optional[os.DirEntry],
-                  Optional[os.DirEntry],
-                  Optional[os.DirEntry]]:
+    def split_package_content(cls, item: os.DirEntry[str]) -> \
+            Tuple[Optional[os.DirEntry[str]],
+                  Optional[os.DirEntry[str]],
+                  Optional[os.DirEntry[str]]
+            ]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -1017,8 +1023,8 @@ class HathiLimitedViewPackageBuilder:
                 files = list(file_group[1])
                 yield file_group[0], list(files)
 
-    def get_content(self):
-        zip_files = []
+    def get_content(self) -> Tuple[List[os.DirEntry[str]], List[os.DirEntry[str]], List[os.DirEntry[str]]]:
+        zip_files: List[os.DirEntry[str]] = []
         mets_files = []
         unidentified_files = []
 
