@@ -1,13 +1,15 @@
 """Collection builder."""
 # pylint: disable=unsubscriptable-object
 import abc
+import functools
 import itertools
 import logging
 import os
 import re
 import warnings
 import zipfile
-from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List
+from typing import Tuple, Optional, Iterator, Iterable, Dict, Callable, List, \
+    cast
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
@@ -16,7 +18,8 @@ from .collection import \
     Item, \
     Package, \
     PackageObject, \
-    AbsPackageComponent
+    AbsPackageComponent, \
+    Batch
 
 
 def _build_ds_instance(item, name: str, path: str) -> None:
@@ -187,7 +190,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         """Build a pckage.
 
         Args:
@@ -251,7 +254,7 @@ class DSBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         for folder in filter(lambda i: i.is_dir(), os.scandir(path)):
             new_package = PackageObject(parent=parent)
             new_package.component_metadata[Metadata.PATH] = folder.path
@@ -292,7 +295,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         logger = logging.getLogger(__name__)
 
         files = set(
@@ -497,7 +500,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                 continue
             new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         group_id = parent.metadata[Metadata.ID]
 
         non_system_files = \
@@ -548,7 +551,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         ext = os.path.splitext(item.name)[1]
         return ext.lower() == ".tif"
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
 
         for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
@@ -646,7 +649,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         _, ext = os.path.splitext(item.name)
         return ext.lower() == file_extension
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
 
@@ -713,7 +716,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         ext = os.path.splitext(item.name)[1]
         return ext.lower() == ".jp2"
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
             item_part, _ = os.path.splitext(file_.name)
@@ -834,7 +837,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         ext = os.path.splitext(file_name)[1]
         return ext.lower() in valid_images_extension
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         package_builder = HathiLimitedViewPackageBuilder(path=path)
         zip_files, mets_files, invalid_files = package_builder.get_content()
 
@@ -1032,3 +1035,134 @@ class HathiLimitedViewPackageBuilder:
                 unidentified_files.append(unidentified_file)
 
         return zip_files, mets_files, unidentified_files
+
+
+class ArchivalNonEASBuilder(AbsCollectionBuilder):
+    grouper_regex = re.compile(
+        r"^(?P<batch>[0-9]+)"
+        r"_"
+        r"(?P<group>[0-9]+)"
+        r"-"
+        r"(?P<part>[0-9]*)"
+        r"(?P<extension>\.tif?)$"
+    )
+
+    def filter_only_access_files(self, item: os.DirEntry[str]) -> bool:
+        if not item.is_file():
+            return False
+        base_name, extension = os.path.splitext(item.name)
+        if extension.lower() != ".tif":
+            return False
+        return True
+
+    def group_packages(
+            self,
+            files: Iterable[os.DirEntry[str]]
+    ) -> Dict[str, List[os.DirEntry[str]]]:
+
+        def key(item: os.DirEntry[str]) -> str:
+            regex_match = self.grouper_regex.match(item.name)
+            if regex_match is not None:
+                return regex_match.groupdict()['group']
+            return ""
+
+        return {
+            group_key: [
+                file for file in files
+            ] for (group_key, files) in itertools.groupby(files, key=key)
+        }
+
+    def build_batch(self, root: str) -> Batch:
+        new_batch = Batch(root)
+        self.build_package(parent=new_batch, path=root)
+
+        return new_batch.children[0]
+
+    def build_instance(self, parent: Item, path: str, filename: str, *args,
+                       **kwargs) -> None:
+        if "access" in path:
+            Instantiation(
+                category=InstantiationTypes.ACCESS,
+                parent=parent
+            )
+        elif "preservation" in path:
+            Instantiation(
+                category=InstantiationTypes.PRESERVATION,
+                parent=parent
+            )
+
+    def filter_file_is_item_of(self, item: os.DirEntry, group_id: str) -> bool:
+        if not item.is_file():
+            return False
+        matches = self.grouper_regex.match(item.name)
+        if matches is None:
+            return False
+        return matches.groupdict().get('group') == group_id
+
+    def build_package(self,
+                      parent: Batch,
+                      path: str,
+                      *args,
+                      **kwargs: str) -> None:
+
+        access_path = os.path.join(path, "access")
+        access_files = filter(
+            self.filter_only_access_files,
+            os.scandir(access_path)
+        )
+
+        new_package = Package(path, parent=parent)
+        grouped_access_files = self.group_packages(access_files)
+        for group_name in grouped_access_files.keys():
+            self.build_object(parent=new_package,
+                              path=path,
+                              group_name=group_name)
+
+    def build_object(self,
+                     parent: Package,
+                     path: str,
+                     *args,
+                     **kwargs: str) -> None:
+
+        new_object = PackageObject(parent=parent)
+        new_object.component_metadata[Metadata.ID] = kwargs['group_name']
+        access_dir = os.path.join(path, "access")
+        for item_file in filter(
+                functools.partial(
+                    self.filter_file_is_item_of,
+                    group_id=kwargs['group_name']
+                ),
+                os.scandir(access_dir)
+        ):
+            match_result = self.grouper_regex.match(item_file.name)
+            if match_result is None:
+                raise AttributeError("Unable to match file structure")
+
+            part = match_result.groupdict()['part']
+            self.build_item(parent=new_object, item_id=part, path=path)
+
+    def build_item(self, parent: PackageObject, item_id: str, path: str) -> None:
+        new_item = Item(parent=parent)
+        new_item.component_metadata[Metadata.ID] = item_id
+        access_path = os.path.join(path, "access")
+        preservation_path = os.path.join(path, "preservation")
+        for item in itertools.chain.from_iterable([
+            os.scandir(access_path),
+            os.scandir(preservation_path)
+        ]):
+            match_result = self.grouper_regex.match(cast(str, item.name))
+            if match_result is None:
+                raise AttributeError("Unable to match file structure")
+
+            file_naming_parts = match_result.groupdict()
+
+            if file_naming_parts['group'] != parent.metadata[Metadata.ID]:
+                continue
+
+            if file_naming_parts['part'] != item_id:
+                continue
+
+            self.build_instance(new_item,
+                                path=cast(str, item.path),
+                                filename=cast(str, item.name)
+                                )
