@@ -203,7 +203,8 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @staticmethod
-    def filter_same_name_files(item: "os.DirEntry[str]", filename: str) -> bool:
+    def filter_same_name_files(item: "os.DirEntry[str]",
+                               filename: str) -> bool:
 
         if not item.is_file():
             return False
@@ -816,9 +817,10 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def split_package_content(cls, item: "os.DirEntry[str]") -> \
-            Tuple[Optional["os.DirEntry[str]"],
-                  Optional["os.DirEntry[str]"],
-                  Optional["os.DirEntry[str]"]
+            Tuple[
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"]
             ]:
 
         if cls.mets_file_matcher.match(item.name):
@@ -855,7 +857,6 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
                     ",".join(file.path for file in invalid_files)
                 )
             )
-
 
         contents = self.get_zip_content(package_builder, zip_files)
 
@@ -955,9 +956,10 @@ class HathiLimitedViewPackageBuilder:
 
     @classmethod
     def split_package_content(cls, item: "os.DirEntry[str]") -> \
-            Tuple[Optional["os.DirEntry[str]"],
-                  Optional["os.DirEntry[str]"],
-                  Optional["os.DirEntry[str]"]
+            Tuple[
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"]
             ]:
 
         if cls.mets_file_matcher.match(item.name):
@@ -1102,7 +1104,10 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
                 parent=parent
             )
 
-    def filter_file_is_item_of(self, item: "os.DirEntry[str]", group_id: str) -> bool:
+    def filter_file_is_item_of(self,
+                               item: "os.DirEntry[str]",
+                               group_id: str) -> bool:
+
         if not item.is_file():
             return False
         matches = self.grouper_regex.match(item.name)
@@ -1152,7 +1157,11 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
             part = match_result.groupdict()['part']
             self.build_item(parent=new_object, item_id=part, path=path)
 
-    def build_item(self, parent: PackageObject, item_id: str, path: str) -> None:
+    def build_item(self,
+                   parent: PackageObject,
+                   item_id: str,
+                   path: str) -> None:
+
         new_item = Item(parent=parent)
         new_item.component_metadata[Metadata.ID] = item_id
         access_path = os.path.join(path, "access")
