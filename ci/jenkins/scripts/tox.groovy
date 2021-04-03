@@ -129,7 +129,7 @@ def getToxTestsParallel(args = [:]){
         def TOX_RESULT_FILE_NAME = "tox_result.json"
         def envs
         def originalNodeLabel
-        def dockerImageName = "${currentBuild.fullProjectName}:tox".replaceAll("-", "").replaceAll('/', "").replaceAll(' ', "").toLowerCase()
+        def dockerImageName = "${currentBuild.fullProjectName}:tox".replaceAll("-", "").replaceAll('/', "").replaceAll(' ', "").replaceAll('%2f', "").toLowerCase()
         node(label){
             originalNodeLabel = env.NODE_NAME
             checkout scm
