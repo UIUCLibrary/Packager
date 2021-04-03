@@ -203,7 +203,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @staticmethod
-    def filter_same_name_files(item: os.DirEntry, filename: str) -> bool:
+    def filter_same_name_files(item: "os.DirEntry[str]", filename: str) -> bool:
 
         if not item.is_file():
             return False
@@ -213,7 +213,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         return base == filename
 
     @staticmethod
-    def filter_nonsystem_files_only(item: os.DirEntry) -> bool:
+    def filter_nonsystem_files_only(item: "os.DirEntry[str]") -> bool:
         system_files = [
             "Thumbs.db",
             "desktop.ini",
@@ -423,7 +423,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
-        def filter_only_tiff(item: os.DirEntry) -> bool:
+        def filter_only_tiff(item: "os.DirEntry[str]") -> bool:
             return item.name.lower().endswith(".tif")
 
         for file_ in filter(
@@ -475,7 +475,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
         group_id = parent.metadata[Metadata.ID]
 
-        def is_it_an_instance(item: os.DirEntry) -> bool:
+        def is_it_an_instance(item: "os.DirEntry[str]") -> bool:
             if not item.is_file():
                 return False
             file_name_parts = self.identify_file_name_parts(item.name)
@@ -506,7 +506,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         non_system_files = \
             filter(self.filter_nonsystem_files_only, os.scandir(path))
 
-        def filter_by_group(candidate_file: os.DirEntry) -> bool:
+        def filter_by_group(candidate_file: "os.DirEntry[str]") -> bool:
             parts = self.identify_file_name_parts(candidate_file.name)
             return parts is not None and parts['group'] == group_id
 
@@ -544,7 +544,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         return new_batch
 
     @staticmethod
-    def filter_tiff_files(item: os.DirEntry) -> bool:
+    def filter_tiff_files(item: "os.DirEntry[str]") -> bool:
         if not item.is_file():
             return False
 
@@ -815,10 +815,11 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             os.path.splitext(file_name)[0]
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry[str]) -> \
-            Tuple[Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]]]:
+    def split_package_content(cls, item: "os.DirEntry[str]") -> \
+            Tuple[Optional["os.DirEntry[str]"],
+                  Optional["os.DirEntry[str]"],
+                  Optional["os.DirEntry[str]"]
+            ]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -953,10 +954,10 @@ class HathiLimitedViewPackageBuilder:
         self.path = path
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry[str]) -> \
-            Tuple[Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]],
-                  Optional[os.DirEntry[str]]
+    def split_package_content(cls, item: "os.DirEntry[str]") -> \
+            Tuple[Optional["os.DirEntry[str]"],
+                  Optional["os.DirEntry[str]"],
+                  Optional["os.DirEntry[str]"]
             ]:
 
         if cls.mets_file_matcher.match(item.name):
@@ -1023,8 +1024,12 @@ class HathiLimitedViewPackageBuilder:
                 files = list(file_group[1])
                 yield file_group[0], list(files)
 
-    def get_content(self) -> Tuple[List[os.DirEntry[str]], List[os.DirEntry[str]], List[os.DirEntry[str]]]:
-        zip_files: List[os.DirEntry[str]] = []
+    def get_content(self) -> Tuple[
+        List["os.DirEntry[str]"],
+        List["os.DirEntry[str]"],
+        List["os.DirEntry[str]"]
+    ]:
+        zip_files: List["os.DirEntry[str]"] = []
         mets_files = []
         unidentified_files = []
 
@@ -1053,7 +1058,7 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
         r"(?P<extension>\.tif?)$"
     )
 
-    def filter_only_access_files(self, item: os.DirEntry[str]) -> bool:
+    def filter_only_access_files(self, item: "os.DirEntry[str]") -> bool:
         if not item.is_file():
             return False
         base_name, extension = os.path.splitext(item.name)
@@ -1063,10 +1068,10 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
 
     def group_packages(
             self,
-            files: Iterable[os.DirEntry[str]]
-    ) -> Dict[str, List[os.DirEntry[str]]]:
+            files: Iterable["os.DirEntry[str]"]
+    ) -> Dict[str, List["os.DirEntry[str]"]]:
 
-        def key(item: os.DirEntry[str]) -> str:
+        def key(item: "os.DirEntry[str]") -> str:
             regex_match = self.grouper_regex.match(item.name)
             if regex_match is not None:
                 return regex_match.groupdict()['group']
@@ -1097,7 +1102,7 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
                 parent=parent
             )
 
-    def filter_file_is_item_of(self, item: os.DirEntry, group_id: str) -> bool:
+    def filter_file_is_item_of(self, item: "os.DirEntry[str]", group_id: str) -> bool:
         if not item.is_file():
             return False
         matches = self.grouper_regex.match(item.name)
