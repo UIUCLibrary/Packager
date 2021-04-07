@@ -1063,7 +1063,7 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
     def filter_only_access_files(self, item: "os.DirEntry[str]") -> bool:
         if not item.is_file():
             return False
-        base_name, extension = os.path.splitext(item.name)
+        _, extension = os.path.splitext(item.name)
         if extension.lower() != ".tif":
             return False
         return True
