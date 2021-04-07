@@ -1094,15 +1094,20 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
     def build_instance(self, parent: Item, path: str, filename: str, *args,
                        **kwargs) -> None:
         if "access" in path:
-            Instantiation(
+            new_instance = Instantiation(
                 category=InstantiationTypes.ACCESS,
                 parent=parent
             )
+
         elif "preservation" in path:
-            Instantiation(
+            new_instance = Instantiation(
                 category=InstantiationTypes.PRESERVATION,
                 parent=parent
             )
+        else:
+            raise ValueError(f"Expecting 'access' or 'preservation' in {path}")
+        new_instance.component_metadata[Metadata.PATH] = os.path.dirname(path)
+        new_instance._files.append(filename)
 
     def filter_file_is_item_of(self,
                                item: "os.DirEntry[str]",
@@ -1163,7 +1168,8 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
                    path: str) -> None:
 
         new_item = Item(parent=parent)
-        new_item.component_metadata[Metadata.ID] = item_id
+        new_item.component_metadata[Metadata.ITEM_NAME] = item_id
+        new_item.component_metadata[Metadata.PATH] = path
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
         for item in itertools.chain.from_iterable([

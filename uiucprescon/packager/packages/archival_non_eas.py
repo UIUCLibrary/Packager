@@ -12,4 +12,4 @@ class ArchivalNonEAS(AbsPackageBuilder):
         yield from package_builder.build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
-        pass
+        raise NotImplementedError("ArchivalNonEAS can only be read")
