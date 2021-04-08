@@ -402,13 +402,12 @@ pipeline {
                                             steps{
                                                 withEnv(['PYLINTHOME=.']) {
                                                     catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
-                                                        sh(
-                                                            script: '''mkdir -p logs
-                                                                       mkdir -p reports
-                                                                       pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt
-                                                                       ''',
-                                                            label: "Running pylint"
-                                                        )
+                                                        tee('reports/pylint.txt'){
+                                                            sh(
+                                                                script: 'pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"',
+                                                                label: "Running pylint"
+                                                            )
+                                                        }
                                                     }
                                                     sh(
                                                         script: 'pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt',
