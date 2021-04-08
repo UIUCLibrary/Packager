@@ -136,7 +136,6 @@ class NonEASBuilder(AbsCollectionBuilder):
                                item: "os.DirEntry[str]",
                                group_id: str) -> bool:
         """Verify that the file belongs to a group."""
-
         if not item.is_file():
             return False
         matches = self.grouper_regex.match(item.name)
