@@ -151,7 +151,7 @@ class TestTransformToDigitalLibraryCompound:
 ]
                          )
 def test_sorter_regex(file_name, group, part):
-    s = collection_builder.ArchivalNonEASBuilder()
+    s = archival_non_eas.ArchivalNonEASBuilder()
     data = s.grouper_regex.match(file_name)
     assert data.groupdict()['group'] == group and \
            data.groupdict()['part'] == part
