@@ -242,8 +242,8 @@ class CatalogedNonEAS(AbsPackageBuilder):
             MMSID1-002.tif
             MMSID2-001.tif
             MMSID2-002.tif
-
     """
+
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
         package_builder = CatalogedNonEASBuilder()
         yield from package_builder.build_batch(path)
