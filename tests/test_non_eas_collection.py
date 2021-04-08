@@ -69,7 +69,10 @@ class TestArchivalNonEAS:
 class TestArchivalTransformToDigitalLibraryCompound:
 
     @pytest.fixture()
-    def transformed_to_dl_compound(self, sample_archival_collection, monkeypatch):
+    def transformed_to_dl_compound(
+            self, sample_archival_collection, monkeypatch
+    ):
+
         root, files = sample_archival_collection
         factory = packager.PackageFactory(noneas.ArchivalNonEAS())
 
@@ -205,7 +208,11 @@ class TestArchivalTransformToHT:
         ),
     ])
     def test_transform(
-            self, sample_archival_collection, archival_transformed_to_ht_trust, input_file, output_file):
+            self,
+            sample_archival_collection,
+            archival_transformed_to_ht_trust,
+            input_file, output_file):
+
         root, files = sample_archival_collection
         output_path, transform = archival_transformed_to_ht_trust
         assert transform.called is True
@@ -232,7 +239,10 @@ class TestArchivalTransformToHT:
 
 
 @pytest.fixture
-def sample_cataloged_collection(monkeypatch) -> typing.Tuple[str, typing.List[str]]:
+def sample_cataloged_collection(
+        monkeypatch
+) -> typing.Tuple[str, typing.List[str]]:
+
     batch_root = os.path.join("dummy", "batch")
     number_of_sample_groups = 2
     number_of_parts_each = 4
