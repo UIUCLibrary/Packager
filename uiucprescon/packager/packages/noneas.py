@@ -57,6 +57,8 @@ class ArchivalNonEAS(AbsPackageBuilder):
 
 
 class NonEASBuilder(AbsCollectionBuilder):
+    """Builder for noneas packages."""
+
     @property
     @abc.abstractmethod
     def grouper_regex(self) -> typing.Pattern[str]:
@@ -70,6 +72,7 @@ class NonEASBuilder(AbsCollectionBuilder):
 
     @staticmethod
     def filter_only_access_files(item: "os.DirEntry[str]") -> bool:
+        """Filter item so that only an access file will return True."""
         if not item.is_file():
             return False
         _, extension = os.path.splitext(item.name)
@@ -81,7 +84,7 @@ class NonEASBuilder(AbsCollectionBuilder):
             self,
             files: Iterable["os.DirEntry[str]"]
     ) -> Dict[str, List["os.DirEntry[str]"]]:
-
+        """Sort packages by group."""
         def key(item: "os.DirEntry[str]") -> str:
             regex_match = self.grouper_regex.match(item.name)
             if regex_match is not None:
@@ -94,11 +97,7 @@ class NonEASBuilder(AbsCollectionBuilder):
             ] for (group_key, files) in itertools.groupby(files, key=key)
         }
 
-    def build_package(self,
-                      parent: Batch,
-                      path: str,
-                      *_,
-                      **__: str) -> None:
+    def build_package(self, parent: Batch, path: str, *_, **__: str) -> None:
 
         access_path = os.path.join(path, "access")
 
@@ -136,6 +135,7 @@ class NonEASBuilder(AbsCollectionBuilder):
     def filter_file_is_item_of(self,
                                item: "os.DirEntry[str]",
                                group_id: str) -> bool:
+        """Verify that the file belongs to a group."""
 
         if not item.is_file():
             return False
@@ -148,7 +148,14 @@ class NonEASBuilder(AbsCollectionBuilder):
                    parent: PackageObject,
                    item_id: str,
                    path: str) -> None:
+        """Build an item object.
 
+        Args:
+            parent:
+            item_id:
+            path:
+
+        """
         new_item = Item(parent=parent)
         new_item.component_metadata[Metadata.ITEM_NAME] = item_id
         new_item.component_metadata[Metadata.PATH] = path
@@ -182,7 +189,15 @@ class NonEASBuilder(AbsCollectionBuilder):
                      path: str,
                      *_,
                      **kwargs: str) -> None:
+        """Build an object object.
 
+        Args:
+            parent:
+            path:
+            *_:
+            **kwargs:
+
+        """
         new_object = PackageObject(parent=parent)
         new_object.component_metadata[Metadata.ID] = kwargs['group_name']
         access_dir = os.path.join(path, "access")
@@ -202,6 +217,8 @@ class NonEASBuilder(AbsCollectionBuilder):
 
 
 class ArchivalNonEASBuilder(NonEASBuilder):
+    """For building archival/ non-eas packages."""
+
     grouper_regex = re.compile(
         r"^(?P<batch>[0-9]+)"
         r"_"
@@ -237,6 +254,8 @@ class CatalogedNonEAS(AbsPackageBuilder):
 
 
 class CatalogedNonEASBuilder(NonEASBuilder):
+    """For building cataloged / non-eas packages."""
+
     grouper_regex = re.compile(
         r"^"
         r"(?P<group>[0-9]+)"
