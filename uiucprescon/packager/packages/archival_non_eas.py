@@ -1,3 +1,5 @@
+"""Archival collections."""
+
 import functools
 import itertools
 import os
@@ -24,10 +26,20 @@ class ArchivalNonEAS(AbsPackageBuilder):
     """Archival collections."""
 
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
+        """Locate archival packages.
+
+        Args:
+            path: Path to the root of packages location
+
+        Returns:
+            Returns an iterable of package.
+
+        """
         package_builder = ArchivalNonEASBuilder()
         yield from package_builder.build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
+        """There is no transformation implemented for this."""
         raise NotImplementedError("ArchivalNonEAS can only be read")
 
 
