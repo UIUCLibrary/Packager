@@ -97,8 +97,8 @@ class NonEASBuilder(abc.ABC):
     def build_package(self,
                       parent: Batch,
                       path: str,
-                      *args,
-                      **kwargs: str) -> None:
+                      *_,
+                      **__: str) -> None:
 
         access_path = os.path.join(path, "access")
 
@@ -114,8 +114,8 @@ class NonEASBuilder(abc.ABC):
                               path=path,
                               group_name=group_name)
 
-    def build_instance(self, parent: Item, path: str, filename: str, *args,
-                       **kwargs) -> None:
+    def build_instance(self, parent: Item, path: str, filename: str, *_,
+                       **__) -> None:
 
         if pathlib.Path(path).parent.name == "access":
             new_instance = Instantiation(
@@ -180,7 +180,7 @@ class NonEASBuilder(abc.ABC):
     def build_object(self,
                      parent: Package,
                      path: str,
-                     *args,
+                     *_,
                      **kwargs: str) -> None:
 
         new_object = PackageObject(parent=parent)
