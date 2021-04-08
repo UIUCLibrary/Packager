@@ -2,11 +2,11 @@
 #
 # Batch (folder)
 #   access (folder) (contains cropped, 400dpi, 8bit tifs)
-#       00001_001-001.tif (covert to JP2 post packaging via Speedwagon)
+#       00001_001-001.tif
 #       00001_001-002.tif
 #       00001_002-001.tif
 #       00001_002-002.tif
-#   preservation (folder) (contains uncropped, 600dpi, 16bit tifs)
+#   preservation (folder)
 #       00001_002-001.tif
 #       00001_002-002.tif
 #       00001_002-001.tif
@@ -89,15 +89,15 @@ class TestTransformToDigitalLibraryCompound:
 
     @pytest.mark.parametrize('input_file, output_file', [
         (
-                os.path.join('preservation', '0001_002-004.tif'),
+                os.path.join('access', '0001_002-004.tif'),
                 os.path.join('002', 'access', '002-004.jp2')
         ),
         (
-                os.path.join('preservation', '0001_001-004.tif'),
+                os.path.join('access', '0001_001-004.tif'),
                 os.path.join('001', 'access', '001-004.jp2'),
         ),
         (
-                os.path.join('preservation', '0001_002-001.tif'),
+                os.path.join('access', '0001_002-001.tif'),
                 os.path.join('002', 'access', '002-001.jp2')
         ),
     ])

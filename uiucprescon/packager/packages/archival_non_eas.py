@@ -3,6 +3,7 @@
 import functools
 import itertools
 import os
+import pathlib
 import re
 from typing import List, Iterable, Dict
 import typing
@@ -100,13 +101,14 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
 
     def build_instance(self, parent: Item, path: str, filename: str, *args,
                        **kwargs) -> None:
-        if "access" in path:
+
+        if pathlib.Path(path).parent.name == "access":
             new_instance = Instantiation(
                 category=InstantiationTypes.ACCESS,
                 parent=parent
             )
 
-        elif "preservation" in path:
+        elif pathlib.Path(path).parent.name == "preservation":
             new_instance = Instantiation(
                 category=InstantiationTypes.PRESERVATION,
                 parent=parent
