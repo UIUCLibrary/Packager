@@ -1,5 +1,5 @@
 """Archival collections."""
-
+import abc
 import functools
 import itertools
 import os
@@ -11,7 +11,6 @@ import typing
 from uiucprescon.packager.common import Metadata, InstantiationTypes
 
 from .abs_package_builder import AbsPackageBuilder
-from .collection_builder import AbsCollectionBuilder
 from .collection import \
     Instantiation, \
     Item, \
@@ -20,7 +19,7 @@ from .collection import \
     Batch
 
 
-__all__ = ['ArchivalNonEAS']
+__all__ = ['ArchivalNonEAS', 'CatalogedNonEAS']
 
 
 class ArchivalNonEAS(AbsPackageBuilder):
@@ -57,15 +56,17 @@ class ArchivalNonEAS(AbsPackageBuilder):
         raise NotImplementedError("ArchivalNonEAS can only be read")
 
 
-class ArchivalNonEASBuilder(AbsCollectionBuilder):
-    grouper_regex = re.compile(
-        r"^(?P<batch>[0-9]+)"
-        r"_"
-        r"(?P<group>[0-9]+)"
-        r"-"
-        r"(?P<part>[0-9]*)"
-        r"(?P<extension>\.tif?)$"
-    )
+class NonEASBuilder(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def grouper_regex(self) -> typing.Pattern[str]:
+        """Compiled regex group."""
+
+    def build_batch(self, root: str) -> Batch:
+        new_batch = Batch(root)
+        self.build_package(parent=new_batch, path=root)
+
+        return new_batch.children[0]
 
     @staticmethod
     def filter_only_access_files(item: "os.DirEntry[str]") -> bool:
@@ -93,11 +94,25 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
             ] for (group_key, files) in itertools.groupby(files, key=key)
         }
 
-    def build_batch(self, root: str) -> Batch:
-        new_batch = Batch(root)
-        self.build_package(parent=new_batch, path=root)
+    def build_package(self,
+                      parent: Batch,
+                      path: str,
+                      *args,
+                      **kwargs: str) -> None:
 
-        return new_batch.children[0]
+        access_path = os.path.join(path, "access")
+
+        new_package = Package(path, parent=parent)
+        grouped_access_files = self.group_packages(
+            filter(
+                self.filter_only_access_files,
+                os.scandir(access_path)
+            )
+        )
+        for group_name in grouped_access_files.keys():
+            self.build_object(parent=new_package,
+                              path=path,
+                              group_name=group_name)
 
     def build_instance(self, parent: Item, path: str, filename: str, *args,
                        **kwargs) -> None:
@@ -128,49 +143,6 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
         if matches is None:
             return False
         return matches.groupdict().get('group') == group_id
-
-    def build_package(self,
-                      parent: Batch,
-                      path: str,
-                      *args,
-                      **kwargs: str) -> None:
-
-        access_path = os.path.join(path, "access")
-
-        new_package = Package(path, parent=parent)
-        grouped_access_files = self.group_packages(
-            filter(
-                self.filter_only_access_files,
-                os.scandir(access_path)
-            )
-        )
-        for group_name in grouped_access_files.keys():
-            self.build_object(parent=new_package,
-                              path=path,
-                              group_name=group_name)
-
-    def build_object(self,
-                     parent: Package,
-                     path: str,
-                     *args,
-                     **kwargs: str) -> None:
-
-        new_object = PackageObject(parent=parent)
-        new_object.component_metadata[Metadata.ID] = kwargs['group_name']
-        access_dir = os.path.join(path, "access")
-        for item_file in filter(
-                functools.partial(
-                    self.filter_file_is_item_of,
-                    group_id=kwargs['group_name']
-                ),
-                os.scandir(access_dir)
-        ):
-            match_result = self.grouper_regex.match(item_file.name)
-            if match_result is None:
-                raise AttributeError("Unable to match file structure")
-
-            part = match_result.groupdict()['part']
-            self.build_item(parent=new_object, item_id=part, path=path)
 
     def build_item(self,
                    parent: PackageObject,
@@ -204,3 +176,71 @@ class ArchivalNonEASBuilder(AbsCollectionBuilder):
                                 path=typing.cast(str, item.path),
                                 filename=typing.cast(str, item.name)
                                 )
+
+    def build_object(self,
+                     parent: Package,
+                     path: str,
+                     *args,
+                     **kwargs: str) -> None:
+
+        new_object = PackageObject(parent=parent)
+        new_object.component_metadata[Metadata.ID] = kwargs['group_name']
+        access_dir = os.path.join(path, "access")
+        for item_file in filter(
+                functools.partial(
+                    self.filter_file_is_item_of,
+                    group_id=kwargs['group_name']
+                ),
+                os.scandir(access_dir)
+        ):
+            match_result = self.grouper_regex.match(item_file.name)
+            if match_result is None:
+                raise AttributeError("Unable to match file structure")
+
+            part = match_result.groupdict()['part']
+            self.build_item(parent=new_object, item_id=part, path=path)
+
+
+class ArchivalNonEASBuilder(NonEASBuilder):
+    grouper_regex = re.compile(
+        r"^(?P<batch>[0-9]+)"
+        r"_"
+        r"(?P<group>[0-9]+)"
+        r"-"
+        r"(?P<part>[0-9]*)"
+        r"(?P<extension>\.tif?)$"
+    )
+
+
+class CatalogedNonEAS(AbsPackageBuilder):
+    """Cataloged Non-EAS package.
+
+    (Batch)/
+        access/
+            MMSID1-001.tif
+            MMSID1-002.tif
+            MMSID2-001.tif
+            MMSID2-002.tif
+        preservation/
+            MMSID1-001.tif
+            MMSID1-002.tif
+            MMSID2-001.tif
+            MMSID2-002.tif
+
+    """
+    def locate_packages(self, path: str) -> typing.Iterator[Package]:
+        package_builder = CatalogedNonEASBuilder()
+        yield from package_builder.build_batch(path)
+
+    def transform(self, package: Package, dest: str) -> None:
+        raise NotImplementedError("read only")
+
+
+class CatalogedNonEASBuilder(NonEASBuilder):
+    grouper_regex = re.compile(
+        r"^"
+        r"(?P<group>[0-9]+)"
+        r"-"
+        r"(?P<part>[0-9]*)"
+        r"(?P<extension>\.tif?)$"
+    )
