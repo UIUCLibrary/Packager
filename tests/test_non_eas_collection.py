@@ -4,7 +4,7 @@ import typing
 import pytest
 from uiucprescon import packager
 from uiucprescon.packager.packages import \
-    noneas, digital_library_compound
+    noneas, digital_library_compound, hathi_jp2_package
 
 # Example Archival collection/non-EAS delivered from lab:
 #
@@ -164,6 +164,57 @@ def test_sorter_regex(file_name, group, part):
            data.groupdict()['part'] == part
 
 
+class TestArchivalTransformToHT:
+    @pytest.fixture()
+    def archival_transformed_to_ht_trust(
+            self, sample_archival_collection, monkeypatch):
+
+        root, files = sample_archival_collection
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
+        hathi_jp2_format = packager.PackageFactory(
+            hathi_jp2_package.HathiJp2()
+        )
+        output_path = os.path.join('some', 'folder')
+        transform = Mock()
+
+        def mock_transform(_, source, destination):
+            transform(source=source, destination=destination)
+
+        with monkeypatch.context() as mp:
+            mp.setattr(
+                packager.transformations.Transformers,
+                "transform", mock_transform
+            )
+            for package in factory.locate_packages(root):
+                hathi_jp2_format.transform(package, output_path)
+
+        return output_path, transform
+
+    @pytest.mark.parametrize('input_file, output_file', [
+        (
+            os.path.join('access', '0001_002-004.tif'),
+            os.path.join('002', '00000004.jp2')
+        ),
+        (
+            os.path.join('access', '0001_002-001.tif'),
+            os.path.join('002', '00000001.jp2'),
+        ),
+        (
+            os.path.join('access', '0001_001-001.tif'),
+            os.path.join('001', '00000001.jp2'),
+        ),
+    ])
+    def test_transform(
+            self, sample_archival_collection, archival_transformed_to_ht_trust, input_file, output_file):
+        root, files = sample_archival_collection
+        output_path, transform = archival_transformed_to_ht_trust
+        assert transform.called is True
+        expected_destination = os.path.join(output_path, output_file)
+        transform.assert_any_call(
+            source=os.path.join(root, input_file),
+            destination=expected_destination,
+        )
+
 # Example Cataloged collection/non-EAS delivered from lab:
 #
 # Batch (folder)
@@ -259,6 +310,60 @@ class TestCatalogedNonEAS:
         packages = list(factory.locate_packages(root))
         first_package = packages[0]
         assert len(first_package) == 4
+
+
+class TestCatalogedTransformToHT:
+    @pytest.fixture()
+    def transformed_to_ht_trust(
+            self, sample_cataloged_collection, monkeypatch):
+
+        root, files = sample_cataloged_collection
+        factory = packager.PackageFactory(noneas.CatalogedNonEAS())
+        digital_library_format = packager.PackageFactory(
+            hathi_jp2_package.HathiJp2())
+        output_path = os.path.join('some', 'folder')
+        transform = Mock()
+
+        def mock_transform(_, source, destination):
+            transform(source=source, destination=destination)
+
+        with monkeypatch.context() as mp:
+            mp.setattr(
+                packager.transformations.Transformers,
+                "transform", mock_transform
+            )
+            for package in list(factory.locate_packages(root)):
+                digital_library_format.transform(package, output_path)
+
+        return output_path, transform
+
+    @pytest.mark.parametrize('input_file, output_file', [
+        (
+            os.path.join('dummy', 'batch',
+                         'access', '9910011205899-002.tif'),
+            os.path.join('9910011205899', '00000002.jp2')
+        ),
+        (
+            os.path.join('dummy', 'batch',
+                         'access', '9910011205899-001.tif'),
+            os.path.join('9910011205899', '00000001.jp2'),
+        ),
+        (
+            os.path.join('dummy', 'batch',
+                         'access', '9910012205899-001.tif'),
+            os.path.join('9910012205899', '00000001.jp2'),
+        ),
+    ])
+    def test_transform(
+            self, transformed_to_ht_trust, input_file, output_file):
+
+        output_path, transform = transformed_to_ht_trust
+        assert transform.called is True
+        expected_destination = os.path.join(output_path, output_file)
+        transform.assert_any_call(
+            source=input_file,
+            destination=expected_destination,
+        )
 
 
 class TestCatalogedTransformToDigitalLibraryCompound:
