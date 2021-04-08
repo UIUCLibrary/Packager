@@ -23,7 +23,20 @@ __all__ = ['ArchivalNonEAS']
 
 
 class ArchivalNonEAS(AbsPackageBuilder):
-    """Archival collections."""
+    """Archival collections.
+
+    (Batch)/
+        access/
+            00001_001-001.tif
+            00001_001-002.tif
+            00001_002-001.tif
+            00001_002-002.tif
+        preservation/
+            00001_001-001.tif
+            00001_001-002.tif
+            00001_002-001.tif
+            00001_002-002.tif
+    """
 
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
         """Locate archival packages.
