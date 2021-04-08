@@ -62,6 +62,9 @@ class TestArchivalNonEAS:
         first_package = packages[0]
         assert len(first_package) == 4
 
+
+class TestTransformToDigitalLibraryCompound:
+
     @pytest.fixture()
     def transformed_to_dl_compound(self, sample_archival_collection, monkeypatch):
         root, files = sample_archival_collection
@@ -138,6 +141,7 @@ class TestArchivalNonEAS:
             os.path.join(root, input_file),
             os.path.join(output_path, output_file)
         )
+
 
 @pytest.mark.parametrize('file_name, group, part', [
     ('0001_001-002.tif', "001", '002'),
