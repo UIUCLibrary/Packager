@@ -205,34 +205,6 @@ pipeline {
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
-        stage("Getting Distribution Info"){
-            agent {
-                dockerfile {
-                    filename 'ci/docker/python/linux/jenkins/Dockerfile'
-                    label 'linux && docker'
-                    additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
-                }
-            }
-            steps{
-                timeout(5){
-                    sh "python setup.py dist_info"
-                }
-            }
-            post{
-                success{
-                    stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-                    archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-                }
-                cleanup{
-                    cleanWs(
-                        deleteDirs: true,
-                        patterns: [
-                            [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                            ]
-                    )
-                }
-            }
-        }
         stage('Build') {
             parallel {
                 stage("Python Package"){
