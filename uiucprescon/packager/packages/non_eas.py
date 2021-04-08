@@ -9,7 +9,7 @@ from typing import List, Iterable, Dict
 import typing
 
 from uiucprescon.packager.common import Metadata, InstantiationTypes
-
+from .collection_builder import AbsCollectionBuilder
 from .abs_package_builder import AbsPackageBuilder
 from .collection import \
     Instantiation, \
@@ -56,7 +56,7 @@ class ArchivalNonEAS(AbsPackageBuilder):
         raise NotImplementedError("ArchivalNonEAS can only be read")
 
 
-class NonEASBuilder(abc.ABC):
+class NonEASBuilder(AbsCollectionBuilder):
     @property
     @abc.abstractmethod
     def grouper_regex(self) -> typing.Pattern[str]:
