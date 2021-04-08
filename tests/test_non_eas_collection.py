@@ -4,7 +4,7 @@ import typing
 import pytest
 from uiucprescon import packager
 from uiucprescon.packager.packages import \
-    non_eas, digital_library_compound
+    noneas, digital_library_compound
 
 # Example Archival collection/non-EAS delivered from lab:
 #
@@ -54,13 +54,13 @@ def sample_archival_collection(tmpdir):
 class TestArchivalNonEAS:
     def test_objects(self, sample_archival_collection):
         root, files = sample_archival_collection
-        factory = packager.PackageFactory(non_eas.ArchivalNonEAS())
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
         packages = factory.locate_packages(root)
         assert len(list(packages)) == 2
 
     def test_items_found(self, sample_archival_collection):
         root, files = sample_archival_collection
-        factory = packager.PackageFactory(non_eas.ArchivalNonEAS())
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
         packages = list(factory.locate_packages(root))
         first_package = packages[0]
         assert len(first_package) == 4
@@ -71,7 +71,7 @@ class TestArchivalTransformToDigitalLibraryCompound:
     @pytest.fixture()
     def transformed_to_dl_compound(self, sample_archival_collection, monkeypatch):
         root, files = sample_archival_collection
-        factory = packager.PackageFactory(non_eas.ArchivalNonEAS())
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
 
         digital_library_format = packager.PackageFactory(
             digital_library_compound.DigitalLibraryCompound())
@@ -158,7 +158,7 @@ class TestArchivalTransformToDigitalLibraryCompound:
 ]
                          )
 def test_sorter_regex(file_name, group, part):
-    s = non_eas.ArchivalNonEASBuilder()
+    s = noneas.ArchivalNonEASBuilder()
     data = s.grouper_regex.match(file_name)
     assert data.groupdict()['group'] == group and \
            data.groupdict()['part'] == part
@@ -249,13 +249,13 @@ def sample_cataloged_collection(monkeypatch) -> typing.Tuple[str, typing.List[st
 class TestCatalogedNonEAS:
     def test_objects(self, sample_cataloged_collection):
         root, files = sample_cataloged_collection
-        factory = packager.PackageFactory(non_eas.CatalogedNonEAS())
+        factory = packager.PackageFactory(noneas.CatalogedNonEAS())
         packages = factory.locate_packages(root)
         assert len(list(packages)) == 2
 
     def test_items_found(self, sample_cataloged_collection):
         root, files = sample_cataloged_collection
-        factory = packager.PackageFactory(non_eas.CatalogedNonEAS())
+        factory = packager.PackageFactory(noneas.CatalogedNonEAS())
         packages = list(factory.locate_packages(root))
         first_package = packages[0]
         assert len(first_package) == 4
@@ -268,7 +268,7 @@ class TestCatalogedTransformToDigitalLibraryCompound:
             self, sample_cataloged_collection, monkeypatch):
 
         root, files = sample_cataloged_collection
-        factory = packager.PackageFactory(non_eas.CatalogedNonEAS())
+        factory = packager.PackageFactory(noneas.CatalogedNonEAS())
         digital_library_format = packager.PackageFactory(
             digital_library_compound.DigitalLibraryCompound())
         output_path = os.path.join('some', 'folder')
