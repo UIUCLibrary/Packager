@@ -245,10 +245,15 @@ class CatalogedNonEAS(AbsPackageBuilder):
     """
 
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
+        """Locate packages found at a given path."""
         package_builder = CatalogedNonEASBuilder()
         yield from package_builder.build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
+        """Transform a package into a the current type at given destination.
+
+        Not Implemented!
+        """
         raise NotImplementedError("read only")
 
 
