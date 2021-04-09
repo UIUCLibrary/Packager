@@ -125,11 +125,13 @@ def getToxTestsParallel(args = [:]){
     def label = args['label']
     def dockerfile = args['dockerfile']
     def dockerArgs = args['dockerArgs'] ? args['dockerArgs'] : ""
+    def dockerBaseName = currentBuild.fullProjectName.replaceAll("-", "").replaceAll('/', "").replaceAll(' ', "").replaceAll('%2f', "").toLowerCase()
+    echo "using ${dockerBaseName} for dockerBaseName"
     script{
         def TOX_RESULT_FILE_NAME = "tox_result.json"
         def envs
         def originalNodeLabel
-        def dockerImageName = "${currentBuild.fullProjectName}:tox".replaceAll("-", "").replaceAll('/', "").replaceAll(' ', "").toLowerCase()
+        def dockerImageName = "${dockerBaseName}:tox"
         node(label){
             originalNodeLabel = env.NODE_NAME
             checkout scm

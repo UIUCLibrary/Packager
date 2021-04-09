@@ -205,34 +205,6 @@ pipeline {
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
-        stage("Getting Distribution Info"){
-            agent {
-                dockerfile {
-                    filename 'ci/docker/python/linux/jenkins/Dockerfile'
-                    label 'linux && docker'
-                    additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
-                }
-            }
-            steps{
-                timeout(5){
-                    sh "python setup.py dist_info"
-                }
-            }
-            post{
-                success{
-                    stash includes: "uiucprescon.packager.dist-info/**", name: 'DIST-INFO'
-                    archiveArtifacts artifacts: "uiucprescon.packager.dist-info/**"
-                }
-                cleanup{
-                    cleanWs(
-                        deleteDirs: true,
-                        patterns: [
-                            [pattern: "uiucprescon.packager.dist-info/", type: 'INCLUDE'],
-                            ]
-                    )
-                }
-            }
-        }
         stage('Build') {
             parallel {
                 stage("Python Package"){
@@ -402,13 +374,12 @@ pipeline {
                                             steps{
                                                 withEnv(['PYLINTHOME=.']) {
                                                     catchError(buildResult: 'SUCCESS', message: 'Pylint found issues', stageResult: 'UNSTABLE') {
-                                                        sh(
-                                                            script: '''mkdir -p logs
-                                                                       mkdir -p reports
-                                                                       pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint.txt
-                                                                       ''',
-                                                            label: "Running pylint"
-                                                        )
+                                                        tee('reports/pylint.txt'){
+                                                            sh(
+                                                                script: 'pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"',
+                                                                label: "Running pylint"
+                                                            )
+                                                        }
                                                     }
                                                     sh(
                                                         script: 'pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt',
@@ -428,12 +399,12 @@ pipeline {
                                         stage("pyDocStyle"){
                                             steps{
                                                 catchError(buildResult: 'SUCCESS', message: 'Did not pass all pyDocStyle tests', stageResult: 'UNSTABLE') {
-                                                    sh(
-                                                        label: "Run pydocstyle",
-                                                        script: '''mkdir -p reports
-                                                                   pydocstyle uiucprescon/packager > reports/pydocstyle-report.txt
-                                                                   '''
-                                                    )
+                                                    tee('reports/pydocstyle-report.txt'){
+                                                        sh(
+                                                            label: "Run pydocstyle",
+                                                            script: 'pydocstyle uiucprescon/packager'
+                                                        )
+                                                    }
                                                 }
                                             }
                                             post {

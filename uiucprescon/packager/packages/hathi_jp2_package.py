@@ -71,9 +71,6 @@ class HathiJp2(AbsPackageBuilder):
             for file_ in inst.files:
                 _, ext = os.path.splitext(file_)
 
-                new_file_name = item_name + ext
-                new_file_path = os.path.join(new_item_path, new_file_name)
-
                 if ext.lower() == ".jp2":
 
                     # If the item is already a jp2 then copy
@@ -87,6 +84,9 @@ class HathiJp2(AbsPackageBuilder):
                         strategy=transformations.ConvertJp2Hathi(),
                         logger=logger
                     )
+                new_file_name = str(int(item_name)).zfill(8) + ".jp2"
+                new_file_path = os.path.join(new_item_path, new_file_name)
 
-                file_transformer.transform(source=file_,
-                                           destination=new_file_path)
+                file_transformer.transform(
+                    source=os.path.join(inst.metadata[Metadata.PATH], file_),
+                    destination=new_file_path)

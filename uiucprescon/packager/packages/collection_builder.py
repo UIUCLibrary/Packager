@@ -187,7 +187,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         """Build a pckage.
 
         Args:
@@ -200,7 +200,8 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         """
 
     @staticmethod
-    def filter_same_name_files(item: os.DirEntry, filename: str) -> bool:
+    def filter_same_name_files(item: "os.DirEntry[str]",
+                               filename: str) -> bool:
 
         if not item.is_file():
             return False
@@ -210,7 +211,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
         return base == filename
 
     @staticmethod
-    def filter_nonsystem_files_only(item: os.DirEntry) -> bool:
+    def filter_nonsystem_files_only(item: "os.DirEntry[str]") -> bool:
         system_files = [
             "Thumbs.db",
             "desktop.ini",
@@ -251,7 +252,7 @@ class DSBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         for folder in filter(lambda i: i.is_dir(), os.scandir(path)):
             new_package = PackageObject(parent=parent)
             new_package.component_metadata[Metadata.PATH] = folder.path
@@ -292,7 +293,7 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
             if os.path.splitext(os.path.basename(file))[0] == filename:
                 new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         logger = logging.getLogger(__name__)
 
         files = set(
@@ -420,7 +421,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
-        def filter_only_tiff(item: os.DirEntry) -> bool:
+        def filter_only_tiff(item: "os.DirEntry[str]") -> bool:
             return item.name.lower().endswith(".tif")
 
         for file_ in filter(
@@ -472,7 +473,7 @@ class CaptureOneBuilder(AbsCollectionBuilder):
 
         group_id = parent.metadata[Metadata.ID]
 
-        def is_it_an_instance(item: os.DirEntry) -> bool:
+        def is_it_an_instance(item: "os.DirEntry[str]") -> bool:
             if not item.is_file():
                 return False
             file_name_parts = self.identify_file_name_parts(item.name)
@@ -497,13 +498,13 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                 continue
             new_instantiation.files.append(file.path)
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         group_id = parent.metadata[Metadata.ID]
 
         non_system_files = \
             filter(self.filter_nonsystem_files_only, os.scandir(path))
 
-        def filter_by_group(candidate_file: os.DirEntry) -> bool:
+        def filter_by_group(candidate_file: "os.DirEntry[str]") -> bool:
             parts = self.identify_file_name_parts(candidate_file.name)
             return parts is not None and parts['group'] == group_id
 
@@ -541,14 +542,14 @@ class HathiTiffBuilder(AbsCollectionBuilder):
         return new_batch
 
     @staticmethod
-    def filter_tiff_files(item: os.DirEntry) -> bool:
+    def filter_tiff_files(item: "os.DirEntry[str]") -> bool:
         if not item.is_file():
             return False
 
         ext = os.path.splitext(item.name)[1]
         return ext.lower() == ".tif"
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
 
         for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
@@ -646,7 +647,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         _, ext = os.path.splitext(item.name)
         return ext.lower() == file_extension
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
 
@@ -713,7 +714,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         ext = os.path.splitext(item.name)[1]
         return ext.lower() == ".jp2"
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         for file_ in filter(self.filter_tiff_files, os.scandir(path)):
             new_item = Item(parent=parent)
             item_part, _ = os.path.splitext(file_.name)
@@ -812,10 +813,12 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             os.path.splitext(file_name)[0]
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry) -> \
-            Tuple[Optional[os.DirEntry],
-                  Optional[os.DirEntry],
-                  Optional[os.DirEntry]]:
+    def split_package_content(cls, item: "os.DirEntry[str]") -> \
+            Tuple[
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"]
+            ]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -834,7 +837,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         ext = os.path.splitext(file_name)[1]
         return ext.lower() in valid_images_extension
 
-    def build_package(self, parent, path: str) -> None:
+    def build_package(self, parent, path: str, *args, **kwargs) -> None:
         package_builder = HathiLimitedViewPackageBuilder(path=path)
         zip_files, mets_files, invalid_files = package_builder.get_content()
 
@@ -846,7 +849,11 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
                                  f"found {len(mets_files)}")
         if len(invalid_files) != 1:
-            print("Found invalid files {}".format(",".join(invalid_files)))
+            print(
+                "Found invalid files {}".format(
+                    ",".join(file.path for file in invalid_files)
+                )
+            )
 
         contents = self.get_zip_content(package_builder, zip_files)
 
@@ -945,10 +952,12 @@ class HathiLimitedViewPackageBuilder:
         self.path = path
 
     @classmethod
-    def split_package_content(cls, item: os.DirEntry) -> \
-            Tuple[Optional[os.DirEntry],
-                  Optional[os.DirEntry],
-                  Optional[os.DirEntry]]:
+    def split_package_content(cls, item: "os.DirEntry[str]") -> \
+            Tuple[
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"],
+                Optional["os.DirEntry[str]"]
+            ]:
 
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
@@ -1014,8 +1023,12 @@ class HathiLimitedViewPackageBuilder:
                 files = list(file_group[1])
                 yield file_group[0], list(files)
 
-    def get_content(self):
-        zip_files = []
+    def get_content(self) -> Tuple[
+        List["os.DirEntry[str]"],
+        List["os.DirEntry[str]"],
+        List["os.DirEntry[str]"]
+    ]:
+        zip_files: List["os.DirEntry[str]"] = []
         mets_files = []
         unidentified_files = []
 
