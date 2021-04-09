@@ -254,11 +254,11 @@ def sample_cataloged_collection(
                 mock_item = Mock(path=f)
                 mock_item.name = os.path.split(f)[-1]
                 if f.endswith(".tif"):
-                   mock_item.is_file = Mock(return_value=True)
-                   mock_item.is_dir = Mock(return_value=False)
+                    mock_item.is_file = Mock(return_value=True)
+                    mock_item.is_dir = Mock(return_value=False)
                 else:
-                   mock_item.is_file = Mock(return_value=False)
-                   mock_item.is_dir = Mock(return_value=True)
+                    mock_item.is_file = Mock(return_value=False)
+                    mock_item.is_dir = Mock(return_value=True)
                 yield mock_item
         elif path == os.path.join(batch_root, "access"):
             for f in packages:
