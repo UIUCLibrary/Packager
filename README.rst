@@ -16,6 +16,6 @@ Packager tools for DS library
 
     .. image:: https://jenkins.library.illinois.edu/buildStatus/icon?job=OpenSourceProjects/Packager/master
         :target: https://jenkins.library.illinois.edu/view/Henry/job/OpenSourceProjects/job/Packager/job/master
-
-    .. image:: https://img.shields.io/badge/dynamic/json.svg?query=$..elements[?(@.name=="Line")].ratio&uri=https://jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master/lastBuild/coverage/result/api/json?depth=1&label=Coverage&suffix=%
+    
+    .. image:: https://img.shields.io/jenkins/coverage/api/https/jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master   
         :target: https://jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master/coverage/
