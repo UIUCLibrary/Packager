@@ -219,9 +219,7 @@ class ArchivalNonEASBuilder(NonEASBuilder):
     """For building archival/ non-eas packages."""
 
     grouper_regex = re.compile(
-        r"^(?P<batch>[0-9]+)"
-        r"_"
-        r"(?P<group>[0-9]+)"
+        r"^(?P<group>([0-9]+_)+[0-9]+)"
         r"-"
         r"(?P<part>[0-9]*)"
         r"(?P<extension>\.tif?)$"
@@ -261,8 +259,7 @@ class CatalogedNonEASBuilder(NonEASBuilder):
     """For building cataloged / non-eas packages."""
 
     grouper_regex = re.compile(
-        r"^"
-        r"(?P<group>[0-9]+)"
+        r"^(?P<group>[0-9]+)"
         r"-"
         r"(?P<part>[0-9]*)"
         r"(?P<extension>\.tif?)$"
