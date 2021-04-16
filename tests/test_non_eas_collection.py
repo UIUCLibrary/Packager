@@ -275,6 +275,58 @@ class TestArchivalNonEAS:
             destination=expected_destination,
         )
 
+    @pytest.fixture()
+    def archival_full_name_transformed_to_ht_trust(
+            self, sample_collection_longer, monkeypatch):
+
+        root, files = sample_collection_longer
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
+        hathi_jp2_format = packager.PackageFactory(
+            hathi_jp2_package.HathiJp2()
+        )
+        output_path = os.path.join('some', 'folder')
+        transform = Mock()
+
+        def mock_transform(_, source, destination):
+            transform(source=source, destination=destination)
+
+        with monkeypatch.context() as mp:
+            mp.setattr(
+                packager.transformations.Transformers,
+                "transform", mock_transform
+            )
+            for package in factory.locate_packages(root):
+                hathi_jp2_format.transform(package, output_path)
+
+        return output_path, transform
+
+
+    @pytest.mark.parametrize('input_file, output_file', [
+        (
+            os.path.join('access', '0333_003_003_01-001.tif'),
+            os.path.join('0333_003_003_01', '00000001.jp2')
+        ),
+        (
+            os.path.join('access', '0333_003_003_01-002.tif'),
+            os.path.join('0333_003_003_01', '00000002.jp2')
+        ),
+    ])
+    def test_larger_transform(
+            self,
+            sample_collection_longer,
+            archival_full_name_transformed_to_ht_trust,
+            input_file, output_file):
+
+        root, files = sample_collection_longer
+        output_path, transform = archival_full_name_transformed_to_ht_trust
+        assert transform.called is True
+        expected_destination = os.path.join(output_path, output_file)
+        transform.assert_any_call(
+            source=os.path.join(root, input_file),
+            destination=expected_destination,
+        )
+
+
 @pytest.mark.parametrize('file_name, group, part', [
     ('0001_001-002.tif', "0001_001", '002'),
     ('0001_001-001.tif', "0001_001", '001'),
