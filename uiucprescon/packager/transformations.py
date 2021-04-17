@@ -110,11 +110,14 @@ class ConvertJp2Hathi(AbsTransformation):
             logger: System logger. For debugging or passing processing data
 
         """
-        dest = os.path.abspath(os.path.dirname(destination))
 
-        base_name = os.path.splitext(os.path.basename(source))[0]
-        new_name = f"{base_name}.jp2"
-        new_file = os.path.join(dest, new_name)
+        if destination.endswith(".jp2"):
+            new_file = destination
+        else:
+            dest = os.path.abspath(os.path.dirname(destination))
+            base_name = os.path.splitext(os.path.basename(source))[0]
+            new_name = f"{base_name}.jp2"
+            new_file = os.path.join(dest, new_name)
         pykdu_compress.kdu_compress_cli2(
             infile=source,
             outfile=new_file,

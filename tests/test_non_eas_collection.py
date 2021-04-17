@@ -6,74 +6,141 @@ from uiucprescon import packager
 from uiucprescon.packager.packages import \
     noneas, digital_library_compound, hathi_jp2_package
 
-# Example Archival collection/non-EAS delivered from lab:
-#
-# Batch (folder)
-#   access (folder) (contains cropped, 400dpi, 8bit tifs)
-#       00001_001-001.tif
-#       00001_001-002.tif
-#       00001_002-001.tif
-#       00001_002-002.tif
-#   preservation (folder)
-#       00001_002-001.tif
-#       00001_002-002.tif
-#       00001_002-001.tif
-#       00001_002-002.tif
-
-
-@pytest.fixture
-def sample_archival_collection(tmpdir):
-    batch_root = tmpdir / "batch"
-    batch_root.ensure_dir()
-    number_of_sample_groups = 2
-    number_of_parts_each = 4
-    package = []
-
-    for group_id in range(number_of_sample_groups):
-        access_path = batch_root / "access"
-        access_path.ensure_dir()
-
-        preservation_path = batch_root / "preservation"
-        preservation_path.ensure_dir()
-
-        for part_id in range(number_of_parts_each):
-            file_name = \
-                f"0001_{str(group_id + 1).zfill(3)}-{str(part_id + 1).zfill(3)}.tif"
-
-            access_file = access_path / file_name
-            access_file.ensure()
-
-            package.append(access_file.strpath)
-            preservation_file = preservation_path / file_name
-            preservation_file.ensure()
-            package.append(preservation_file.strpath)
-
-    return batch_root.strpath, package
-
 
 class TestArchivalNonEAS:
-    def test_objects(self, sample_archival_collection):
-        root, files = sample_archival_collection
+
+    @pytest.fixture
+    def sample_collection(self, tmpdir):
+        # Example Archival collection/non-EAS delivered from lab:
+        #
+        # Batch (folder)
+        #   access (folder) (contains cropped, 400dpi, 8bit tifs)
+        #       00001_001-001.tif
+        #       00001_001-002.tif
+        #       00001_002-001.tif
+        #       00001_002-002.tif
+        #   preservation (folder)
+        #       00001_002-001.tif
+        #       00001_002-002.tif
+        #       00001_002-001.tif
+        #       00001_002-002.tif
+
+        batch_root = tmpdir / "batch"
+        batch_root.ensure_dir()
+        number_of_sample_groups = 2
+        number_of_parts_each = 4
+        package = []
+
+        for group_id in range(number_of_sample_groups):
+            access_path = batch_root / "access"
+            access_path.ensure_dir()
+
+            preservation_path = batch_root / "preservation"
+            preservation_path.ensure_dir()
+
+            for part_id in range(number_of_parts_each):
+                file_name = \
+                    f"0001_{str(group_id + 1).zfill(3)}" \
+                    f"-" \
+                    f"{str(part_id + 1).zfill(3)}.tif"
+
+                access_file = access_path / file_name
+                access_file.ensure()
+
+                package.append(access_file.strpath)
+                preservation_file = preservation_path / file_name
+                preservation_file.ensure()
+                package.append(preservation_file.strpath)
+
+        yield batch_root.strpath, package
+        tmpdir.remove()
+
+    @pytest.fixture()
+    def sample_collection_longer(self, tmpdir):
+        # Example Archival collection/non-EAS delivered from lab:
+        #
+        # Batch (folder)
+        #   access (folder) (contains cropped, 400dpi, 8bit tifs)
+        #       0333_003_003_01-001.tif
+        #       0333_003_003_01-002.tif
+        #       0333_003_003_01-003.tif
+        #       0333_003_003_01-004.tif
+        #       0333_003_003_02-001.tif
+        #       0333_003_003_02-002.tif
+        #       0333_003_003_02-003.tif
+        #       0333_003_003_02-004.tif
+        #   preservation (folder)
+        #       0333_003_003_01-001.tif
+        #       0333_003_003_01-002.tif
+        #       0333_003_003_01-003.tif
+        #       0333_003_003_01-004.tif
+        #       0333_003_003_02-001.tif
+        #       0333_003_003_02-002.tif
+        #       0333_003_003_02-003.tif
+        #       0333_003_003_02-004.tif
+
+        batch_root = tmpdir / "batch"
+        batch_root.ensure_dir()
+        number_of_sample_groups = 2
+        number_of_parts_each = 4
+        package = []
+
+        for group_id in range(number_of_sample_groups):
+            access_path = batch_root / "access"
+            access_path.ensure_dir()
+
+            preservation_path = batch_root / "preservation"
+            preservation_path.ensure_dir()
+
+            for part_id in range(number_of_parts_each):
+                file_name = \
+                    f"0333_003_003_0{str(group_id + 1)}" \
+                    f"-" \
+                    f"{str(part_id + 1).zfill(3)}.tif"
+
+                access_file = access_path / file_name
+                access_file.ensure()
+
+                package.append(access_file.strpath)
+                preservation_file = preservation_path / file_name
+                preservation_file.ensure()
+                package.append(preservation_file.strpath)
+
+        yield batch_root.strpath, package
+        tmpdir.remove()
+
+    def test_objects(self, sample_collection):
+        root, files = sample_collection
         factory = packager.PackageFactory(noneas.ArchivalNonEAS())
         packages = factory.locate_packages(root)
         assert len(list(packages)) == 2
 
-    def test_items_found(self, sample_archival_collection):
-        root, files = sample_archival_collection
+    def test_items_found(self, sample_collection):
+        root, files = sample_collection
         factory = packager.PackageFactory(noneas.ArchivalNonEAS())
         packages = list(factory.locate_packages(root))
         first_package = packages[0]
         assert len(first_package) == 4
 
+    def test_objects_longer(self, sample_collection_longer):
+        root, files = sample_collection_longer
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
+        packages = factory.locate_packages(root)
+        assert len(list(packages)) == 2
 
-class TestArchivalTransformToDigitalLibraryCompound:
+    def test_items_found_longer(self, sample_collection_longer):
+        root, files = sample_collection_longer
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
+        packages = list(factory.locate_packages(root))
+        first_package = packages[0]
+        assert len(first_package) == 4
 
     @pytest.fixture()
     def transformed_to_dl_compound(
-            self, sample_archival_collection, monkeypatch
+            self, sample_collection, monkeypatch
     ):
 
-        root, files = sample_archival_collection
+        root, files = sample_collection
         factory = packager.PackageFactory(noneas.ArchivalNonEAS())
 
         digital_library_format = packager.PackageFactory(
@@ -97,25 +164,27 @@ class TestArchivalTransformToDigitalLibraryCompound:
     @pytest.mark.parametrize('input_file, output_file', [
         (
                 os.path.join('access', '0001_002-004.tif'),
-                os.path.join('002', 'access', '002-004.jp2')
+                os.path.join('0001_002', 'access', '0001_002-004.jp2')
         ),
         (
                 os.path.join('access', '0001_001-004.tif'),
-                os.path.join('001', 'access', '001-004.jp2'),
+                os.path.join('0001_001', 'access', '0001_001-004.jp2'),
         ),
         (
                 os.path.join('access', '0001_002-001.tif'),
-                os.path.join('002', 'access', '002-001.jp2')
+                os.path.join('0001_002', 'access', '0001_002-001.jp2')
         ),
 
     ])
-    def test_transform_jp2(self,
-                           sample_archival_collection,
-                           transformed_to_dl_compound,
-                           input_file,
-                           output_file):
+    def test_transform_dl_compound_jp2(
+            self,
+            sample_collection,
+            transformed_to_dl_compound,
+            input_file,
+            output_file
+    ):
 
-        root, _ = sample_archival_collection
+        root, _ = sample_collection
         output_path, transform = transformed_to_dl_compound
         assert transform.called is True
         expected_source = os.path.join(root, input_file)
@@ -125,26 +194,30 @@ class TestArchivalTransformToDigitalLibraryCompound:
     @pytest.mark.parametrize('input_file, output_file', [
         (
                 os.path.join('preservation', '0001_002-004.tif'),
-                os.path.join('002', 'preservation', '002-004.tif')
+                os.path.join('0001_002', 'preservation', '0001_002-004.tif')
         ),
         (
                 os.path.join('preservation', '0001_001-004.tif'),
-                os.path.join('001', 'preservation', '001-004.tif'),
+                os.path.join('0001_001', 'preservation', '0001_001-004.tif'),
+        ),
+        (
+                os.path.join('preservation', '0001_001-001.tif'),
+                os.path.join('0001_001', 'preservation', '0001_001-001.tif'),
         ),
         (
                 os.path.join('preservation', '0001_002-001.tif'),
-                os.path.join('002', 'preservation', '002-001.tif')
+                os.path.join('0001_002', 'preservation', '0001_002-001.tif')
         ),
     ])
-    def test_transform_pres(
+    def test_transform_to_dl_compound_pres(
             self,
-            sample_archival_collection,
+            sample_collection,
             transformed_to_dl_compound,
             input_file,
             output_file
     ):
 
-        root, files = sample_archival_collection
+        root, files = sample_collection
         output_path, transform = transformed_to_dl_compound
         assert transform.called is True
         transform.assert_any_call(
@@ -152,27 +225,11 @@ class TestArchivalTransformToDigitalLibraryCompound:
             destination=os.path.join(output_path, output_file)
         )
 
-
-@pytest.mark.parametrize('file_name, group, part', [
-    ('0001_001-002.tif', "001", '002'),
-    ('0001_001-001.tif', "001", '001'),
-    ('0001_002-001.tif', "002", '001'),
-    ('0001_002-002.tif', "002", '002'),
-]
-                         )
-def test_sorter_regex(file_name, group, part):
-    s = noneas.ArchivalNonEASBuilder()
-    data = s.grouper_regex.match(file_name)
-    assert data.groupdict()['group'] == group and \
-           data.groupdict()['part'] == part
-
-
-class TestArchivalTransformToHT:
     @pytest.fixture()
     def archival_transformed_to_ht_trust(
-            self, sample_archival_collection, monkeypatch):
+            self, sample_collection, monkeypatch):
 
-        root, files = sample_archival_collection
+        root, files = sample_collection
         factory = packager.PackageFactory(noneas.ArchivalNonEAS())
         hathi_jp2_format = packager.PackageFactory(
             hathi_jp2_package.HathiJp2()
@@ -196,24 +253,24 @@ class TestArchivalTransformToHT:
     @pytest.mark.parametrize('input_file, output_file', [
         (
             os.path.join('access', '0001_002-004.tif'),
-            os.path.join('002', '00000004.jp2')
+            os.path.join('0001_002', '00000004.jp2')
         ),
         (
             os.path.join('access', '0001_002-001.tif'),
-            os.path.join('002', '00000001.jp2'),
+            os.path.join('0001_002', '00000001.jp2'),
         ),
         (
             os.path.join('access', '0001_001-001.tif'),
-            os.path.join('001', '00000001.jp2'),
+            os.path.join('0001_001', '00000001.jp2'),
         ),
     ])
     def test_transform(
             self,
-            sample_archival_collection,
+            sample_collection,
             archival_transformed_to_ht_trust,
             input_file, output_file):
 
-        root, files = sample_archival_collection
+        root, files = sample_collection
         output_path, transform = archival_transformed_to_ht_trust
         assert transform.called is True
         expected_destination = os.path.join(output_path, output_file)
@@ -221,6 +278,72 @@ class TestArchivalTransformToHT:
             source=os.path.join(root, input_file),
             destination=expected_destination,
         )
+
+    @pytest.fixture()
+    def archival_full_name_transformed_to_ht_trust(
+            self, sample_collection_longer, monkeypatch):
+
+        root, files = sample_collection_longer
+        factory = packager.PackageFactory(noneas.ArchivalNonEAS())
+        hathi_jp2_format = packager.PackageFactory(
+            hathi_jp2_package.HathiJp2()
+        )
+        output_path = os.path.join('some', 'folder')
+        transform = Mock()
+
+        def mock_transform(_, source, destination):
+            transform(source=source, destination=destination)
+
+        with monkeypatch.context() as mp:
+            mp.setattr(
+                packager.transformations.Transformers,
+                "transform", mock_transform
+            )
+            for package in factory.locate_packages(root):
+                hathi_jp2_format.transform(package, output_path)
+
+        return output_path, transform
+
+    @pytest.mark.parametrize('input_file, output_file', [
+        (
+            os.path.join('access', '0333_003_003_01-001.tif'),
+            os.path.join('0333_003_003_01', '00000001.jp2')
+        ),
+        (
+            os.path.join('access', '0333_003_003_01-002.tif'),
+            os.path.join('0333_003_003_01', '00000002.jp2')
+        ),
+    ])
+    def test_larger_transform(
+            self,
+            sample_collection_longer,
+            archival_full_name_transformed_to_ht_trust,
+            input_file, output_file):
+
+        root, files = sample_collection_longer
+        output_path, transform = archival_full_name_transformed_to_ht_trust
+        assert transform.called is True
+        expected_destination = os.path.join(output_path, output_file)
+        transform.assert_any_call(
+            source=os.path.join(root, input_file),
+            destination=expected_destination,
+        )
+
+
+@pytest.mark.parametrize('file_name, group, part', [
+    ('0001_001-002.tif', "0001_001", '002'),
+    ('0001_001-001.tif', "0001_001", '001'),
+    ('0001_002-001.tif', "0001_002", '001'),
+    ('0001_002-002.tif', "0001_002", '002'),
+    ('0333_003_003_01-001.tif', "0333_003_003_01", '001'),
+]
+                         )
+def test_sorter_regex(file_name, group, part):
+    s = noneas.ArchivalNonEASBuilder()
+    data = s.grouper_regex.match(file_name)
+    assert data.groupdict()['group'] == group and \
+           data.groupdict()['part'] == part
+
 
 # Example Cataloged collection/non-EAS delivered from lab:
 #
@@ -296,7 +419,9 @@ def sample_cataloged_collection(
         preservation_path = os.path.join(batch_root, "preservation")
         for part_id in range(number_of_parts_each):
             file_name = \
-                f"991001{str(group_id + 1)}205899-{str(part_id + 1).zfill(3)}.tif"
+                f"991001{str(group_id + 1)}205899" \
+                f"-" \
+                f"{str(part_id + 1).zfill(3)}.tif"
 
             access_file = os.path.join(access_path, file_name)
 
