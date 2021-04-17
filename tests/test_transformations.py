@@ -22,6 +22,7 @@ def test_convert_jp2_hathi_source(monkeypatch):
         in_args=ANY
     )
 
+
 def test_convert_jp2_hathi_user_dir_for_output(monkeypatch):
 
     import pykdu_compress

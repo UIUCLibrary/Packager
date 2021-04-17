@@ -40,7 +40,9 @@ class TestArchivalNonEAS:
 
             for part_id in range(number_of_parts_each):
                 file_name = \
-                    f"0001_{str(group_id + 1).zfill(3)}-{str(part_id + 1).zfill(3)}.tif"
+                    f"0001_{str(group_id + 1).zfill(3)}" \
+                    f"-" \
+                    f"{str(part_id + 1).zfill(3)}.tif"
 
                 access_file = access_path / file_name
                 access_file.ensure()
@@ -92,7 +94,9 @@ class TestArchivalNonEAS:
 
             for part_id in range(number_of_parts_each):
                 file_name = \
-                    f"0333_003_003_0{str(group_id + 1)}-{str(part_id + 1).zfill(3)}.tif"
+                    f"0333_003_003_0{str(group_id + 1)}" \
+                    f"-" \
+                    f"{str(part_id + 1).zfill(3)}.tif"
 
                 access_file = access_path / file_name
                 access_file.ensure()
@@ -300,7 +304,6 @@ class TestArchivalNonEAS:
 
         return output_path, transform
 
-
     @pytest.mark.parametrize('input_file, output_file', [
         (
             os.path.join('access', '0333_003_003_01-001.tif'),
@@ -416,7 +419,9 @@ def sample_cataloged_collection(
         preservation_path = os.path.join(batch_root, "preservation")
         for part_id in range(number_of_parts_each):
             file_name = \
-                f"991001{str(group_id + 1)}205899-{str(part_id + 1).zfill(3)}.tif"
+                f"991001{str(group_id + 1)}205899" \
+                f"-" \
+                f"{str(part_id + 1).zfill(3)}.tif"
 
             access_file = os.path.join(access_path, file_name)
 
@@ -568,5 +573,3 @@ class TestCatalogedTransformToDigitalLibraryCompound:
         expected_destination = os.path.join(output_path, output_file)
         transform.assert_any_call(source=input_file,
                                   destination=expected_destination)
-
-
