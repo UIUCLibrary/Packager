@@ -181,12 +181,12 @@ def getToxTestsParallel(args = [:]){
                                 if(isUnix()){
                                     sh(
                                         label: "Running Tox with ${tox_env} environment",
-                                        script: "tox -v --parallel--safe-build --result-json=${TOX_RESULT_FILE_NAME} -e ${tox_env}"
+                                        script: "tox -v --parallel--safe-build --result-json=${TOX_RESULT_FILE_NAME} --workdir=/tmp/tox -e ${tox_env} "
                                     )
                                 } else {
                                     bat(
                                         label: "Running Tox with ${tox_env} environment",
-                                        script: "tox -v --parallel--safe-build --result-json=${TOX_RESULT_FILE_NAME} -e ${tox_env}"
+                                        script: "tox -v --parallel--safe-build --result-json=${TOX_RESULT_FILE_NAME} --workdir=%TEMP%\\tox -e ${tox_env}"
                                     )
                                 }
                             } catch (e){
