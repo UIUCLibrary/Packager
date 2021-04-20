@@ -212,6 +212,15 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
 
     @staticmethod
     def filter_nonsystem_files_only(item: "os.DirEntry[str]") -> bool:
+        """Filter out nonsystem files.
+
+        Args:
+            item: DirEntry from scandir
+
+        Returns:
+            Returns True if the item is a file that is not a a system file.
+
+        """
         system_files = [
             "Thumbs.db",
             "desktop.ini",
@@ -543,6 +552,15 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
     @staticmethod
     def filter_tiff_files(item: "os.DirEntry[str]") -> bool:
+        """Filter out items that are not a tiff file.
+
+        Args:
+            item: DirEntry from scandir
+
+        Returns:
+            Returns True if the item is a tiff file else returns False
+
+        """
         if not item.is_file():
             return False
 
