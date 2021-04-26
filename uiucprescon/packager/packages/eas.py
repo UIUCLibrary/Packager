@@ -1,3 +1,7 @@
+"""EAS package.
+
+This Module contains EAS package class
+"""
 import os
 import pathlib
 import re
@@ -18,11 +22,22 @@ __all__ = ['Eas']
 
 
 class Eas(AbsPackageBuilder):
+    """EAS package."""
 
     def locate_packages(self, path: str) -> Iterator[Package]:
+        """Locate EAS packages on a given file path.
+
+        Args:
+            path: File path to search for EAS packages
+
+        Yields:
+            EAS package
+
+        """
         yield from EASBuilder().build_batch(path)
 
     def transform(self, package: Package, dest: str) -> None:
+        """Not Implemented."""
         raise NotImplementedError("Read only")
 
 
@@ -51,7 +66,12 @@ class EASBuilder(AbsCollectionBuilder):
         new_instance.component_metadata[Metadata.PATH] = path
         new_instance._files.append(filename)
 
-    def build_package(self, parent: Batch, path: str, *args, **kwargs) -> None:
+    def build_package(self,
+                      parent: Batch,
+                      path: str,
+                      *args: None,
+                      **kwargs: None) -> None:
+
         groups = defaultdict(list)
         access_path = os.path.join(path, "access")
         if not os.path.exists(access_path):
@@ -84,7 +104,7 @@ class EASBuilder(AbsCollectionBuilder):
 
     def locate_package_files(self, path: str) -> Iterable[pathlib.Path]:
         for item in typing.cast(
-                Iterable[os.DirEntry],
+                Iterable['os.DirEntry[str]'],
                 filter(lambda p: self.is_eas_file(pathlib.Path(p.path)),
                        os.scandir(path))
         ):
