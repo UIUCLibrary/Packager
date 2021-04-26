@@ -1,6 +1,6 @@
 import os.path
 import pathlib
-from unittest.mock import Mock, call, ANY
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -84,14 +84,24 @@ class TestEASCollection:
             "out/99350592312205899/00000002.jp2"
         )
     ])
-    def test_transform_to_hathi(self, sample_collection_path, expected_source, expected_destination, monkeypatch):
+    def test_transform_to_hathi(self,
+                                sample_collection_path,
+                                expected_source,
+                                expected_destination,
+                                monkeypatch):
+
         factory = packager.PackageFactory(eas.Eas())
         packages = factory.locate_packages(sample_collection_path)
         destination_type = packager.PackageFactory(HathiJp2())
         output = "out"
 
         transform = Mock()
-        monkeypatch.setattr(packager.packages.hathi_jp2_package.transformations.Transformers, "transform", transform)
+
+        monkeypatch.setattr(
+            packager.packages.hathi_jp2_package.transformations.Transformers,
+            "transform",
+            transform
+        )
 
         for p in packages:
 
@@ -125,8 +135,13 @@ class TestEASCollection:
         transform.assert_has_calls(
             [
                 call(
-                    os.path.join(sample_collection_path, "access", "99338384012205899-00000001.tif"),
-                    os.path.join(output, "99338384012205899", "access", "99338384012205899-00000001.jp2")
+                    os.path.join(sample_collection_path,
+                                 "access",
+                                 "99338384012205899-00000001.tif"),
+                    os.path.join(output,
+                                 "99338384012205899",
+                                 "access",
+                                 "99338384012205899-00000001.jp2")
                 ),
                 call(
                     source=os.path.join(sample_collection_path, "access",
@@ -137,11 +152,17 @@ class TestEASCollection:
                                              "99338384012205899-00000001.tif")
                 ),
                 call(
-                    os.path.join(sample_collection_path, "access", "99338384012205899-00000002.tif"),
-                    os.path.join(output, "99338384012205899", "access", "99338384012205899-00000002.jp2")
+                    os.path.join(sample_collection_path,
+                                 "access",
+                                 "99338384012205899-00000002.tif"),
+                    os.path.join(output,
+                                 "99338384012205899",
+                                 "access",
+                                 "99338384012205899-00000002.jp2")
                 ),
                 call(
-                    source=os.path.join(sample_collection_path, "access",
+                    source=os.path.join(sample_collection_path,
+                                        "access",
                                         "99338384012205899-00000002.tif"),
                     destination=os.path.join(output,
                                              "99338384012205899",
@@ -149,8 +170,13 @@ class TestEASCollection:
                                              "99338384012205899-00000002.tif")
                 ),
                 call(
-                    os.path.join(sample_collection_path, "access", "99350592312205899-00000001.tif"),
-                    os.path.join(output, "99350592312205899", "access", "99350592312205899-00000001.jp2")
+                    os.path.join(sample_collection_path,
+                                 "access",
+                                 "99350592312205899-00000001.tif"),
+                    os.path.join(output,
+                                 "99350592312205899",
+                                 "access",
+                                 "99350592312205899-00000001.jp2")
                 ),
                 call(
                     source=os.path.join(sample_collection_path, "access",
@@ -161,8 +187,13 @@ class TestEASCollection:
                                              "99350592312205899-00000001.tif")
                 ),
                 call(
-                    os.path.join(sample_collection_path, "access", "99350592312205899-00000002.tif"),
-                    os.path.join(output, "99350592312205899", "access", "99350592312205899-00000002.jp2")),
+                    os.path.join(sample_collection_path,
+                                 "access",
+                                 "99350592312205899-00000002.tif"),
+                    os.path.join(output,
+                                 "99350592312205899",
+                                 "access",
+                                 "99350592312205899-00000002.jp2")),
                 call(
                     source=os.path.join(sample_collection_path, "access",
                                         "99350592312205899-00000002.tif"),
@@ -258,5 +289,3 @@ class TestEASBuilder:
     def test_is_eas_file(self, file_name, is_eas):
         builder = eas.EASBuilder()
         assert builder.is_eas_file(pathlib.Path(file_name)) is is_eas
-
-
