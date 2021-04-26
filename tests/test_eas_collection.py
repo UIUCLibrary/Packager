@@ -68,20 +68,20 @@ class TestEASCollection:
 
     @pytest.mark.parametrize("expected_source, expected_destination", [
         (
-            "batch1/access/99338384012205899-00000001.tif",
-            "out/99338384012205899/00000001.jp2"
+            os.path.join("batch1", "access", "99338384012205899-00000001.tif"),
+            os.path.join("out", "99338384012205899", "00000001.jp2")
         ),
         (
-            "batch1/access/99338384012205899-00000002.tif",
-            "out/99338384012205899/00000002.jp2"
+            os.path.join("batch1", "access", "99338384012205899-00000002.tif"),
+            os.path.join("out", "99338384012205899", "00000002.jp2")
         ),
         (
-            "batch1/access/99350592312205899-00000001.tif",
-            "out/99350592312205899/00000001.jp2"
+            os.path.join("batch1", "access", "99350592312205899-00000001.tif"),
+            os.path.join("out", "99350592312205899", "00000001.jp2")
         ),
         (
-            "batch1/access/99350592312205899-00000002.tif",
-            "out/99350592312205899/00000002.jp2"
+            os.path.join("batch1", "access", "99350592312205899-00000002.tif"),
+            os.path.join("out", "99350592312205899", "00000002.jp2")
         )
     ])
     def test_transform_to_hathi(self,
