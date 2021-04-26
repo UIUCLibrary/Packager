@@ -42,6 +42,8 @@ class Eas(AbsPackageBuilder):
 
 
 class EASBuilder(AbsCollectionBuilder):
+    """Build EAS packages."""
+
     grouper_regex = re.compile(
         r"^(?P<group>([0-9]+))"
         r"-"
@@ -97,12 +99,30 @@ class EASBuilder(AbsCollectionBuilder):
 
     @staticmethod
     def is_eas_file(path: 'os.PathLike[str]') -> bool:
+        """Check if inputted path belongs in an EAS package.
+
+        Args:
+            path:
+
+        Returns:
+            Returns True if file matches expected, else returns False
+
+        """
         path = pathlib.Path(path)
         if path.is_dir():
             return False
         return EASBuilder.grouper_regex.match(path.name) is not None
 
     def locate_package_files(self, path: str) -> Iterable[pathlib.Path]:
+        """Locate any EAS files at the given path.
+
+        Args:
+            path:
+
+        Yields:
+            Any valid files at the path
+
+        """
         for item in typing.cast(
                 Iterable['os.DirEntry[str]'],
                 filter(lambda p: self.is_eas_file(pathlib.Path(p.path)),
@@ -111,6 +131,14 @@ class EASBuilder(AbsCollectionBuilder):
             yield pathlib.Path(item.path)
 
     def build_object(self, parent: Package, group_id: str, path: str) -> None:
+        """Build a new object.
+
+        Args:
+            parent:
+            group_id:
+            path:
+
+        """
         new_object = PackageObject(parent=parent)
         new_object.component_metadata[Metadata.ID] = group_id
         new_object.component_metadata[Metadata.PATH] = path
