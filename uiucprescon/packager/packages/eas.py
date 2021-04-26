@@ -8,7 +8,9 @@ from collections import defaultdict
 from uiucprescon.packager import Metadata
 from uiucprescon.packager.packages.abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager.packages.collection import Package, \
-    AbsPackageComponent, Batch, PackageObject, Item, Instantiation, InstantiationTypes
+    AbsPackageComponent, Batch, PackageObject, Item, Instantiation, \
+    InstantiationTypes
+
 from uiucprescon.packager.packages.collection_builder import \
     AbsCollectionBuilder
 
@@ -37,8 +39,13 @@ class EASBuilder(AbsCollectionBuilder):
         self.build_package(parent=new_batch, path=root)
         return new_batch.children[0]
 
-    def build_instance(self, parent, path: str, filename: str, *args,
-                       **kwargs) -> None:
+    def build_instance(self,
+                       parent: Item,
+                       path: str,
+                       filename: str,
+                       *args: None,
+                       **kwargs: None) -> None:
+
         new_instance = Instantiation(parent=parent,
                                      category=InstantiationTypes.ACCESS)
         new_instance.component_metadata[Metadata.PATH] = path
@@ -61,14 +68,15 @@ class EASBuilder(AbsCollectionBuilder):
             groups[group['group']].append(file)
 
         new_package = Package(path, parent=parent)
-        for group_name, packages in groups.items():
+        for group_name, _ in groups.items():
             self.build_object(
                 parent=new_package,
                 group_id=group_name,
                 path=path
             )
 
-    def is_eas_file(self, path: 'os.PathLike[str]') -> bool:
+    @staticmethod
+    def is_eas_file(path: 'os.PathLike[str]') -> bool:
         path = pathlib.Path(path)
         if path.is_dir():
             return False
@@ -87,17 +95,24 @@ class EASBuilder(AbsCollectionBuilder):
         new_object.component_metadata[Metadata.ID] = group_id
         new_object.component_metadata[Metadata.PATH] = path
         access_path = os.path.join(path, "access")
-        for f in filter(
+        for directory_item in filter(
                 lambda item: self.is_eas_file(pathlib.Path(item.path)),
                 os.scandir(access_path)
         ):
-            regex_result = EASBuilder.grouper_regex.match(f.name)
+            regex_result = EASBuilder.grouper_regex.match(directory_item.name)
             if regex_result is None:
                 raise ValueError("Unknown pattern")
 
             groups = regex_result.groupdict()
             if groups['group'] != group_id:
                 continue
+
             new_item = Item(parent=new_object)
-            new_item.component_metadata[Metadata.ITEM_NAME] = regex_result['part']
-            self.build_instance(new_item, path=os.path.dirname(f.path), filename=f.name)
+            new_item.component_metadata[Metadata.ITEM_NAME] = \
+                regex_result['part']
+
+            self.build_instance(
+                new_item,
+                path=os.path.dirname(directory_item.path),
+                filename=directory_item.name
+            )
