@@ -9,12 +9,9 @@ import typing
 from typing import Iterable, Iterator
 from collections import defaultdict
 
-from uiucprescon.packager import Metadata
+from uiucprescon.packager.common import Metadata
 from uiucprescon.packager.packages.abs_package_builder import AbsPackageBuilder
-from uiucprescon.packager.packages.collection import Package, \
-    AbsPackageComponent, Batch, PackageObject, Item, Instantiation, \
-    InstantiationTypes
-
+import uiucprescon.packager.packages.collection as collection
 from uiucprescon.packager.packages.collection_builder import \
     AbsCollectionBuilder
 
@@ -24,7 +21,7 @@ __all__ = ['Eas']
 class Eas(AbsPackageBuilder):
     """EAS package."""
 
-    def locate_packages(self, path: str) -> Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[collection.Package]:
         """Locate EAS packages on a given file path.
 
         Args:
@@ -36,7 +33,7 @@ class Eas(AbsPackageBuilder):
         """
         yield from EASBuilder().build_batch(path)
 
-    def transform(self, package: Package, dest: str) -> None:
+    def transform(self, package: collection.Package, dest: str) -> None:
         """Not Implemented."""
         raise NotImplementedError("Read only")
 
@@ -51,25 +48,25 @@ class EASBuilder(AbsCollectionBuilder):
         r"(?P<extension>\.tif?)$"
     )
 
-    def build_batch(self, root: str) -> AbsPackageComponent:
-        new_batch = Batch(root)
+    def build_batch(self, root: str) -> collection.AbsPackageComponent:
+        new_batch = collection.Batch(root)
         self.build_package(parent=new_batch, path=root)
         return new_batch.children[0]
 
     def build_instance(self,
-                       parent: Item,
+                       parent: collection.Item,
                        path: str,
                        filename: str,
                        *args: None,
                        **kwargs: None) -> None:
 
-        new_instance = Instantiation(parent=parent,
-                                     category=InstantiationTypes.ACCESS)
+        new_instance = collection.Instantiation(parent=parent,
+                                                category=collection.InstantiationTypes.ACCESS)
         new_instance.component_metadata[Metadata.PATH] = path
         new_instance._files.append(filename)
 
     def build_package(self,
-                      parent: Batch,
+                      parent: collection.Batch,
                       path: str,
                       *args: None,
                       **kwargs: None) -> None:
@@ -77,7 +74,7 @@ class EASBuilder(AbsCollectionBuilder):
         groups = defaultdict(list)
         access_path = os.path.join(path, "access")
         if not os.path.exists(access_path):
-            raise FileNotFoundError(f"No access located in {path}")
+            raise FileNotFoundError(f"No access directory located in {path}")
 
         for file in self.locate_package_files(access_path):
             match_result = EASBuilder.grouper_regex.match(file.name)
@@ -89,7 +86,7 @@ class EASBuilder(AbsCollectionBuilder):
             group = match_result.groupdict()
             groups[group['group']].append(file)
 
-        new_package = Package(path, parent=parent)
+        new_package = collection.Package(path, parent=parent)
         for group_name, _ in groups.items():
             self.build_object(
                 parent=new_package,
@@ -130,7 +127,7 @@ class EASBuilder(AbsCollectionBuilder):
         ):
             yield pathlib.Path(item.path)
 
-    def build_object(self, parent: Package, group_id: str, path: str) -> None:
+    def build_object(self, parent: collection.Package, group_id: str, path: str) -> None:
         """Build a new object.
 
         Args:
@@ -139,7 +136,7 @@ class EASBuilder(AbsCollectionBuilder):
             path:
 
         """
-        new_object = PackageObject(parent=parent)
+        new_object = collection.PackageObject(parent=parent)
         new_object.component_metadata[Metadata.ID] = group_id
         new_object.component_metadata[Metadata.PATH] = path
         access_path = os.path.join(path, "access")
@@ -155,7 +152,7 @@ class EASBuilder(AbsCollectionBuilder):
             if groups['group'] != group_id:
                 continue
 
-            new_item = Item(parent=new_object)
+            new_item = collection.Item(parent=new_object)
             new_item.component_metadata[Metadata.ITEM_NAME] = \
                 regex_result['part']
 
