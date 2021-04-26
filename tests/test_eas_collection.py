@@ -269,6 +269,15 @@ class TestEASBuilder:
     def test_package_built(self, batch):
         assert len(batch.children[0]) == 2
 
+    def test_build_package_invalid_no_access_directory(self, monkeypatch):
+        builder = eas.EASBuilder()
+        path = "dummy"
+
+        monkeypatch.setattr(eas.os.path, "exists", lambda path: False)
+        with pytest.raises(FileNotFoundError) as e:
+            builder.build_package(parent=Mock(), path=path)
+        assert "No access directory locate" in str(e.value)
+
     def test_object_has_items(self, batch):
         package_object = batch.children[0].children[0]
         assert len(package_object) == 3
