@@ -278,6 +278,19 @@ class TestEASBuilder:
             builder.build_package(parent=Mock(), path=path)
         assert "No access directory locate" in str(e.value)
 
+    def test_locate_package_files(self, monkeypatch):
+        path = "dummy"
+        builder = eas.EASBuilder()
+
+        def scandir(path):
+            return [
+                Mock(path=os.path.join(path, "99338384012205899-00000001.tif"))
+            ]
+        monkeypatch.setattr(eas.os, "scandir", scandir)
+        assert next(builder.locate_package_files(path)) == pathlib.Path(
+            os.path.join("dummy", "99338384012205899-00000001.tif")
+        )
+
     def test_object_has_items(self, batch):
         package_object = batch.children[0].children[0]
         assert len(package_object) == 3
