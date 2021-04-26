@@ -60,8 +60,11 @@ class EASBuilder(AbsCollectionBuilder):
                        *args: None,
                        **kwargs: None) -> None:
 
-        new_instance = collection.Instantiation(parent=parent,
-                                                category=collection.InstantiationTypes.ACCESS)
+        new_instance = collection.Instantiation(
+            parent=parent,
+            category=collection.InstantiationTypes.ACCESS
+        )
+
         new_instance.component_metadata[Metadata.PATH] = path
         new_instance._files.append(filename)
 
@@ -127,7 +130,10 @@ class EASBuilder(AbsCollectionBuilder):
         ):
             yield pathlib.Path(item.path)
 
-    def build_object(self, parent: collection.Package, group_id: str, path: str) -> None:
+    def build_object(self,
+                     parent: collection.Package,
+                     group_id: str,
+                     path: str) -> None:
         """Build a new object.
 
         Args:
