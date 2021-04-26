@@ -298,3 +298,9 @@ class TestEASBuilder:
     def test_is_eas_file(self, file_name, is_eas):
         builder = eas.EASBuilder()
         assert builder.is_eas_file(pathlib.Path(file_name)) is is_eas
+
+    def test_is_eas_file_invalid_dir(self, monkeypatch):
+        builder = eas.EASBuilder()
+        path = os.path.join("batch1", "access", "99350592312205899-00000002")
+        monkeypatch.setattr(eas.pathlib.Path, "is_dir", lambda _: True)
+        assert builder.is_eas_file(pathlib.Path(path)) is False
