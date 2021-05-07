@@ -1,5 +1,7 @@
 from unittest.mock import Mock, MagicMock
 
+import pytest
+
 from uiucprescon.packager.packages import collection_builder
 import os
 
@@ -26,6 +28,7 @@ def test_builder_length(monkeypatch):
     assert len(batch) == 10
 
 
+@pytest.mark.filterwarnings("ignore:Use BrittleBooksBuilder")
 def test_build_bb_batch(tmpdir, monkeypatch):
     def mock_scan_dir(root):
         mock_dirs = []

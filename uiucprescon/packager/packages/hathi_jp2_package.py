@@ -3,6 +3,7 @@
 # pylint: disable=unsubscriptable-object
 import logging
 import os
+import pathlib
 from typing import Optional, Iterator
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
@@ -64,11 +65,13 @@ class HathiJp2(AbsPackageBuilder):
             os.makedirs(new_item_path)
 
         for inst in item:
-            if len(inst.files) != 1:
+            files = list(inst.get_files())
+            if len(files) != 1:
                 raise AssertionError(
-                    f"Expected 1 file, found {len(inst.files)}")
+                    f"Expected 1 file, found {len(files)}")
 
-            for file_ in inst.files:
+            for file_ in files:
+                file_ = pathlib.Path(file_).name
                 _, ext = os.path.splitext(file_)
 
                 if ext.lower() == ".jp2":

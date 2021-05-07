@@ -476,9 +476,6 @@ class CaptureOneBuilder(AbsCollectionBuilder):
             *args,
             **kwargs
     ) -> None:
-        new_instantiation = \
-            Instantiation(category=InstantiationTypes.PRESERVATION,
-                          parent=parent)
 
         group_id = parent.metadata[Metadata.ID]
 
@@ -500,12 +497,18 @@ class CaptureOneBuilder(AbsCollectionBuilder):
                 return False
             return True
 
+        files = []
         for file in filter(is_it_an_instance,
                            filter(self.filter_nonsystem_files_only,
                                   os.scandir(path))):
             if not file.name.lower().endswith(".tif"):
                 continue
-            new_instantiation.files.append(file.path)
+
+            files.append(file.path)
+
+        Instantiation(category=InstantiationTypes.PRESERVATION,
+                      parent=parent,
+                      files=files)
 
     def build_package(self, parent, path: str, *args, **kwargs) -> None:
         group_id = parent.metadata[Metadata.ID]
@@ -577,9 +580,6 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
     def build_instance(self, parent, path, filename, *args, **kwargs):
 
-        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
-                                          parent=parent)
-
         def _organize_files(item: os.DirEntry) -> str:
             ext = os.path.splitext(item.name)[1]
             if ext.lower() == ".tif":
@@ -601,9 +601,9 @@ class HathiTiffBuilder(AbsCollectionBuilder):
             elif key == "main_files":
                 for file_ in value:
                     main_files.append(file_)
-
-        for file_ in main_files:
-            new_instantiation.files.append(file_.path)
+        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
+                                          parent=parent,
+                                          files=main_files)
 
         for file_ in sidecar_files:
             new_instantiation.sidecar_files.append(file_.path)
@@ -648,15 +648,15 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             raise FileNotFoundError(
                 f"Preservation file {preservation_file} not found")
 
-        access_instance = Instantiation(category=InstantiationTypes.ACCESS,
-                                        parent=parent)
+        Instantiation(category=InstantiationTypes.ACCESS,
+                      parent=parent,
+                      files=[access_file])
 
-        access_instance.files.append(access_file)
-
-        preservation_instance = Instantiation(
-            category=InstantiationTypes.PRESERVATION, parent=parent)
-
-        preservation_instance.files.append(preservation_file)
+        Instantiation(
+            category=InstantiationTypes.PRESERVATION,
+            parent=parent,
+            files=[preservation_file]
+        )
 
     @staticmethod
     def file_type_filter(item: os.DirEntry, file_extension: str) -> bool:
@@ -754,8 +754,6 @@ class HathiJp2Builder(AbsCollectionBuilder):
             *args,
             **kwargs
     ):
-        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
-                                          parent=parent)
 
         matching_files = \
             filter(lambda x, file_name=filename:
@@ -774,8 +772,10 @@ class HathiJp2Builder(AbsCollectionBuilder):
                 elif key == "main_files":
                     main_files.append(file_)
 
-        for file_ in main_files:
-            new_instantiation.files.append(file_.path)
+        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
+                                          parent=parent,
+                                          files=main_files
+                                          )
 
         for file_ in sidecar_files:
             new_instantiation.sidecar_files.append(file_.path)
@@ -816,15 +816,19 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     def build_instance(self, parent, path: str, *args, **kwargs) -> None:
         file_category = kwargs['file_category']
+
+        file_name = kwargs.get('filename')
+        files = []
+        if file_name is not None:
+            files.append(file_name)
+
         new_instantiation = Instantiation(category=file_category,
-                                          parent=parent)
+                                          parent=parent,
+                                          files=files)
         new_instantiation.sidecar_files = [
             os.path.split(sidecar_file)[-1] for sidecar_file in
             kwargs.get('sidecar_files', [])
         ]
-        file_name = kwargs.get('filename')
-        if file_name is not None:
-            new_instantiation.files.append(file_name)
 
         new_instantiation.component_metadata[Metadata.PATH] = path
         new_instantiation.component_metadata[Metadata.ID] = \
@@ -866,7 +870,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         if len(mets_files) != 1:
             raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
                                  f"found {len(mets_files)}")
-        if len(invalid_files) != 1:
+        if len(invalid_files) != 0:
             print(
                 "Found invalid files {}".format(
                     ",".join(file.path for file in invalid_files)

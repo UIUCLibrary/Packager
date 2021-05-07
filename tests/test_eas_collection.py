@@ -39,7 +39,7 @@ class TestEASCollection:
         for f in sample_access_files:
             valid_paths.append(os.path.join(batch_dir, "access", f))
 
-        def scandir(path):
+        def locate_files_access(_, path):
             for f in sample_access_files:
                 new_file = Mock(
                     path=os.path.join(path, f),
@@ -47,7 +47,9 @@ class TestEASCollection:
                 new_file.name = f
                 yield new_file
 
-        monkeypatch.setattr(eas.os, "scandir", scandir)
+        monkeypatch.setattr(eas.EASBuilder,
+                            "locate_files_access",
+                            locate_files_access)
 
         def locate_package_files(_, path: str):
             for f in sample_access_files:
@@ -282,12 +284,15 @@ class TestEASBuilder:
         path = "dummy"
         builder = eas.EASBuilder()
 
-        def scandir(path):
+        def search_strategy(path):
             return [
                 Mock(path=os.path.join(path, "99338384012205899-00000001.tif"))
             ]
-        monkeypatch.setattr(eas.os, "scandir", scandir)
-        assert next(builder.locate_package_files(path)) == pathlib.Path(
+        p = next(
+            builder.locate_package_files(path, search_strategy=search_strategy)
+        )
+
+        assert p == pathlib.Path(
             os.path.join("dummy", "99338384012205899-00000001.tif")
         )
 

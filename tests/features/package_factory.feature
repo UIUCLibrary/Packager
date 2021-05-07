@@ -23,3 +23,4 @@ Feature: Build package objects
     Given a hathi jp2 package containing 2 objects with text sidecar files
     Then resulting packages hathi jp2 package should be 2
     And each instance in jp2 package should contain a text sidecar file
+    And each instance in jp2 package should files

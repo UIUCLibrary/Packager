@@ -26,3 +26,19 @@ def test_zip_error(monkeypatch):
 
         assert error.value.src_zip_file == item.metadata[Metadata.PATH] and \
                "somefile.txt" in error.value.problem_files[0]
+
+
+class TestInstantiation:
+    def test_normal_constructor(self):
+        access = collection.Instantiation(
+            category=collection.InstantiationTypes.ACCESS
+        )
+        assert access is not None
+
+    def test_constructor_with_files(self):
+
+        access = collection.Instantiation(
+            category=collection.InstantiationTypes.ACCESS,
+            files=["somefile.txt"]
+        )
+        assert isinstance(access, collection.Instantiation)

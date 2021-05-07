@@ -169,7 +169,8 @@ class Instantiation(AbsPackageComponent):
 
     def __init__(self,
                  category: InstantiationTypes = InstantiationTypes.GENERIC,
-                 parent: Optional[Item] = None) -> None:
+                 parent: Optional[Item] = None,
+                 files=None) -> None:
         """Create a new instantiation object.
 
         Args:
@@ -179,7 +180,7 @@ class Instantiation(AbsPackageComponent):
         self.category = category
         super().__init__(parent)
         self.component_metadata[Metadata.CATEGORY] = category
-        self._files: List[str] = []
+        self._files: List[str] = files or []
         self.sidecar_files: List[str] = []
 
     @property

@@ -58,12 +58,17 @@ def test_read_only_transform(capture_one_sample_package):
 
 
 def test_convert(hathi_limited_view_sample_packages, monkeypatch):
+    import pathlib
 
-    def mock_kdu_convert(infile: str, outfile: str, in_args=None, out_args=None):
-        shutil.copyfile(infile, outfile)
+    def kdu_compress_cli2(infile: str,
+                          outfile: str, in_args=None, out_args=None):
+        pathlib.Path(outfile).touch()
 
-    monkeypatch.setattr(pykdu_compress, "kdu_compress_cli2", mock_kdu_convert)
-    monkeypatch.setattr(pykdu_compress, "kdu_expand_cli", mock_kdu_convert)
+    def kdu_expand_cli(infile: str, outfile: str, in_args=None, out_args=None):
+        pathlib.Path(outfile).touch()
+
+    monkeypatch.setattr(pykdu_compress, "kdu_compress_cli2", kdu_compress_cli2)
+    monkeypatch.setattr(pykdu_compress, "kdu_expand_cli", kdu_expand_cli)
 
     digital_library_compound_builder = packager.PackageFactory(
         packager.packages.DigitalLibraryCompound())
@@ -71,16 +76,20 @@ def test_convert(hathi_limited_view_sample_packages, monkeypatch):
     with tempfile.TemporaryDirectory() as tmp_dir:
         for package in hathi_limited_view_sample_packages:
             try:
-                digital_library_compound_builder.transform(package, dest=tmp_dir)
+                digital_library_compound_builder.transform(package,
+                                                           dest=tmp_dir)
+
             except errors.ZipFileException as e:
+
                 print(f"{e.src_zip_file} had a problem", file=sys.stderr)
+
                 if len(e.problem_files) > 0:
-                    print(f"Problems with {','.join(e.problem_files)}", file=sys.stderr)
+                    print(f"Problems with {','.join(e.problem_files)}",
+                          file=sys.stderr)
+
                 problem_file = zipfile.ZipFile(e.src_zip_file)
                 print(problem_file.namelist(), file=sys.stderr)
                 raise
-
-
         assert len(list(os.scandir(tmp_dir))) == 1
 
         for i, new_package in enumerate(
@@ -88,8 +97,15 @@ def test_convert(hathi_limited_view_sample_packages, monkeypatch):
             assert new_package.metadata[Metadata.ID] == \
                    hathi_limited_view_sample_packages[i].metadata[Metadata.ID]
 
-            assert new_package.metadata[Metadata.PATH] == tmp_dir
+            sample_item = new_package.items[0]
+            access = sample_item.instantiations[InstantiationTypes.ACCESS]
+            access_files = list(access.get_files())
+            assert len(access_files) > 0
 
+            pres = sample_item.instantiations[InstantiationTypes.PRESERVATION]
+            pres_files = list(pres.get_files())
+            assert len(pres_files) > 0
+            assert new_package.metadata[Metadata.PATH] == tmp_dir
 
 
 

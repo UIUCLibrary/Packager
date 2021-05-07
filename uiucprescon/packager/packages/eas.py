@@ -62,11 +62,11 @@ class EASBuilder(AbsCollectionBuilder):
 
         new_instance = collection.Instantiation(
             parent=parent,
-            category=collection.InstantiationTypes.ACCESS
+            category=collection.InstantiationTypes.ACCESS,
+            files=[filename]
         )
 
         new_instance.component_metadata[Metadata.PATH] = path
-        new_instance._files.append(filename)
 
     def build_package(self,
                       parent: collection.Batch,
@@ -113,11 +113,15 @@ class EASBuilder(AbsCollectionBuilder):
             return False
         return EASBuilder.grouper_regex.match(path.name) is not None
 
-    def locate_package_files(self, path: str) -> Iterable[pathlib.Path]:
+    def locate_package_files(
+            self,
+            path: str, search_strategy=os.scandir
+    ) -> Iterable[pathlib.Path]:
         """Locate any EAS files at the given path.
 
         Args:
             path:
+            search_strategy:
 
         Yields:
             Any valid files at the path
@@ -126,9 +130,12 @@ class EASBuilder(AbsCollectionBuilder):
         for item in typing.cast(
                 Iterable['os.DirEntry[str]'],
                 filter(lambda p: self.is_eas_file(pathlib.Path(p.path)),
-                       os.scandir(path))
+                       search_strategy(path))
         ):
             yield pathlib.Path(item.path)
+
+    def locate_files_access(self, path: str) -> 'Iterable[os.DirEntry[str]]':
+        return os.scandir(path)
 
     def build_object(self,
                      parent: collection.Package,
@@ -148,7 +155,7 @@ class EASBuilder(AbsCollectionBuilder):
         access_path = os.path.join(path, "access")
         for directory_item in filter(
                 lambda item: self.is_eas_file(pathlib.Path(item.path)),
-                os.scandir(access_path)
+                self.locate_files_access(access_path)
         ):
             regex_result = EASBuilder.grouper_regex.match(directory_item.name)
             if regex_result is None:
