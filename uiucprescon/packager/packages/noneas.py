@@ -97,16 +97,25 @@ class NonEASBuilder(AbsCollectionBuilder):
             ] for (group_key, files) in itertools.groupby(files, key=key)
         }
 
+    @staticmethod
+    def locate_files_access(path: str) -> 'Iterable[os.DirEntry[str]]':
+        """Locate access files."""
+        return filter(NonEASBuilder.filter_only_access_files, os.scandir(path))
+
+    @staticmethod
+    def locate_files_preservation(
+            path: str
+    ) -> 'Iterable[os.DirEntry[str]]':
+        """Locate preservation files."""
+        return os.scandir(path)
+
     def build_package(self, parent: Batch, path: str, *_, **__: str) -> None:
 
         access_path = os.path.join(path, "access")
 
         new_package = Package(path, parent=parent)
         grouped_access_files = self.group_packages(
-            filter(
-                self.filter_only_access_files,
-                os.scandir(access_path)
-            )
+            self.locate_files_access(access_path)
         )
         for group_name in grouped_access_files.keys():
             self.build_object(parent=new_package,
@@ -119,18 +128,19 @@ class NonEASBuilder(AbsCollectionBuilder):
         if pathlib.Path(path).parent.name == "access":
             new_instance = Instantiation(
                 category=InstantiationTypes.ACCESS,
-                parent=parent
+                parent=parent,
+                files=[filename]
             )
 
         elif pathlib.Path(path).parent.name == "preservation":
             new_instance = Instantiation(
                 category=InstantiationTypes.PRESERVATION,
-                parent=parent
+                parent=parent,
+                files=[filename]
             )
         else:
             raise ValueError(f"Expecting 'access' or 'preservation' in {path}")
         new_instance.component_metadata[Metadata.PATH] = os.path.dirname(path)
-        new_instance._files.append(filename)
 
     def filter_file_is_item_of(self,
                                item: "os.DirEntry[str]",
@@ -161,8 +171,8 @@ class NonEASBuilder(AbsCollectionBuilder):
         access_path = os.path.join(path, "access")
         preservation_path = os.path.join(path, "preservation")
         for item in itertools.chain.from_iterable([
-            os.scandir(access_path),
-            os.scandir(preservation_path)
+            self.locate_files_access(access_path),
+            self.locate_files_preservation(preservation_path)
         ]):
             match_result = self.grouper_regex.match(
                 typing.cast(str, item.name)
@@ -205,7 +215,7 @@ class NonEASBuilder(AbsCollectionBuilder):
                     self.filter_file_is_item_of,
                     group_id=kwargs['group_name']
                 ),
-                os.scandir(access_dir)
+                self.locate_files_access(access_dir)
         ):
             match_result = self.grouper_regex.match(item_file.name)
             if match_result is None:

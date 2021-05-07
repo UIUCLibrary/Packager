@@ -52,7 +52,7 @@ def step_impl(package_objects, package_type):
 
     for item in object_000001:
         for instance_type, instance in item.instantiations.items():
-            for file_ in instance.files:
+            for file_ in instance.get_files():
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
 
@@ -72,7 +72,7 @@ def step_impl(package_objects, package_type):
 
     for item in object_000002:
         for instance_type, instance in item.instantiations.items():
-            for file_ in instance.files:
+            for file_ in instance.get_files():
                 basename = os.path.basename(file_)
                 assert checker.match(basename)
 
@@ -150,4 +150,17 @@ def step_impl(hathi_jp2_package_w_sidecar_text):
             for instance in item.instantiations.values():
                 num_sidecar_file = len(instance.sidecar_files)
                 if num_sidecar_file != 1:
-                    pytest.fail(f"{instance} contains {num_sidecar_file} sidecare files")
+                    pytest.fail(
+                        f"{instance} contains {num_sidecar_file} sidecar files"
+                    )
+
+
+@then("each instance in jp2 package should files")
+def instances_has_files(hathi_jp2_package_w_sidecar_text):
+    for obj in hathi_jp2_package_w_sidecar_text:
+        for item in obj:
+            for inst in item.instantiations.values():
+                if len(list(inst.get_files())) == 0:
+                    pytest.fail(
+                        f"{inst.metadata[Metadata.ID]} contains no files"
+                    )

@@ -84,7 +84,8 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             )
 
             for inst in item:
-                if len(inst.files) != 1:
+                files = list(inst.get_files())
+                if len(files) != 1:
                     raise AssertionError(
                         f"Each instance should have only 1 file, found "
                         f"{inst.files}: [{', '.join(inst.files)}]")

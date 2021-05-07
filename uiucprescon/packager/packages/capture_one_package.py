@@ -66,9 +66,11 @@ class CaptureOnePackage(AbsPackageBuilder):
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
             for inst in item:
-                if len(inst.files) != 1:
+                files = list(inst.get_files())
+                if len(files) != 1:
                     raise AssertionError("More than one file found")
-                for file_ in inst.files:
+
+                for file_ in files:
                     _, ext = os.path.splitext(file_)
                     new_file_name = \
                         f"{object_name}{self.delimiter}{item_name}{ext}"

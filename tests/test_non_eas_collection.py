@@ -1,5 +1,5 @@
 import os
-from unittest.mock import Mock
+from unittest.mock import Mock, call, ANY
 import typing
 import pytest
 from uiucprescon import packager
@@ -371,7 +371,8 @@ def sample_cataloged_collection(
     number_of_parts_each = 4
     packages: typing.Set[str] = set()
 
-    def scandir(path):
+    def scandir(_, path):
+
         if path == batch_root:
             for f in packages:
                 mock_item = Mock(path=f)
@@ -412,7 +413,16 @@ def sample_cataloged_collection(
                     mock_item.is_dir = Mock(return_value=True)
                 yield mock_item
 
-    monkeypatch.setattr(os, 'scandir', scandir)
+    monkeypatch.setattr(
+        noneas.NonEASBuilder, 'locate_files_access',
+        scandir
+    )
+
+    monkeypatch.setattr(
+        noneas.NonEASBuilder, 'locate_files_preservation',
+        scandir
+    )
+
     for group_id in range(number_of_sample_groups):
         access_path = os.path.join(batch_root, "access")
 
@@ -450,17 +460,18 @@ class TestCatalogedNonEAS:
 class TestCatalogedTransformToHT:
     @pytest.fixture()
     def transformed_to_ht_trust(
-            self, sample_cataloged_collection, monkeypatch):
+            self, sample_cataloged_collection, monkeypatch, tmpdir
+    ):
+        transform = Mock()
+
+        def mock_transform(_, source, destination):
+            transform(source=source, destination=destination)
 
         root, files = sample_cataloged_collection
         factory = packager.PackageFactory(noneas.CatalogedNonEAS())
         digital_library_format = packager.PackageFactory(
             hathi_jp2_package.HathiJp2())
         output_path = os.path.join('some', 'folder')
-        transform = Mock()
-
-        def mock_transform(_, source, destination):
-            transform(source=source, destination=destination)
 
         with monkeypatch.context() as mp:
             mp.setattr(
@@ -491,7 +502,6 @@ class TestCatalogedTransformToHT:
     ])
     def test_transform(
             self, transformed_to_ht_trust, input_file, output_file):
-
         output_path, transform = transformed_to_ht_trust
         assert transform.called is True
         expected_destination = os.path.join(output_path, output_file)

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import pathlib
 from typing import Iterator
 from uiucprescon.packager.packages import collection_builder
 from uiucprescon.packager.packages.collection import Package
@@ -45,19 +46,29 @@ class HathiTiff(AbsPackageBuilder):
                 os.makedirs(new_item_path)
 
             for inst in item:
-                if len(inst.files) != 1:
+                files = list(inst.get_files())
+                if len(files) != 1:
                     raise AssertionError(
-                        f"Expected 1 file, found {len(inst.files)}")
+                        f"Expected 1 file, found {len(files)}")
 
-                for file_ in inst.files:
-                    _, ext = os.path.splitext(file_)
+                for file_ in files:
+
+                    _, ext = os.path.splitext(pathlib.Path(file_).name)
 
                     new_file_name = item_name + ext
                     new_file_path = os.path.join(new_item_path, new_file_name)
+                    self.copy(file_, destination=new_file_path, logger=logger)
 
-                    copy = transformations.Transformers(
-                        strategy=transformations.CopyFile(),
-                        logger=logger
-                    )
+    @staticmethod
+    def copy(source: str,
+             destination: str,
+             logger: logging.Logger = None) -> None:
+        """Copy file without modifications."""
+        logger = logger or logging.getLogger(__name__)
 
-                    copy.transform(source=file_, destination=new_file_path)
+        copy = transformations.Transformers(
+            strategy=transformations.CopyFile(),
+            logger=logger
+        )
+
+        copy.transform(source=source, destination=destination)
