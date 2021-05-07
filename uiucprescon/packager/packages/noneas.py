@@ -97,11 +97,16 @@ class NonEASBuilder(AbsCollectionBuilder):
             ] for (group_key, files) in itertools.groupby(files, key=key)
         }
 
-    def locate_files_access(self, path: str) -> 'Iterable[os.DirEntry[str]]':
-        return filter(self.filter_only_access_files, os.scandir(path))
+    @staticmethod
+    def locate_files_access(path: str) -> 'Iterable[os.DirEntry[str]]':
+        """Locate access files."""
+        return filter(NonEASBuilder.filter_only_access_files, os.scandir(path))
 
-    def locate_files_preservation(self,
-                                  path: str) -> 'Iterable[os.DirEntry[str]]':
+    @staticmethod
+    def locate_files_preservation(
+            path: str
+    ) -> 'Iterable[os.DirEntry[str]]':
+        """Locate preservation files."""
         return os.scandir(path)
 
     def build_package(self, parent: Batch, path: str, *_, **__: str) -> None:
