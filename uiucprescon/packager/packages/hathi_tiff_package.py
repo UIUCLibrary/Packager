@@ -57,10 +57,18 @@ class HathiTiff(AbsPackageBuilder):
 
                     new_file_name = item_name + ext
                     new_file_path = os.path.join(new_item_path, new_file_name)
+                    self.copy(file_, destination=new_file_path, logger=logger)
 
-                    copy = transformations.Transformers(
-                        strategy=transformations.CopyFile(),
-                        logger=logger
-                    )
+    @staticmethod
+    def copy(source: str,
+             destination: str,
+             logger: logging.Logger = None) -> None:
+        """Copy file without modifications."""
+        logger = logger or logging.getLogger(__name__)
 
-                    copy.transform(source=file_, destination=new_file_path)
+        copy = transformations.Transformers(
+            strategy=transformations.CopyFile(),
+            logger=logger
+        )
+
+        copy.transform(source=source, destination=destination)
