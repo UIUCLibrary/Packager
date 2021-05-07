@@ -47,11 +47,14 @@ class CopyFile(AbsTransformation):
         """
         dest = os.path.abspath(os.path.dirname(destination))
         source_name = os.path.basename(source)
-
         logger.debug("Copying {} to {}".format(source_name, dest))
-        shutil.copy(source, destination)
-        return os.path.join(dest, source_name)
-        # logger.info("Added {} to {}".format(source_name, dest))
+        self.copy(source, destination)
+        return destination
+
+    @staticmethod
+    def copy(source: str, destination: str) -> str:
+        """Copy the file from the source to the destination without changes."""
+        return shutil.copy(source, destination)
 
 
 class ConvertTiff(AbsTransformation):
@@ -70,10 +73,14 @@ class ConvertTiff(AbsTransformation):
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.tif"
         dest = os.path.abspath(os.path.dirname(destination))
-
-        pykdu_compress.kdu_expand_cli(infile=source, outfile=destination)
+        self.make_tiff(source, destination)
         logger.info("Generated {} in {}".format(new_name, dest))
         return new_name
+
+    @staticmethod
+    def make_tiff(source: str, destination: str) -> None:
+        """Generate a tiff file."""
+        pykdu_compress.kdu_expand_cli(infile=source, outfile=destination)
 
 
 class ConvertJp2Standard(AbsTransformation):
@@ -91,10 +98,14 @@ class ConvertJp2Standard(AbsTransformation):
         """
         base_name = os.path.splitext(source)[0]
         new_name = f"{base_name}.jp2"
-
-        pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
+        self.make_jp2(source, destination)
         dest = os.path.abspath(os.path.dirname(destination))
         return os.path.join(dest, new_name)
+
+    @staticmethod
+    def make_jp2(source: str, destination: str) -> None:
+        """Generate a new jp2 file with Kakadu jp2 encoder."""
+        pykdu_compress.kdu_compress_cli2(infile=source, outfile=destination)
 
 
 class ConvertJp2Hathi(AbsTransformation):
@@ -118,9 +129,18 @@ class ConvertJp2Hathi(AbsTransformation):
             base_name = os.path.splitext(os.path.basename(source))[0]
             new_name = f"{base_name}.jp2"
             new_file = os.path.join(dest, new_name)
+
+        self.make_jp2(source, new_file)
+        logger.info(f"Fixing up {new_file} to 400 dpi")
+        set_dpi(new_file, x=400, y=400)
+        return new_file
+
+    @staticmethod
+    def make_jp2(source: str, destination: str) -> None:
+        """Generate a new jp2 file with Hathi-Trust specs."""
         pykdu_compress.kdu_compress_cli2(
             infile=source,
-            outfile=new_file,
+            outfile=destination,
             in_args=[
                 "Clevels=5",
                 "Clayers=8",
@@ -133,12 +153,8 @@ class ConvertJp2Hathi(AbsTransformation):
                 "42988",
                 "-jp2_space",
                 "sRGB",
-                ],
+            ],
         )
-
-        logger.info(f"Fixing up {new_file} to 400 dpi")
-        set_dpi(new_file, x=400, y=400)
-        return new_file
 
 
 class Transformers:

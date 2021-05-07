@@ -134,7 +134,9 @@ class EASBuilder(AbsCollectionBuilder):
         ):
             yield pathlib.Path(item.path)
 
-    def locate_files_access(self, path: str) -> 'Iterable[os.DirEntry[str]]':
+    @staticmethod
+    def locate_files_access(path: str) -> 'Iterable[os.DirEntry[str]]':
+        """Locate access files."""
         return os.scandir(path)
 
     def build_object(self,
