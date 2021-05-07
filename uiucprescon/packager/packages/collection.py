@@ -212,8 +212,10 @@ class Instantiation(AbsPackageComponent):
                                                path=temp_dir.name)
 
                     except KeyError as error:
-                        raise ZipFileException(error, zip_file=zip_file_name,
-                                               problem_files=[file_to_extract])
+                        raise ZipFileException(
+                            error, zip_file=zip_file_name,
+                            problem_files=[file_to_extract]
+                        ) from error
 
             else:
                 yield os.path.join(self.metadata[Metadata.PATH], pkg_file)
