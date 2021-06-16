@@ -7,6 +7,11 @@ SUPPORTED_MAC_VERSIONS = ['3.8', '3.9']
 SUPPORTED_LINUX_VERSIONS = [ '3.7', '3.8', '3.9']
 SUPPORTED_WINDOWS_VERSIONS = [ '3.7', '3.8', '3.9']
 
+PYPI_SERVERS = [
+    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_public/',
+    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python/',
+    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_testing/'
+    ]
 
 def getDevPiStagingIndex(){
 
@@ -201,6 +206,7 @@ pipeline {
         booleanParam(name: 'TEST_PACKAGES_ON_MAC', defaultValue: false, description: 'Test Python packages on Mac')
         booleanParam(name: "DEPLOY_DEVPI", defaultValue: false, description: "Deploy to devpi on http://devpi.library.illinois.edu/DS_Jenkins/${env.BRANCH_NAME}")
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
+        booleanParam(name: 'DEPLOY_PYPI', defaultValue: false, description: 'Deploy to pypi')
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
