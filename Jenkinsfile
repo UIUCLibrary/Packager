@@ -1059,6 +1059,63 @@ pipeline {
         }
         stage("Deploy"){
             parallel {
+                stage('Deploy to pypi') {
+                    agent {
+                        dockerfile {
+                            filename 'ci/docker/python/linux/jenkins/Dockerfile'
+                            label 'linux && docker'
+                            additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) --build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
+                        }
+                    }
+                    when{
+                        allOf{
+                            equals expected: true, actual: params.BUILD_PACKAGES
+                            equals expected: true, actual: params.DEPLOY_PYPI
+                        }
+                        beforeAgent true
+                        beforeInput true
+                    }
+                    options{
+                        retry(3)
+                    }
+                    input {
+                        message 'Upload to pypi server?'
+                        parameters {
+                            choice(
+                                choices: PYPI_SERVERS,
+                                description: 'Url to the pypi index to upload python packages.',
+                                name: 'SERVER_URL'
+                            )
+                        }
+                    }
+                    steps{
+                        unstash 'PYTHON_PACKAGES'
+                        script{
+                            def pypi = fileLoader.fromGit(
+                                    'pypi',
+                                    'https://github.com/UIUCLibrary/jenkins_helper_scripts.git',
+                                    '2',
+                                    null,
+                                    ''
+                                )
+                            pypi.pypiUpload(
+                                credentialsId: 'jenkins-nexus',
+                                repositoryUrl: SERVER_URL,
+                                glob: 'dist/*'
+                                )
+                        }
+                    }
+                    post{
+                        cleanup{
+                            cleanWs(
+                                deleteDirs: true,
+                                patterns: [
+                                        [pattern: 'dist/', type: 'INCLUDE']
+                                    ]
+                            )
+                        }
+                    }
+                }
                 stage("Deploy Online Documentation") {
                     when{
                         equals expected: true, actual: params.DEPLOY_DOCS
