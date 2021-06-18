@@ -151,6 +151,12 @@ def startup(){
                     }
                 }
             },
+            'Loading Reference Build Information': {
+                node(){
+                    checkout scm
+                    discoverGitReferenceBuild()
+                }
+            },
             "Getting Distribution Info": {
                 node('linux && docker') {
                     timeout(2){
