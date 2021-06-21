@@ -75,9 +75,9 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
 
                 group_id = file_name_parts['group']
                 group_ids.add(group_id)
-            except ValueError:
+            except ValueError as error:
                 raise ValueError(
-                    "Unable to split {}".format(file_.name))
+                    "Unable to split {}".format(file_.name)) from error
 
         for object_name in sorted(group_ids):
             new_object = collection.PackageObject(parent=new_batch)
