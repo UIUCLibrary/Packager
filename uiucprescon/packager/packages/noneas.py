@@ -76,9 +76,7 @@ class NonEASBuilder(AbsCollectionBuilder):
         if not item.is_file():
             return False
         _, extension = os.path.splitext(item.name)
-        if extension.lower() != ".tif":
-            return False
-        return True
+        return extension.lower() == ".tif"
 
     def group_packages(
             self,
