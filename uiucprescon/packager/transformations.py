@@ -13,16 +13,14 @@ except ImportError:
           "missing import")
 
 
-# pylint: disable=too-few-public-methods
 # AbsTransformation is an abstract method and really only needs to have a
 #   single method
+# pylint: disable=too-few-public-methods
 class AbsTransformation(metaclass=abc.ABCMeta):
     """Abstract base class for creating transformation classes.
 
     Perform some form of operation on a file, such as convert or copy
     """
-
-    # pylint: enable=too-few-public-methods
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
@@ -35,6 +33,7 @@ class AbsTransformation(metaclass=abc.ABCMeta):
             logger: System logger. For debugging or passing processing data
 
         """
+# pylint: enable=too-few-public-methods
 
 
 class CopyFile(AbsTransformation):
