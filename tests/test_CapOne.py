@@ -1,10 +1,10 @@
 import os
 import shutil
-import sys
 
 from uiucprescon import packager
 from uiucprescon.packager import Metadata
-from uiucprescon.packager.packages import collection_builder, collection
+from uiucprescon.packager.packages import collection_builder, collection, \
+    capture_one_package
 import pytest
 import pykdu_compress
 
@@ -256,7 +256,7 @@ def test_capture_one_dashes(capture_one_batch_with_dashes):
 
 def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
-    builder = collection_builder.CaptureOneBuilder()
+    builder = capture_one_package.CaptureOneBuilder()
     builder.splitter = collection_builder.dash_splitter
     batch = builder.build_batch(batch_dir)
     assert batch.path == batch_dir
@@ -264,7 +264,7 @@ def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
 
 def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
-    builder = collection_builder.CaptureOneBuilder()
+    builder = capture_one_package.CaptureOneBuilder()
     builder.splitter = collection_builder.dash_splitter
     sample_object = collection.PackageObject()
     sample_object.component_metadata[Metadata.ID] = "99423682912205899"
@@ -274,7 +274,7 @@ def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
 
 def test_builder2_build_instance(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
-    builder = collection_builder.CaptureOneBuilder()
+    builder = capture_one_package.CaptureOneBuilder()
     builder.splitter = collection_builder.dash_splitter
     sample_item = collection.Item()
     sample_item.component_metadata[Metadata.ID] = "00001"
@@ -309,7 +309,7 @@ def test_underscore_splitter(file_path, is_valid, expected_group,
 @pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
                          sample_underscore_file_names)
 def test_splitter(file_path, is_valid, expected_group, expected_item):
-    builder = collection_builder.CaptureOneBuilder()
+    builder = capture_one_package.CaptureOneBuilder()
     result = builder.identify_file_name_parts(file_path)
     if result is None:
         assert is_valid is False
@@ -331,7 +331,7 @@ sample_dashed_file_names = [
 @pytest.mark.parametrize("file_path, is_valid, expected_group, expected_item",
                          sample_dashed_file_names)
 def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
-    builder = collection_builder.CaptureOneBuilder()
+    builder = capture_one_package.CaptureOneBuilder()
     builder.splitter = collection_builder.dash_splitter
     result = builder.identify_file_name_parts(file_path)
     if result is None:
