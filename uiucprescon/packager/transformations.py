@@ -14,6 +14,8 @@ except ImportError:
 
 
 # pylint: disable=too-few-public-methods
+# AbsTransformation is an abstract method and really only needs to have a
+#   single method
 class AbsTransformation(metaclass=abc.ABCMeta):
     """Abstract base class for creating transformation classes.
 
@@ -189,3 +191,6 @@ class Transformers:
 
         path, filename = os.path.split(new_name)
         self._logger.info("Added %s in %s", filename, path)
+
+    def change_strategy(self, strategy: AbsTransformation):
+        self._strategy = strategy
