@@ -13,11 +13,13 @@ except ImportError:
           "missing import")
 
 
+# pylint: disable=too-few-public-methods
 class AbsTransformation(metaclass=abc.ABCMeta):
     """Abstract base class for creating transformation classes.
 
     Perform some form of operation on a file, such as convert or copy
     """
+    # pylint: enable=too-few-public-methods
 
     @abc.abstractmethod
     def transform(self, source: str, destination: str,
