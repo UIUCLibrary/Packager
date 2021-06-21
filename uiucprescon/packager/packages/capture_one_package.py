@@ -22,6 +22,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
     """
 
     def __init__(self) -> None:
+        """Init a new CaptureOneBuilder."""
         super().__init__()
         self.splitter: \
             Optional[Callable[[str], Optional[Dict[str, str]]]] = None
@@ -37,7 +38,6 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             Dictionary of all the identified components in the file
 
         """
-
         if self.splitter is not None:
             # pylint: disable=not-callable
             # This is a callable via dependency injection by assigning splitter
@@ -46,6 +46,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
         return collection_builder.underscore_splitter(file_name)
 
     def build_batch(self, root: str) -> collection_builder.AbsPackageComponent:
+        """Build a capture one style batch object."""
         new_batch = collection.Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
@@ -96,7 +97,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             *args,
             **kwargs
     ) -> None:
-
+        """Build a capture one style instance object."""
         group_id = parent.metadata[Metadata.ID]
 
         def is_it_an_instance(item: "os.DirEntry[str]") -> bool:
@@ -132,6 +133,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             files=files)
 
     def build_package(self, parent, path: str, *args, **kwargs) -> None:
+        """Build a capture one style package object."""
         group_id = parent.metadata[Metadata.ID]
 
         non_system_files = \
@@ -198,10 +200,11 @@ class CaptureOnePackage(AbsPackageBuilder):
         self.package_builder.splitter = splitter
 
     def locate_packages(self, path: str) -> Iterator[collection.Package]:
-
+        """Locate Capture One style packages."""
         yield from self.package_builder.build_batch(path)
 
     def transform(self, package: collection.Package, dest: str) -> None:
+        """Transform package into a capture one style package."""
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
