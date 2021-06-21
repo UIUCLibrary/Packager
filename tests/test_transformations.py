@@ -1,3 +1,4 @@
+import logging
 import os.path
 from unittest.mock import Mock, ANY
 
@@ -44,3 +45,27 @@ def test_convert_jp2_hathi_user_dir_for_output(monkeypatch):
         outfile=os.path.join(destination, "somefile.jp2"),
         in_args=ANY
     )
+
+
+def test_change_strategy(monkeypatch):
+
+    class Spam(packager.transformations.AbsTransformation):
+
+        def transform(self, source: str, destination: str,
+                      logger: logging.Logger) -> str:
+            pass
+
+    class Bacon(packager.transformations.AbsTransformation):
+        transformed = Mock()
+
+        def transform(self, source: str, destination: str,
+                      logger: logging.Logger) -> str:
+            Bacon.transformed()
+
+    t = packager.transformations.Transformers(Spam())
+    t.change_strategy(Bacon())
+    monkeypatch.setattr(
+        packager.transformations.os.path, "split", lambda p: ("foo", "bar")
+    )
+    t.transform("foo", "bar")
+    assert Bacon.transformed.called is True
