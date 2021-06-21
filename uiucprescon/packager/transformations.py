@@ -21,6 +21,7 @@ class AbsTransformation(metaclass=abc.ABCMeta):
 
     Perform some form of operation on a file, such as convert or copy
     """
+
     # pylint: enable=too-few-public-methods
 
     @abc.abstractmethod
