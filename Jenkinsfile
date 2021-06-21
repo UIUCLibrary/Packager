@@ -404,8 +404,8 @@ pipeline {
                                                 always{
                                                     stash includes: "reports/pylint_issues.txt,reports/pylint.txt", name: 'PYLINT_REPORT'
                                                     archiveArtifacts allowEmptyArchive: true, artifacts: "reports/pylint.txt"
-                                                    discoverGitReferenceBuild()
-                                                    recordIssues(tools: [pyLint(pattern: 'reports/pylint.txt')])
+//                                                     discoverGitReferenceBuild()
+                                                    recordIssues(skipBlames: true, tools: [pyLint(pattern: 'reports/pylint.txt')])
                                                 }
                                             }
                                         }
