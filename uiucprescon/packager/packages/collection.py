@@ -38,7 +38,6 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
     @property
     def metadata(self) -> Dict[Metadata, MetadataTypes]:
         """Metadata about the component."""
-
         return dict(self._metadata)
 
     def add_to_parent(self, child) -> None:
