@@ -7,8 +7,8 @@ import logging
 import os
 from typing import Optional, Dict, Callable, Iterator
 from uiucprescon.packager import transformations
-from uiucprescon.packager.common import Metadata, PackageTypes, InstantiationTypes
-from uiucprescon.packager.packages.collection import Package, PackageObject, Item
+from uiucprescon.packager.common import \
+    Metadata, PackageTypes, InstantiationTypes
 from uiucprescon.packager.packages import collection_builder, collection
 from .abs_package_builder import AbsPackageBuilder
 
@@ -46,7 +46,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
         return collection_builder.underscore_splitter(file_name)
 
     def build_batch(self, root: str) -> collection_builder.AbsPackageComponent:
-        new_batch = Package(root)
+        new_batch = collection.Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
         files = []
 
@@ -80,7 +80,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
                     "Unable to split {}".format(file_.name))
 
         for object_name in sorted(group_ids):
-            new_object = PackageObject(parent=new_batch)
+            new_object = collection.PackageObject(parent=new_batch)
             new_object.component_metadata[Metadata.ID] = object_name
 
             new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
@@ -126,9 +126,10 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
 
             files.append(file.path)
 
-        collection.Instantiation(category=InstantiationTypes.PRESERVATION,
-                      parent=parent,
-                      files=files)
+        collection.Instantiation(
+            category=InstantiationTypes.PRESERVATION,
+            parent=parent,
+            files=files)
 
     def build_package(self, parent, path: str, *args, **kwargs) -> None:
         group_id = parent.metadata[Metadata.ID]
@@ -150,9 +151,10 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             if file_name_parts['extension'].lower() != ".tif":
                 continue
             item_part = file_name_parts['part']
-            new_item = Item(parent=parent)
+            new_item = collection.Item(parent=parent)
             new_item.component_metadata[Metadata.ITEM_NAME] = item_part
             self.build_instance(new_item, path, item_part)
+
 
 class CaptureOnePackage(AbsPackageBuilder):
     """Package generated from the lab using Capture One.
@@ -195,11 +197,11 @@ class CaptureOnePackage(AbsPackageBuilder):
         self.package_builder = CaptureOneBuilder()
         self.package_builder.splitter = splitter
 
-    def locate_packages(self, path: str) -> Iterator[Package]:
+    def locate_packages(self, path: str) -> Iterator[collection.Package]:
 
         yield from self.package_builder.build_batch(path)
 
-    def transform(self, package: Package, dest: str) -> None:
+    def transform(self, package: collection.Package, dest: str) -> None:
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
