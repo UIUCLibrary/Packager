@@ -154,7 +154,7 @@ def startup(){
             'Loading Reference Build Information': {
                 node(){
                     checkout scm
-                    discoverGitReferenceBuild()
+                    discoverGitReferenceBuild(latestBuildIfNotFound: true)
                 }
             },
             "Getting Distribution Info": {
@@ -167,7 +167,7 @@ def startup(){
                                     sh(
                                        label: "Running setup.py with dist_info",
                                        script: """python --version
-                                                  python setup.py dist_info
+                                                  PIP_NO_CACHE_DIR=off python setup.py dist_info
                                                """
                                     )
                                     stash includes: "*.dist-info/**", name: 'DIST-INFO'

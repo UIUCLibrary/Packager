@@ -13,6 +13,9 @@ except ImportError:
           "missing import")
 
 
+# AbsTransformation is an abstract method and really only needs to have a
+#   single method
+# pylint: disable=too-few-public-methods
 class AbsTransformation(metaclass=abc.ABCMeta):
     """Abstract base class for creating transformation classes.
 
@@ -30,6 +33,7 @@ class AbsTransformation(metaclass=abc.ABCMeta):
             logger: System logger. For debugging or passing processing data
 
         """
+# pylint: enable=too-few-public-methods
 
 
 class CopyFile(AbsTransformation):
@@ -187,3 +191,7 @@ class Transformers:
 
         path, filename = os.path.split(new_name)
         self._logger.info("Added %s in %s", filename, path)
+
+    def change_strategy(self, strategy: AbsTransformation):
+        """Change the transformation strategy."""
+        self._strategy = strategy

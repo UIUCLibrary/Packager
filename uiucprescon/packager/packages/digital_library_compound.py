@@ -41,6 +41,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             uniqueID2/access/uniqueID2-00000001.jp2
 
     """
+
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
         """Locate Digital Library packages on a given file path.
 

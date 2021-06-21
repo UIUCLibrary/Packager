@@ -76,9 +76,7 @@ class NonEASBuilder(AbsCollectionBuilder):
         if not item.is_file():
             return False
         _, extension = os.path.splitext(item.name)
-        if extension.lower() != ".tif":
-            return False
-        return True
+        return extension.lower() == ".tif"
 
     def group_packages(
             self,
@@ -92,9 +90,9 @@ class NonEASBuilder(AbsCollectionBuilder):
             return ""
 
         return {
-            group_key: [
+            group_key: list(
                 file for file in files
-            ] for (group_key, files) in itertools.groupby(files, key=key)
+            ) for (group_key, files) in itertools.groupby(files, key=key)
         }
 
     @staticmethod
