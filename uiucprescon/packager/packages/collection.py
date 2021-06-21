@@ -37,10 +37,12 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
     @property
     def metadata(self) -> Dict[Metadata, MetadataTypes]:
+        """Metadata about the component."""
 
         return dict(self._metadata)
 
     def add_to_parent(self, child) -> None:
+        """Add child to parent object."""
         if self.parent is None:
             raise AttributeError("Root objects do not have parents")
         self.parent.children.append(child)
@@ -60,7 +62,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def children(self) -> List[Type["AbsPackageComponent"]]:
-        pass
+        """Child components of the package."""
 
     def _gen_combined_metadata(self) -> ChainMap[Metadata, MetadataTypes]:
         if self.parent:
@@ -73,6 +75,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
     @staticmethod
     def init_local_metadata() -> dict:
+        """Get default metadata."""
         return dict()
 
 
@@ -120,10 +123,12 @@ class Package(AbsPackageComponent):
 
     @property
     def children(self):
+        """Child components of the package."""
         return self.objects
 
     @property
     def others(self):
+        """Other items that are not children of the package."""
         return self.unidentified_objects
 
 
@@ -185,6 +190,12 @@ class Instantiation(AbsPackageComponent):
 
     @property
     def files(self):
+        """List of file names contained.
+
+        Warnings:
+            Deprecated for get_files method.
+
+        """
         warnings.warn("Use get_files instead", DeprecationWarning)
         return self._files
 
