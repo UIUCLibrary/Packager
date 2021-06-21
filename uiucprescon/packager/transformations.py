@@ -193,4 +193,5 @@ class Transformers:
         self._logger.info("Added %s in %s", filename, path)
 
     def change_strategy(self, strategy: AbsTransformation):
+        """Change the transformation strategy."""
         self._strategy = strategy
