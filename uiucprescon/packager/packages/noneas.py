@@ -92,9 +92,9 @@ class NonEASBuilder(AbsCollectionBuilder):
             return ""
 
         return {
-            group_key: [
+            group_key: list(
                 file for file in files
-            ] for (group_key, files) in itertools.groupby(files, key=key)
+            ) for (group_key, files) in itertools.groupby(files, key=key)
         }
 
     @staticmethod
