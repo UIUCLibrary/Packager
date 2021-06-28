@@ -9,9 +9,9 @@ from typing import List, Iterable, Dict
 import typing
 
 from uiucprescon.packager.common import Metadata, InstantiationTypes
-from .collection_builder import AbsCollectionBuilder
-from .abs_package_builder import AbsPackageBuilder
-from .collection import \
+from uiucprescon.packager.packages.collection_builder import AbsCollectionBuilder
+from uiucprescon.packager.packages.abs_package_builder import AbsPackageBuilder
+from uiucprescon.packager.packages.collection import \
     Instantiation, \
     Item, \
     Package, \
@@ -257,17 +257,36 @@ class CatalogedNonEAS(AbsPackageBuilder):
 
     def transform(self, package: Package, dest: str) -> None:
         """Transform a package into a the current type at given destination.
-
         Not Implemented!
+
         """
         raise NotImplementedError("read only")
 
 
 class CatalogedNonEASBuilder(NonEASBuilder):
-    """For building cataloged / non-eas packages."""
+    """For building cataloged / non-eas packages.
+
+    Examples:
+
+        >>> CatalogedNonEASBuilder.grouper_regex.match("123-12312.tif")
+        <re.Match object; span=(...), match='123-12312.tif'>
+
+        >>> CatalogedNonEASBuilder.grouper_regex.match("1234-12312.tif")
+        <re.Match object; span=(...), match='1234-12312.tif'>
+
+        >>> CatalogedNonEASBuilder.grouper_regex.match("1234_1-00000001.tif")
+        <re.Match object; span=(...), match='1234_1-00000001.tif'>
+
+        >>> CatalogedNonEASBuilder.grouper_regex.match("spam") is None
+        True
+
+        >>> matcher = CatalogedNonEASBuilder.grouper_regex
+        >>> matcher.match("1234_1-00000001.tif").groupdict()['group']
+        '1234_1'
+    """
 
     grouper_regex = re.compile(
-        r"^(?P<group>[0-9]+)"
+        r"^(?P<group>([0-9])+(_[0-9]+)?)"
         r"-"
         r"(?P<part>[0-9]*)"
         r"(?P<extension>\.tif?)$"

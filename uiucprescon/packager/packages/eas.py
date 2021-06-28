@@ -39,10 +39,28 @@ class Eas(AbsPackageBuilder):
 
 
 class EASBuilder(AbsCollectionBuilder):
-    """Build EAS packages."""
+    """Build EAS packages.
+
+    Examples:
+
+        >>> EASBuilder.grouper_regex.match("99338384012205899-00000001.tif")
+        <re.Match object; span=(...), match='99338384012205899-00000001.tif'>
+
+        >>> EASBuilder.grouper_regex.match("99338384012205899_1-00000001.tif")
+        <re.Match object; span=(...), match='99338384012205899_1-00000001.tif'>
+
+        >>> EASBuilder.grouper_regex.match("spam") is None
+        True
+
+        >>> matcher = EASBuilder.grouper_regex
+        >>> matches = matcher.match("99338384012205899_1-00000001.tif")
+        >>> matches.groupdict()['group']
+        '99338384012205899_1'
+
+    """
 
     grouper_regex = re.compile(
-        r"^(?P<group>([0-9]+))"
+        r"^(?P<group>([0-9])+(_[0-9]+)?)"
         r"-"
         r"(?P<part>[0-9]*)"
         r"(?P<extension>\.tif?)$"
