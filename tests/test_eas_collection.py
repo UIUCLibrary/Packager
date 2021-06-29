@@ -322,3 +322,114 @@ class TestEASBuilder:
         path = os.path.join("batch1", "access", "99350592312205899-00000002")
         monkeypatch.setattr(eas.pathlib.Path, "is_dir", lambda _: True)
         assert builder.is_eas_file(pathlib.Path(path)) is False
+
+
+class TestTransform:
+    @pytest.fixture
+    def eas_collection(self, monkeypatch):
+
+        def factory(file_name):
+            def locate_files_access(_, path):
+                dir_entry = Mock()
+                dir_entry.name = file_name
+                dir_entry.path = os.path.join(path, "access")
+                return [dir_entry]
+
+            monkeypatch.setattr(
+                eas.EASBuilder,
+                "locate_files_access",
+                locate_files_access
+            )
+
+            def locate_package_files(_, path):
+                pres_entry = Mock()
+                pres_entry.name = file_name
+                pres_entry.path = os.path.join(path, "preservation")
+                access_entry = Mock()
+                access_entry.name = file_name
+                access_entry.path = os.path.join(path, "access")
+                return [pres_entry, access_entry]
+
+            monkeypatch.setattr(
+                eas.EASBuilder,
+                "locate_package_files",
+                locate_package_files
+            )
+            monkeypatch.setattr(eas.os.path, "exists", lambda x: True)
+            return "source"
+
+        return factory
+
+    @pytest.mark.parametrize(
+        "source_file, package_type, expected_out",
+        [
+            (
+                    '9910012205899-000002.tif',
+                    DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'preservation',
+                        '9910012205899-000002.tif'
+                    ),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'access',
+                        '9910012205899-001.jp2'
+                    ),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'preservation',
+                        '9910012205899_1-001.tif'
+                    ),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'access',
+                        '9910012205899_1-001.jp2'
+                    ),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            )
+        ]
+    )
+    def test_cataloged_collection_transform(
+            self,
+            eas_collection,
+            source_file, package_type, expected_out,
+            monkeypatch
+    ):
+        transform = Mock(spec=lambda source, destination: None)
+        monkeypatch.setattr(
+            packager.transformations.Transformers,
+            "transform",
+            transform
+        )
+        output_dir = "output"
+        factory = packager.PackageFactory(eas.Eas())
+        for p in factory.locate_packages(eas_collection(source_file)):
+            packager.PackageFactory(package_type()).transform(p, output_dir)

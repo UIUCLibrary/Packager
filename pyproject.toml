@@ -1,3 +1,14 @@
 [build-system]
 requires = ["setuptools>=40.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--verbose -s --doctest-modules --doctest-continue-on-failure"
+testpaths = [
+    "tests",
+    "uiucprescon/packager",
+]
+norecursedirs = ["features", "build"]
+bdd_features_base_dir = "tests/features/"
+junit_family="xunit1"

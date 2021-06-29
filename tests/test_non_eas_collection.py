@@ -1,7 +1,9 @@
 import os
-from unittest.mock import Mock, call, ANY
+from unittest.mock import Mock, ANY
 import typing
 import pytest
+
+import uiucprescon.packager.transformations
 from uiucprescon import packager
 from uiucprescon.packager.packages import \
     noneas, digital_library_compound, hathi_jp2_package
@@ -583,3 +585,112 @@ class TestCatalogedTransformToDigitalLibraryCompound:
         expected_destination = os.path.join(output_path, output_file)
         transform.assert_any_call(source=input_file,
                                   destination=expected_destination)
+
+
+class TestTransform:
+    @pytest.fixture
+    def cataloged_collection(self, monkeypatch):
+
+        def factory(file_name):
+            def locate_files_access(_, path):
+                dir_entry = Mock()
+                dir_entry.name = file_name
+                dir_entry.path = os.path.join(path, "access")
+                return [dir_entry]
+
+            monkeypatch.setattr(
+                uiucprescon.packager.packages.noneas.NonEASBuilder,
+                "locate_files_access",
+                locate_files_access
+            )
+
+            def locate_files_preservation(_, path):
+                dir_entry = Mock()
+                dir_entry.name = file_name
+                dir_entry.path = os.path.join(path, "preservation")
+                return [dir_entry]
+
+            monkeypatch.setattr(
+                uiucprescon.packager.packages.noneas.NonEASBuilder,
+                "locate_files_preservation",
+                locate_files_preservation
+            )
+            return "source"
+
+        return factory
+
+    @pytest.mark.parametrize(
+        "source_file, package_type, expected_out",
+        [
+            (
+                    '9910012205899-001.tif',
+                    digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'preservation',
+                        '9910012205899-001.tif'
+                    ),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'access',
+                        '9910012205899-001.jp2'
+                    ),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'preservation',
+                        '9910012205899_1-001.tif'
+                    ),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'access',
+                        '9910012205899_1-001.jp2'
+                    ),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    '9910012205899-001.tif',
+                    hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-001.tif",
+                    hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            )
+        ]
+    )
+    def test_cataloged_collection_transform(
+            self,
+            cataloged_collection,
+            source_file, package_type, expected_out,
+            monkeypatch
+    ):
+        transform = Mock(spec=lambda source, destination: None)
+        monkeypatch.setattr(
+            uiucprescon.packager.transformations.Transformers,
+            "transform",
+            transform
+        )
+        output_dir = "output"
+        factory = packager.PackageFactory(noneas.CatalogedNonEAS())
+        for p in factory.locate_packages(cataloged_collection(source_file)):
+            packager.PackageFactory(package_type()).transform(p, output_dir)
+
+        transform.assert_any_call(ANY, os.path.join(output_dir, expected_out))

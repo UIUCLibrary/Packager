@@ -7,7 +7,7 @@ import os
 import re
 import warnings
 import zipfile
-from typing import Tuple, Optional, Iterator, Iterable, Dict, List
+from typing import Tuple, Optional, Iterator, Iterable, List
 
 from uiucprescon.packager.common import Metadata, PackageTypes
 from uiucprescon.packager.common import InstantiationTypes
@@ -330,72 +330,6 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
         return new_batch
 
 
-def delimiter_splitter(
-        file_name: str,
-        delimiter: str
-) -> Optional[Dict[str, str]]:
-    """Split the group and part of a given file based on character delimiter.
-
-    Args:
-        file_name: the name of a given file
-        delimiter: string that splits the group from the part in the file name
-
-    Returns: Dictionary containing the identified components
-    """
-    result = re.match(r'^'
-                      r'(?P<group>\d*)'
-                      f'[{delimiter}]'
-                      r'(?P<part>[0-9]*)'
-                      r'(?P<extension>\.[A-Za-z0-9]*)?'
-                      r'$', file_name)
-    if result is None or len(result.groups()) == 0:
-        return None
-    return result.groupdict()
-
-
-def dash_splitter(file_name: str) -> Optional[Dict[str, str]]:
-    """Use a dash to split the file name into components.
-
-    Args:
-        file_name: the name of a given file
-
-    Returns: Dictionary containing the identified components
-
-    """
-    result = re.match(r'^'
-                      r'(?P<group>\d*)'
-                      r'-'
-                      r'(?P<part>[0-9]*)'
-                      r'(?P<extension>\.[A-Za-z0-9]*)?'
-                      r'$', file_name)
-    if result is None or len(result.groups()) == 0:
-        return None
-    return result.groupdict()
-
-
-def underscore_splitter(file_name: str) -> Optional[Dict[str, str]]:
-    """Use an underscore to split the file name into components.
-
-    Args:
-        file_name: the name of a given file
-
-    Returns: Dictionary containing the identified components
-
-    """
-    result = re.match(r'^'
-                      r'(?P<group>\d*)'
-                      r'_'
-                      r'(?P<part>[0-9]*)'
-                      r'(?P<extension>\.[A-Za-z0-9]*)?'
-                      r'$', file_name)
-    if result is None or len(result.groups()) == 0:
-        return None
-    return result.groupdict()
-
-
-# class CaptureOneBuilder(AbsCollectionBuilder):
-
-
 class HathiTiffBuilder(AbsCollectionBuilder):
     """HathiTiffBuilder."""
 
@@ -520,7 +454,9 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         )
 
     @staticmethod
-    def file_type_filter(item: os.DirEntry, file_extension: str) -> bool:
+    def file_type_filter(item: 'os.DirEntry[str]',
+                         file_extension: str) -> bool:
+        """Filter out files not matching extension."""
         if not item.is_file():
             return False
         _, ext = os.path.splitext(item.name)
@@ -655,9 +591,11 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def is_package_dir_name(cls, dirname: str) -> bool:
+        """Check if package matches directory naming convention."""
         return bool(cls.package_matcher.match(dirname))
 
     def build_batch(self, root: str):
+        """Build batch."""
         others = []
         for item in os.scandir(root):
 
