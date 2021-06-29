@@ -202,7 +202,7 @@ class AbsCollectionBuilder(metaclass=abc.ABCMeta):
     @staticmethod
     def filter_same_name_files(item: "os.DirEntry[str]",
                                filename: str) -> bool:
-
+        """Identify if files are the same."""
         if not item.is_file():
             return False
 
@@ -523,6 +523,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
 
     @staticmethod
     def filter_tiff_files(item: os.DirEntry) -> bool:
+        """Identify if file given is a tiff file."""
         if not item.is_file():
             return False
 
@@ -640,7 +641,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
                 Optional["os.DirEntry[str]"],
                 Optional["os.DirEntry[str]"]
             ]:
-
+        """Split contents into zip files, mets files, & unidentified files."""
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
 
@@ -651,6 +652,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @staticmethod
     def filter_image_format(file_name: str) -> bool:
+        """Identify if the given file is a valid image format or not."""
         valid_images_extension = [
             ".tif",
             ".jp2"
@@ -684,6 +686,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def get_zip_content(cls, package_builder, zip_files):
+        """Access the content of the zip file."""
         contents = {}
 
         for i in itertools.groupby(sorted(
@@ -738,6 +741,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def get_file_type(cls, file_name: str) -> InstantiationTypes:
+        """Get the InstantiationTypes enum for a given file."""
         ext = os.path.splitext(file_name)[1]
 
         if cls.filter_image_format(file_name):
@@ -779,7 +783,7 @@ class HathiLimitedViewPackageBuilder:
                 Optional["os.DirEntry[str]"],
                 Optional["os.DirEntry[str]"]
             ]:
-
+        """Split contents into zip files, mets files, & unidentified files."""
         if cls.mets_file_matcher.match(item.name):
             return None, item, None
 
@@ -806,11 +810,12 @@ class HathiLimitedViewPackageBuilder:
             zip_file_source: zipfile.ZipFile,
             file_name: str
     ) -> bool:
-
+        """Filter function to check if a source is a file."""
         return not zip_file_source.getinfo(file_name).is_dir()
 
     @classmethod
     def get_item_type(cls, item_group: Tuple[str, List[str]]) -> str:
+        """Identify the type of a given item."""
         _, files = item_group
         for file in files:
             if cls.is_image_format(file) is True:
@@ -821,6 +826,7 @@ class HathiLimitedViewPackageBuilder:
 
     @staticmethod
     def is_image_format(file_name: str) -> bool:
+        """Check if a file name is a valid image file."""
         valid_images_extension = [
             ".tif",
             ".jp2"
@@ -831,7 +837,7 @@ class HathiLimitedViewPackageBuilder:
     @classmethod
     def iter_items_from_archive(cls, zip_file: str) -> \
             Iterator[Tuple[str, Iterable[str]]]:
-
+        """Iterate items from a zip archive."""
         with zipfile.ZipFile(zip_file) as item_contents:
             for file_group in itertools.groupby(
                     sorted(
@@ -849,6 +855,7 @@ class HathiLimitedViewPackageBuilder:
         List["os.DirEntry[str]"],
         List["os.DirEntry[str]"]
     ]:
+        """Provide access to content and return paths to the files."""
         zip_files: List["os.DirEntry[str]"] = []
         mets_files = []
         unidentified_files = []
