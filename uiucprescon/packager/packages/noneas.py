@@ -37,6 +37,10 @@ class ArchivalNonEAS(AbsPackageBuilder):
             00001_001-002.tif
             00001_002-001.tif
             00001_002-002.tif
+
+    .. versionchanged:: 0.2.12
+        ArchivalNonEAS can have files with multiple volume file names.
+
     """
 
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
