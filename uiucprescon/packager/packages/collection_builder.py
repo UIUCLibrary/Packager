@@ -375,7 +375,7 @@ class HathiTiffBuilder(AbsCollectionBuilder):
 
     def build_instance(self, parent, path, filename, *args, **kwargs):
 
-        def _organize_files(item: os.DirEntry) -> str:
+        def _organize_files(item: 'os.DirEntry[str]') -> str:
             ext = os.path.splitext(item.name)[1]
             if ext.lower() == ".tif":
                 return "main_files"
@@ -522,7 +522,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
         return new_batch
 
     @staticmethod
-    def filter_tiff_files(item: os.DirEntry) -> bool:
+    def filter_tiff_files(item: 'os.DirEntry[str]') -> bool:
         """Identify if file given is a tiff file."""
         if not item.is_file():
             return False
@@ -538,7 +538,7 @@ class HathiJp2Builder(AbsCollectionBuilder):
             self.build_instance(new_item, path=path, filename=item_part)
 
     @staticmethod
-    def _organize_files(item: os.DirEntry) -> str:
+    def _organize_files(item: 'os.DirEntry[str]') -> str:
         ext = os.path.splitext(item.name)[1]
         if ext.lower() == ".jp2":
             return "main_files"
