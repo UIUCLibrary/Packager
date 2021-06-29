@@ -5,8 +5,11 @@ from unittest.mock import Mock, ANY
 import uiucprescon.packager.packages.capture_one_package
 from uiucprescon import packager
 from uiucprescon.packager import Metadata
-from uiucprescon.packager.packages import collection_builder, collection, \
-    capture_one_package
+from uiucprescon.packager.packages import \
+    collection, \
+    capture_one_package, \
+    CaptureOnePackage, \
+    DigitalLibraryCompound
 import pytest
 import pykdu_compress
 
@@ -50,8 +53,8 @@ def test_capture_one_tiff_to_hathi_tiff(capture_one_fixture):
     source = os.path.join(capture_one_fixture, CAPTURE_ONE_BATCH_NAME)
     dest = os.path.join(capture_one_fixture, DESTINATION_NAME)
 
-    capture_one_packages_factory = packager.PackageFactory(
-        packager.packages.CaptureOnePackage(delimiter="_"))
+    capture_one_packages_factory = \
+        packager.PackageFactory(CaptureOnePackage(delimiter="_"))
 
     # find all Capture One organized packages
     capture_one_packages = \
@@ -63,8 +66,8 @@ def test_capture_one_tiff_to_hathi_tiff(capture_one_fixture):
     hathi_tiff_package_factory = \
         packager.PackageFactory(packager.packages.HathiTiff())
 
-    for capture_one_package in capture_one_packages:
-        hathi_tiff_package_factory.transform(capture_one_package, dest=dest)
+    for cap_one_package in capture_one_packages:
+        hathi_tiff_package_factory.transform(cap_one_package, dest=dest)
 
     # This should result in the following files
     #
@@ -131,12 +134,12 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
     def dummy_kdu_command(args):
         split_args = args.split()
         output_arg = os.path.abspath(split_args[3].strip('"'))
-        with open(output_arg, "w") as f:
+        with open(output_arg, "w"):
             pass
         pass
 
     def dummy_kdu_compress_cli2(infile, outfile, in_args=None, out_args=None):
-        with open(outfile, "w") as f:
+        with open(outfile, "w"):
             pass
         pass
 
@@ -159,11 +162,10 @@ def test_capture_one_tiff_to_digital_library(capture_one_fixture, monkeypatch):
     # There should be 2 packages in this sample batch
     assert len(capture_one_packages) == 2
 
-    dl_factory = packager.PackageFactory(
-        packager.packages.DigitalLibraryCompound())
+    dl_factory = packager.PackageFactory(DigitalLibraryCompound())
 
-    for capture_one_package in capture_one_packages:
-        dl_factory.transform(capture_one_package, dest=dest)
+    for cap_one_package in capture_one_packages:
+        dl_factory.transform(cap_one_package, dest=dest)
 
     # This should result in the following files
     #
@@ -259,7 +261,7 @@ def test_capture_one_dashes(capture_one_batch_with_dashes):
 def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
+    builder.splitter = capture_one_package.dash_splitter
     batch = builder.build_batch(batch_dir)
     assert batch.path == batch_dir
 
@@ -267,7 +269,7 @@ def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
 def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
+    builder.splitter = capture_one_package.dash_splitter
     sample_object = collection.PackageObject()
     sample_object.component_metadata[Metadata.ID] = "99423682912205899"
     builder.build_package(sample_object, batch_dir)
@@ -277,7 +279,7 @@ def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
 def test_builder2_build_instance(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
+    builder.splitter = capture_one_package.dash_splitter
     sample_item = collection.Item()
     sample_item.component_metadata[Metadata.ID] = "00001"
     builder.build_instance(
@@ -299,7 +301,8 @@ sample_underscore_file_names = [
                          sample_underscore_file_names)
 def test_underscore_splitter(file_path, is_valid, expected_group,
                              expected_item):
-    result = uiucprescon.packager.packages.capture_one_package.underscore_splitter(file_path)
+
+    result = capture_one_package.underscore_splitter(file_path)
     if result is None:
         assert is_valid is False
         return
@@ -334,7 +337,8 @@ sample_dashed_file_names = [
                          sample_dashed_file_names)
 def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
+    splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
+    builder.splitter = splitter
     result = builder.identify_file_name_parts(file_path)
     if result is None:
         assert is_valid is False
@@ -406,7 +410,7 @@ class TestTransform:
         [
             (
                     '9910012205899-00000001.tif',
-                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    DigitalLibraryCompound,
                     os.path.join(
                         '9910012205899', 'preservation',
                         '9910012205899-00000001.tif'
@@ -414,7 +418,7 @@ class TestTransform:
             ),
             (
                     '9910012205899-00000001.tif',
-                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    DigitalLibraryCompound,
                     os.path.join(
                         '9910012205899', 'access',
                         '9910012205899-00000001.jp2'
@@ -422,7 +426,7 @@ class TestTransform:
             ),
             (
                     "9910012205899_1-00000001.tif",
-                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    DigitalLibraryCompound,
                     os.path.join(
                         '9910012205899_1', 'preservation',
                         '9910012205899_1-00000001.tif'
@@ -430,7 +434,7 @@ class TestTransform:
             ),
             (
                     "9910012205899_1-00000001.tif",
-                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    DigitalLibraryCompound,
                     os.path.join(
                         '9910012205899_1', 'access',
                         '9910012205899_1-00000001.jp2'
@@ -489,7 +493,11 @@ class TestTransform:
     ("9910012205899_1-00000001.tif", '-', '_'),
     ("9910012205899$1-00000001.tif", '-', '$'),
 ])
-def test_grouper_regex_builder_valid(file_name, part_delimiter, volume_delimiter):
+def test_grouper_regex_builder_valid(
+        file_name,
+        part_delimiter,
+        volume_delimiter
+):
     regex_builder = capture_one_package.GrouperRegexBuilder()
     regex_builder.part_delimiter = part_delimiter
     regex_builder.volume_delimiter = volume_delimiter
