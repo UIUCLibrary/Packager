@@ -258,8 +258,8 @@ class CatalogedNonEAS(AbsPackageBuilder):
 
     def transform(self, package: Package, dest: str) -> None:
         """Transform a package into a the current type at given destination.
-        Not Implemented!
 
+        Not Implemented!
         """
         raise NotImplementedError("read only")
 
@@ -268,7 +268,6 @@ class CatalogedNonEASBuilder(NonEASBuilder):
     """For building cataloged / non-eas packages.
 
     Examples:
-
         >>> CatalogedNonEASBuilder.grouper_regex.match("123-12312.tif")
         <re.Match object; span=(...), match='123-12312.tif'>
 

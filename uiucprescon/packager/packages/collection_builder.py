@@ -454,7 +454,9 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         )
 
     @staticmethod
-    def file_type_filter(item: os.DirEntry, file_extension: str) -> bool:
+    def file_type_filter(item: 'os.DirEntry[str]',
+                         file_extension: str) -> bool:
+        """Filter out files not matching extension."""
         if not item.is_file():
             return False
         _, ext = os.path.splitext(item.name)
@@ -589,6 +591,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
 
     @classmethod
     def is_package_dir_name(cls, dirname: str) -> bool:
+        """Check if package matches directory naming convention."""
         return bool(cls.package_matcher.match(dirname))
 
     def build_batch(self, root: str):

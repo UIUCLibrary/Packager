@@ -42,7 +42,6 @@ class EASBuilder(AbsCollectionBuilder):
     """Build EAS packages.
 
     Examples:
-
         >>> EASBuilder.grouper_regex.match("99338384012205899-00000001.tif")
         <re.Match object; span=(...), match='99338384012205899-00000001.tif'>
 
