@@ -191,8 +191,8 @@ class Instantiation(AbsPackageComponent):
     def files(self):
         """List of file names contained.
 
-        Warnings:
-            Deprecated for get_files method.
+        .. deprecated:: 0.2.11
+           Deprecated for get_files method.
 
         """
         warnings.warn("Use get_files instead", DeprecationWarning)
