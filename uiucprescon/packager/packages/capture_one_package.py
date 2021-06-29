@@ -224,6 +224,10 @@ class CaptureOnePackage(AbsPackageBuilder):
         - uniqueID1_00000003.tif
         - uniqueID2_00000001.tif
         - uniqueID2_00000002.tif
+
+    .. versionchanged:: 0.2.12
+       CaptureOnePackage can have files with multiple volume file names.
+
     """
 
     delimiter_splitters: Dict[str,

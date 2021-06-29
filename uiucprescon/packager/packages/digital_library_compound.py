@@ -40,6 +40,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             Instead of uniqueID2/access/uniqueID2_00000001.jp2, it is
             uniqueID2/access/uniqueID2-00000001.jp2
 
+    .. versionchanged:: 0.2.12
+        DigitalLibraryCompound can have files with multiple volume file names.
+
     """
 
     def locate_packages(self, path: str) -> typing.Iterator[Package]:
