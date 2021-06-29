@@ -125,7 +125,6 @@ class ConvertJp2Hathi(AbsTransformation):
             logger: System logger. For debugging or passing processing data
 
         """
-
         if destination.endswith(".jp2"):
             new_file = destination
         else:
