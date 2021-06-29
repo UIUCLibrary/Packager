@@ -1,6 +1,8 @@
 import os
 import shutil
+from unittest.mock import Mock, ANY
 
+import uiucprescon.packager.packages.capture_one_package
 from uiucprescon import packager
 from uiucprescon.packager import Metadata
 from uiucprescon.packager.packages import collection_builder, collection, \
@@ -257,7 +259,7 @@ def test_capture_one_dashes(capture_one_batch_with_dashes):
 def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = collection_builder.dash_splitter
+    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
     batch = builder.build_batch(batch_dir)
     assert batch.path == batch_dir
 
@@ -265,7 +267,7 @@ def test_builder2_build_batch_has_path(capture_one_batch_with_dashes):
 def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = collection_builder.dash_splitter
+    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
     sample_object = collection.PackageObject()
     sample_object.component_metadata[Metadata.ID] = "99423682912205899"
     builder.build_package(sample_object, batch_dir)
@@ -275,7 +277,7 @@ def test_builder2_build_package_files_match(capture_one_batch_with_dashes):
 def test_builder2_build_instance(capture_one_batch_with_dashes):
     batch_dir, source_files = capture_one_batch_with_dashes
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = collection_builder.dash_splitter
+    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
     sample_item = collection.Item()
     sample_item.component_metadata[Metadata.ID] = "00001"
     builder.build_instance(
@@ -297,7 +299,7 @@ sample_underscore_file_names = [
                          sample_underscore_file_names)
 def test_underscore_splitter(file_path, is_valid, expected_group,
                              expected_item):
-    result = collection_builder.underscore_splitter(file_path)
+    result = uiucprescon.packager.packages.capture_one_package.underscore_splitter(file_path)
     if result is None:
         assert is_valid is False
         return
@@ -332,7 +334,7 @@ sample_dashed_file_names = [
                          sample_dashed_file_names)
 def test_splitter_dashed(file_path, is_valid, expected_group, expected_item):
     builder = capture_one_package.CaptureOneBuilder()
-    builder.splitter = collection_builder.dash_splitter
+    builder.splitter = uiucprescon.packager.packages.capture_one_package.dash_splitter
     result = builder.identify_file_name_parts(file_path)
     if result is None:
         assert is_valid is False
@@ -361,3 +363,149 @@ def test_transform_into_hathi(capture_one_batch_with_dashes, tmpdir):
     for expected_file in [f"{str(x).zfill(8)}.tif" for x in range(20)]:
         assert (output / "99423682912205899" / expected_file).exists()
     output.remove()
+
+
+class TestTransform:
+    @pytest.fixture
+    def capture_one_collection(self, monkeypatch):
+
+        def factory(file_name):
+            def list_of_tiff_files(_, root):
+                dir_entry = Mock()
+                dir_entry.name = file_name
+                dir_entry.path = os.path.join(root, "access")
+                return [dir_entry]
+
+            monkeypatch.setattr(
+                capture_one_package.CaptureOneBuilder,
+                "locate_batch_files",
+                list_of_tiff_files
+            )
+
+            monkeypatch.setattr(
+                capture_one_package.CaptureOneBuilder,
+                "get_non_system_files",
+                list_of_tiff_files
+            )
+
+            def locate_tiff_instances(_, path, is_it_an_instance):
+                return [os.path.join(path, "access", file_name)]
+
+            monkeypatch.setattr(
+                capture_one_package.CaptureOneBuilder,
+                "locate_tiff_instances",
+                locate_tiff_instances
+            )
+
+            return "source"
+
+        return factory
+
+    @pytest.mark.parametrize(
+        "source_file, package_type, expected_out",
+        [
+            (
+                    '9910012205899-00000001.tif',
+                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'preservation',
+                        '9910012205899-00000001.tif'
+                    ),
+            ),
+            (
+                    '9910012205899-00000001.tif',
+                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899', 'access',
+                        '9910012205899-00000001.jp2'
+                    ),
+            ),
+            (
+                    "9910012205899_1-00000001.tif",
+                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'preservation',
+                        '9910012205899_1-00000001.tif'
+                    ),
+            ),
+            (
+                    "9910012205899_1-00000001.tif",
+                    packager.packages.digital_library_compound.DigitalLibraryCompound,
+                    os.path.join(
+                        '9910012205899_1', 'access',
+                        '9910012205899_1-00000001.jp2'
+                    ),
+            ),
+            (
+                    '9910012205899-00000001.tif',
+                    packager.packages.hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    '9910012205899-00000001.tif',
+                    packager.packages.hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-00000001.tif",
+                    packager.packages.hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            ),
+            (
+                    "9910012205899_1-00000001.tif",
+                    packager.packages.hathi_jp2_package.HathiJp2,
+                    os.path.join('9910012205899_1', '00000001.jp2'),
+            )
+        ]
+    )
+    def test_capture_one_collection_transform(
+            self,
+            capture_one_collection,
+            source_file, package_type, expected_out,
+            monkeypatch
+    ):
+        transform = Mock(spec=lambda source, destination: None)
+        monkeypatch.setattr(
+            uiucprescon.packager.transformations.Transformers,
+            "transform",
+            transform
+        )
+        output_dir = "output"
+
+        capture_one_factory = packager.PackageFactory(
+            packager.packages.CaptureOnePackage(delimiter='-')
+        )
+        for p in capture_one_factory.locate_packages(
+                capture_one_collection(source_file)
+        ):
+            packager.PackageFactory(package_type()).transform(p, output_dir)
+        #
+        transform.assert_any_call(ANY, os.path.join(output_dir, expected_out))
+
+
+@pytest.mark.parametrize("file_name, part_delimiter, volume_delimiter", [
+    ("9910012205899-00000001.tif", '-', None),
+    ("9910012205899_00000001.tif", '_', None),
+    ("9910012205899_1-00000001.tif", '-', '_'),
+    ("9910012205899$1-00000001.tif", '-', '$'),
+])
+def test_grouper_regex_builder_valid(file_name, part_delimiter, volume_delimiter):
+    regex_builder = capture_one_package.GrouperRegexBuilder()
+    regex_builder.part_delimiter = part_delimiter
+    regex_builder.volume_delimiter = volume_delimiter
+    regex_matcher = regex_builder.build()
+    res = regex_matcher.match(file_name)
+    assert res is not None
+
+
+@pytest.mark.parametrize("part_delimiter, volume_delimiter", [
+    ('-', '-'),
+    ('_', '_')
+])
+def test_grouper_regex_builder_invalid_throws_on_build(part_delimiter,
+                                                       volume_delimiter):
+    regex_builder = capture_one_package.GrouperRegexBuilder()
+    regex_builder.part_delimiter = part_delimiter
+    regex_builder.volume_delimiter = volume_delimiter
+    with pytest.raises(ValueError):
+        regex_builder.build()

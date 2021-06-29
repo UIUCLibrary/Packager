@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Optional, Dict, Callable, Iterator
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import \
@@ -43,24 +44,27 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             # This is a callable via dependency injection by assigning splitter
             #   to a function.
             return self.splitter(file_name)
-        return collection_builder.underscore_splitter(file_name)
+        return underscore_splitter(file_name)
 
-    def build_batch(self, root: str) -> collection_builder.AbsPackageComponent:
-        """Build a capture one style batch object."""
-        new_batch = collection.Package(root)
-        new_batch.component_metadata[Metadata.PATH] = root
-        files = []
-
+    @classmethod
+    def locate_batch_files(cls, root):
         def filter_only_tiff(item: "os.DirEntry[str]") -> bool:
             return item.name.lower().endswith(".tif")
 
         for file_ in filter(
                 filter_only_tiff,
                 filter(
-                    self.filter_nonsystem_files_only,
+                    CaptureOneBuilder.filter_nonsystem_files_only,
                     os.scandir(root)
                 )):
-            files.append(file_)
+            yield file_
+
+    def build_batch(self, root: str) -> collection_builder.AbsPackageComponent:
+        """Build a capture one style batch object."""
+        new_batch = collection.Package(root)
+        new_batch.component_metadata[Metadata.PATH] = root
+
+        files = list(self.locate_batch_files(root=root))
 
         files.sort(key=lambda f: f.name)
 
@@ -88,6 +92,19 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
                 PackageTypes.CAPTURE_ONE_SESSION
             self.build_package(new_object, root)
         return new_batch
+
+    @classmethod
+    def locate_tiff_instances(cls, path, is_it_an_instance):
+        files = []
+
+        for file in filter(is_it_an_instance,
+                           filter(cls.filter_nonsystem_files_only,
+                                  os.scandir(path))):
+            if not file.name.lower().endswith(".tif"):
+                continue
+
+            files.append(file.path)
+        return files
 
     def build_instance(
             self,
@@ -118,26 +135,24 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
                 return False
             return True
 
-        files = []
-        for file in filter(is_it_an_instance,
-                           filter(self.filter_nonsystem_files_only,
-                                  os.scandir(path))):
-            if not file.name.lower().endswith(".tif"):
-                continue
-
-            files.append(file.path)
+        files = self.locate_tiff_instances(path, is_it_an_instance)
 
         collection.Instantiation(
             category=InstantiationTypes.PRESERVATION,
             parent=parent,
             files=files)
 
+    @classmethod
+    def get_non_system_files(cls, path):
+        non_system_files = \
+            filter(cls.filter_nonsystem_files_only, os.scandir(path))
+        return non_system_files\
+
+
     def build_package(self, parent, path: str, *args, **kwargs) -> None:
         """Build a capture one style package object."""
         group_id = parent.metadata[Metadata.ID]
-
-        non_system_files = \
-            filter(self.filter_nonsystem_files_only, os.scandir(path))
+        non_system_files = self.get_non_system_files(path)
 
         def filter_by_group(candidate_file: "os.DirEntry[str]") -> bool:
             parts = self.identify_file_name_parts(candidate_file.name)
@@ -158,6 +173,42 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             self.build_instance(new_item, path, item_part)
 
 
+def underscore_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use an underscore to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
+    regex_builder = GrouperRegexBuilder()
+    group_regex = regex_builder.build()
+    result = group_regex.match(file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
+def dash_splitter(file_name: str) -> Optional[Dict[str, str]]:
+    """Use a dash to split the file name into components.
+
+    Args:
+        file_name: the name of a given file
+
+    Returns: Dictionary containing the identified components
+
+    """
+    regex_builder = GrouperRegexBuilder()
+    regex_builder.part_delimiter = '-'
+    regex_builder.volume_delimiter = '_'
+    group_regex = regex_builder.build()
+    result = group_regex.match(file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
 class CaptureOnePackage(AbsPackageBuilder):
     """Package generated from the lab using Capture One.
 
@@ -174,8 +225,8 @@ class CaptureOnePackage(AbsPackageBuilder):
 
     delimiter_splitters: Dict[str,
                               Callable[[str], Optional[Dict[str, str]]]] = {
-        '_': collection_builder.underscore_splitter,
-        '-': collection_builder.dash_splitter
+        '_': underscore_splitter,
+        '-': dash_splitter
     }
 
     def __init__(self, delimiter: str = "_") -> None:
@@ -191,7 +242,7 @@ class CaptureOnePackage(AbsPackageBuilder):
         splitter = CaptureOnePackage.delimiter_splitters.get(delimiter)
         if splitter is None:
             def splitter(filename: str) -> Optional[Dict[str, str]]:
-                return collection_builder.delimiter_splitter(
+                return delimiter_splitter(
                     file_name=filename,
                     delimiter=delimiter
                 )
@@ -227,3 +278,69 @@ class CaptureOnePackage(AbsPackageBuilder):
                     )
                     new_file_path = os.path.join(dest, new_file_name)
                     copy.transform(source=file_, destination=new_file_path)
+
+
+def delimiter_splitter(
+        file_name: str,
+        delimiter: str
+) -> Optional[Dict[str, str]]:
+    """Split the group and part of a given file based on character delimiter.
+
+    Args:
+        file_name: the name of a given file
+        delimiter: string that splits the group from the part in the file name
+
+    Returns: Dictionary containing the identified components
+    """
+    result = re.match(r'^'
+                      r'(?P<group>\d*)'
+                      f'[{delimiter}]'
+                      r'(?P<part>[0-9]*)'
+                      r'(?P<extension>\.[A-Za-z0-9]*)?'
+                      r'$', file_name)
+    if result is None or len(result.groups()) == 0:
+        return None
+    return result.groupdict()
+
+
+class GrouperRegexBuilder:
+    def __init__(self):
+        self.part_delimiter = "_"
+        self.volume_delimiter = None
+
+    def build(self):
+        pattern = [
+            r'^'
+        ]
+        pattern += self.get_group_regex_section()
+
+        pattern += [
+            self.part_delimiter,
+        ]
+        pattern.append(
+            r'(?P<part>[0-9]*)'
+        )
+        pattern += [
+            r'(?P<extension>\.[A-Za-z0-9]*)?',
+            r'$'
+        ]
+        return re.compile(''.join(pattern))
+
+    def get_group_regex_section(self) -> str:
+        if self.volume_delimiter is None:
+            return r'(?P<group>\d*)'
+        if self.volume_delimiter == self.part_delimiter:
+            raise ValueError(
+                "Unable to generate regex where volume delimiter and part "
+                "delimiter have same value."
+            )
+        escaped_values = [
+            '[', ']', '(', ')', '{', '}', '*', '+', '?', '|', '^', '$', '.',
+            ',',  '\\'
+        ]
+        if self.volume_delimiter in escaped_values:
+            volume_delimiter = f"\\{self.volume_delimiter}"
+        else:
+            volume_delimiter = self.volume_delimiter
+        return fr"(?P<group>([0-9]+?({volume_delimiter}[0-9]+)?))"
+
