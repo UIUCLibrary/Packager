@@ -595,6 +595,7 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
         return bool(cls.package_matcher.match(dirname))
 
     def build_batch(self, root: str):
+        """Build batch."""
         others = []
         for item in os.scandir(root):
 
