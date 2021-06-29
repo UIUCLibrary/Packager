@@ -9,7 +9,8 @@ from typing import List, Iterable, Dict
 import typing
 
 from uiucprescon.packager.common import Metadata, InstantiationTypes
-from uiucprescon.packager.packages.collection_builder import AbsCollectionBuilder
+from uiucprescon.packager.packages.collection_builder import \
+    AbsCollectionBuilder
 from uiucprescon.packager.packages.abs_package_builder import AbsPackageBuilder
 from uiucprescon.packager.packages.collection import \
     Instantiation, \

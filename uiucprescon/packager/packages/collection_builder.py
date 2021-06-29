@@ -330,7 +330,6 @@ class BrittleBooksBuilder(AbsCollectionBuilder):
         return new_batch
 
 
-
 class HathiTiffBuilder(AbsCollectionBuilder):
     """HathiTiffBuilder."""
 

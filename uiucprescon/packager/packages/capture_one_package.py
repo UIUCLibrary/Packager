@@ -343,4 +343,3 @@ class GrouperRegexBuilder:
         else:
             volume_delimiter = self.volume_delimiter
         return fr"(?P<group>([0-9]+?({volume_delimiter}[0-9]+)?))"
-
