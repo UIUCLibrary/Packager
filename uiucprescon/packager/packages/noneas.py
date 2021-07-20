@@ -181,7 +181,9 @@ class NonEASBuilder(AbsCollectionBuilder):
                 typing.cast(str, item.name)
             )
             if match_result is None:
-                raise AttributeError("Unable to match file structure")
+                raise AttributeError(
+                    f"{item.path} does not match expected file structure"
+                )
 
             file_naming_parts = match_result.groupdict()
 
