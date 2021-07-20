@@ -62,7 +62,12 @@ class ArchivalNonEAS(AbsPackageBuilder):
 
 
 class NonEASBuilder(AbsCollectionBuilder):
-    """Builder for noneas packages."""
+    """Builder for noneas packages.
+
+    .. versionchanged:: 0.2.13
+        NonEASBuilder ignores system files such as Thumbs.db.
+
+    """
 
     @property
     @abc.abstractmethod
