@@ -1127,6 +1127,7 @@ pipeline {
                     when{
                         equals expected: true, actual: params.DEPLOY_DOCS
                     }
+                    agent any
                     steps{
                         unstash "DOCS_ARCHIVE"
                         dir("build/docs/html/"){
@@ -1143,7 +1144,7 @@ pipeline {
                                         makeEmptyDirs: false, 
                                         noDefaultExcludes: false, 
                                         patternSeparator: '[, ]+', 
-                                        remoteDirectory: "${params.DEPLOY_DOCS_URL_SUBFOLDER}", 
+                                        remoteDirectory: params.DEPLOY_DOCS_URL_SUBFOLDER,
                                         remoteDirectorySDF: false, 
                                         removePrefix: '', 
                                         sourceFiles: '**')], 
