@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from uiucprescon.packager.common import Metadata
 from uiucprescon.packager.packages.abs_package_builder import AbsPackageBuilder
-import uiucprescon.packager.packages.collection as collection
+from uiucprescon.packager.packages import collection
 from uiucprescon.packager.packages.collection_builder import \
     AbsCollectionBuilder
 

@@ -75,7 +75,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
     @staticmethod
     def init_local_metadata() -> dict:
         """Get default metadata."""
-        return dict()
+        return {}
 
 
 class Batch(AbsPackageComponent):
