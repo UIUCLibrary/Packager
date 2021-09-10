@@ -226,15 +226,20 @@ class NonEASBuilder(AbsCollectionBuilder):
         new_object.component_metadata[Metadata.ID] = kwargs['group_name']
         access_dir = os.path.join(path, "access")
         for item_file in filter(
-                functools.partial(
-                    self.filter_file_is_item_of,
-                    group_id=kwargs['group_name']
-                ),
-                self.locate_files_access(access_dir)
-        ):
+                self.filter_nonsystem_files_only,
+                filter(
+                    functools.partial(
+                        self.filter_file_is_item_of,
+                        group_id=kwargs['group_name']
+                    ),
+                    self.locate_files_access(access_dir)
+                )):
+
             match_result = self.grouper_regex.match(item_file.name)
             if match_result is None:
-                raise AttributeError("Unable to match file structure")
+                raise AttributeError(
+                    f"{item_file.path} does not match expected file structure"
+                )
 
             part = match_result.groupdict()['part']
             self.build_item(parent=new_object, item_id=part, path=path)
