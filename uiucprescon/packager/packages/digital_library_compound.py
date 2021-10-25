@@ -102,9 +102,9 @@ class DigitalLibraryCompound(AbsPackageBuilder):
                                                                  object_name)
                         continue
 
+                    # TODO: Make sure to use the correct source files
                     transformer.transform_preservation_file(file_, item_name,
                                                             object_name)
-
                     transformer.transform_access_file(file_, item_name,
                                                       object_name)
 
