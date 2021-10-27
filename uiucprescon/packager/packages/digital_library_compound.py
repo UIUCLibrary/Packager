@@ -571,7 +571,7 @@ class Transform:
                 strategy=self._strategies['ConvertJp2Standard'],
                 logger=self.logger)
         else:
-            raise ValueError("Unknown extension {}".format(ext))
+            raise ValueError(f"Unknown extension {ext}")
 
         access_file_maker.transform(src, access_file_full_path)
 
@@ -612,7 +612,7 @@ class Transform:
                 strategy=self._strategies['CopyFile'],
                 logger=self.logger)
         else:
-            raise ValueError("Unknown extension {}".format(ext))
+            raise ValueError(f"Unknown extension {ext}")
 
         preservation_file_copier.transform(
             source=src, destination=new_preservation_file_path)
