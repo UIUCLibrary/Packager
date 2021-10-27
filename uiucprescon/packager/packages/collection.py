@@ -60,7 +60,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
     def __str__(self) -> str:
         """Present the name and metadata of the given component."""
-        return "{} {}".format(super().__str__(), dict(self.metadata))
+        return f"{super().__str__()} {dict(self.metadata)}"
 
     @property
     @abc.abstractmethod
