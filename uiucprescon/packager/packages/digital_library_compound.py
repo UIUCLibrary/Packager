@@ -19,6 +19,7 @@ __all__ = [
 
 
 class AbsItemTransformStrategy(abc.ABC):
+    """Abstract class for transforming Item objects."""
 
     def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
         self.logger = logger or logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class AbsItemTransformStrategy(abc.ABC):
             dest: str,
             logger: typing.Optional[logging.Logger]
     ) -> None:
-        pass
+        """Transform the preservation files of an item."""
 
     @abc.abstractmethod
     def transform_access_file(
@@ -40,19 +41,19 @@ class AbsItemTransformStrategy(abc.ABC):
             dest: str,
             logger: typing.Optional[logging.Logger]
     ) -> None:
-        pass
+        """Transform the access files of an item."""
 
     @abc.abstractmethod
     def transform_supplementary_data(
             self,
-            instance: Item,
+            item: Item,
             dest: str,
             logger: typing.Optional[logging.Logger]
     ) -> None:
-        pass
+        """Transform the supplementary data of an item."""
 
+    @staticmethod
     def process(
-            self,
             source: str,
             dest: str,
             strategy: typing.Type[transformations.AbsTransformation],
@@ -164,12 +165,14 @@ class UseAccessJp2ForAll(AbsItemTransformStrategy):
             logger=logger
         )
 
-    def transform_supplementary_data(self, instance: Item, dest: str,
-                                     logger: typing.Optional[
-                                         logging.Logger]) -> None:
+    def transform_supplementary_data(
+            self, item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
         logger = logger or logging.getLogger(__name__)
         supplementary = \
-            instance.instantiations.get(
+            item.instantiations.get(
                 InstantiationTypes.SUPPLEMENTARY
             )
         if supplementary is None:
@@ -183,7 +186,7 @@ class UseAccessJp2ForAll(AbsItemTransformStrategy):
                 source=file,
                 dest=os.path.join(
                     dest,
-                    typing.cast(str, instance.metadata[Metadata.ID]),
+                    typing.cast(str, item.metadata[Metadata.ID]),
                     "supplementary",
                     new_file_name
                 ),
