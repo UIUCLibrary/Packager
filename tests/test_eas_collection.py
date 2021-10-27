@@ -140,23 +140,32 @@ class TestEASCollection:
                 destination_type.transform(p, output)
         calls = [
             call(
-                source=os.path.join(sample_collection_path, "access",
-                                    "99338384012205899-00000001.tif"),
-                dest=os.path.join(output,
-                                         "99338384012205899",
-                                         "preservation",
-                                         "99338384012205899-00000001.tif"),
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99338384012205899-00000001.tif"
+                ),
+                dest=os.path.join(
+                    output,
+                    "99338384012205899",
+                    "preservation",
+                    "99338384012205899-00000001.tif"
+                ),
                 strategy=ANY,
                 logger=ANY
             ),
             call(
-                source=os.path.join(sample_collection_path,
-                             "access",
-                             "99338384012205899-00000002.tif"),
-                dest=os.path.join(output,
-                             "99338384012205899",
-                             "access",
-                             "99338384012205899-00000002.jp2"),
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99338384012205899-00000002.tif"
+                ),
+                dest=os.path.join(
+                    output,
+                    "99338384012205899",
+                    "access",
+                    "99338384012205899-00000002.jp2"
+                ),
                 strategy=ANY,
                 logger=ANY
             ),
@@ -164,31 +173,42 @@ class TestEASCollection:
                 source=os.path.join(sample_collection_path,
                                     "access",
                                     "99338384012205899-00000002.tif"),
-                dest=os.path.join(output,
-                                         "99338384012205899",
-                                         "preservation",
-                                         "99338384012205899-00000002.tif"),
+                dest=os.path.join(
+                    output,
+                    "99338384012205899",
+                    "preservation",
+                    "99338384012205899-00000002.tif"
+                ),
                 strategy=ANY,
                 logger=ANY
             ),
             call(
-                source=os.path.join(sample_collection_path,
-                             "access",
-                             "99350592312205899-00000001.tif"),
-                dest=os.path.join(output,
-                             "99350592312205899",
-                             "access",
-                             "99350592312205899-00000001.jp2"),
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99350592312205899-00000001.tif"
+                ),
+                dest=os.path.join(
+                    output,
+                    "99350592312205899",
+                    "access",
+                    "99350592312205899-00000001.jp2"
+                ),
                 strategy=ANY,
                 logger=ANY
             ),
             call(
-                source=os.path.join(sample_collection_path, "access",
-                                    "99350592312205899-00000001.tif"),
-                dest=os.path.join(output,
-                                         "99350592312205899",
-                                         "preservation",
-                                         "99350592312205899-00000001.tif"),
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99350592312205899-00000001.tif"
+                ),
+                dest=os.path.join(
+                    output,
+                    "99350592312205899",
+                    "preservation",
+                    "99350592312205899-00000001.tif"
+                ),
                 strategy=ANY,
                 logger=ANY
             ),

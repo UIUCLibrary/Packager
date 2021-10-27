@@ -104,4 +104,3 @@ class TestUseAccessTiffs:
             strategy=packager.transformations.CopyFile,
             logger=ANY
         ) in strategy.process.call_args_list
-
