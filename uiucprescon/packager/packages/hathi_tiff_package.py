@@ -4,8 +4,9 @@ import logging
 import os
 import pathlib
 from typing import Iterator
+import typing
 from uiucprescon.packager.packages import collection_builder
-from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import Package, Item, Instantiation
 from uiucprescon.packager import transformations
 from uiucprescon.packager.common import Metadata
 from .abs_package_builder import AbsPackageBuilder
@@ -37,25 +38,25 @@ class HathiTiff(AbsPackageBuilder):
         """
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
-
+        item: Item
         for item in package:
-            item_name = item.metadata[Metadata.ITEM_NAME]
-            object_name = item.metadata[Metadata.ID]
+            item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
+            object_name = typing.cast(str, item.metadata[Metadata.ID])
             new_item_path = os.path.join(dest, object_name)
             if not os.path.exists(new_item_path):
                 os.makedirs(new_item_path)
 
+            inst: Instantiation
             for inst in item:
-                files = list(inst.get_files())
+                files: typing.List[str] = list(inst.get_files())
                 if len(files) != 1:
                     raise AssertionError(
                         f"Expected 1 file, found {len(files)}")
-
                 for file_ in files:
 
                     _, ext = os.path.splitext(pathlib.Path(file_).name)
 
-                    new_file_name = item_name + ext
+                    new_file_name = f"{item_name}{ext}"
                     new_file_path = os.path.join(new_item_path, new_file_name)
                     self.copy(file_, destination=new_file_path, logger=logger)
 
