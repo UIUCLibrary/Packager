@@ -165,8 +165,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             file_name_parts = self.identify_file_name_parts(file_.name)
             if file_name_parts is None:
                 raise ValueError(
-                    "File does not match expected naming pattern {}".format(
-                        file_.path)
+                    f"File does not match expected naming pattern {file_.path}"
                 )
             if file_name_parts['extension'].lower() != ".tif":
                 continue
