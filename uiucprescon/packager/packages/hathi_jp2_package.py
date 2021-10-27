@@ -7,7 +7,9 @@ import pathlib
 import typing
 from typing import Optional, Iterator
 from uiucprescon.packager.packages import collection_builder
-from uiucprescon.packager.packages.collection import Package, Item, Instantiation
+from uiucprescon.packager.packages.collection import \
+    Package, Item, Instantiation
+
 from uiucprescon.packager.common import Metadata
 from uiucprescon.packager import transformations
 from .abs_package_builder import AbsPackageBuilder
