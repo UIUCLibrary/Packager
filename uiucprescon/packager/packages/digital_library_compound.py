@@ -1,15 +1,360 @@
 """Compound objects for the Medusa Digital Library."""
-
+import abc
 import logging
 import os
 
 import typing
 
-from uiucprescon.packager.packages.collection import Package
+from uiucprescon.packager.packages.collection import \
+    Instantiation, Package, Item
+
 from uiucprescon.packager.common import Metadata, InstantiationTypes
 from uiucprescon.packager import transformations
 from . import collection_builder
 from .abs_package_builder import AbsPackageBuilder
+
+__all__ = [
+    'DigitalLibraryCompound'
+]
+
+
+class AbsItemTransformStrategy(abc.ABC):
+    """Abstract class for transforming Item objects."""
+
+    def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
+        self.logger = logger or logging.getLogger(__name__)
+        super().__init__()
+
+    @abc.abstractmethod
+    def transform_preservation_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        """Transform the preservation files of an item."""
+
+    @abc.abstractmethod
+    def transform_access_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        """Transform the access files of an item."""
+
+    def transform_supplementary_data(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        """Transform the supplementary data of an item."""
+        logger = logger or logging.getLogger(__name__)
+        supplementary = \
+            item.instantiations.get(
+                InstantiationTypes.SUPPLEMENTARY
+            )
+        if supplementary is None:
+            return
+
+        files: typing.Iterable[str] = supplementary.get_files()
+
+        for file in files:
+            new_file_name = os.path.split(file)[-1]
+            self.process(
+                source=file,
+                dest=os.path.join(
+                    dest,
+                    typing.cast(str, item.metadata[Metadata.ID]),
+                    "supplementary",
+                    new_file_name
+                ),
+                strategy=transformations.CopyFile,
+                logger=logger
+            )
+
+    @staticmethod
+    def process(
+            source: str,
+            dest: str,
+            strategy: typing.Type[transformations.AbsTransformation],
+            logger: logging.Logger
+    ) -> None:
+        """Process a file from source to a destination.
+
+        Args:
+            source: path of source file
+            dest: path and file name to generate
+            strategy: the type of transformation to be made
+            logger:
+        """
+        transformer = strategy()
+        output_path = os.path.split(dest)[0]
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        transformer.transform(source, dest, logger)
+
+
+class DigitalLibraryTransformItem:
+    """Transform items for the digital library."""
+
+    def __init__(self, strategy: AbsItemTransformStrategy) -> None:
+        super().__init__()
+        self._strategy = strategy
+
+    def transform_supplementary_data(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        """Transform supplementary file data to destination."""
+        self._strategy.transform_supplementary_data(item, dest, logger)
+
+    def transform_preservation_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        """Transform preservation file to destination."""
+        logger = logger or logging.getLogger(__name__)
+        self._strategy.transform_preservation_file(item, dest, logger)
+
+    def transform_access_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        """Transform access file to destination."""
+        self._strategy.transform_access_file(item, dest, logger)
+
+
+class UseAccessJp2ForAll(AbsItemTransformStrategy):
+    """Transform items using the access file as source for all derived files.
+
+    This is not idea but useful if you need to generate a package for the
+    digital library and you only have access files.
+    """
+
+    def transform_preservation_file(self, item: Item, dest: str,
+                                    logger: typing.Optional[
+                                        logging.Logger]) -> None:
+
+        access = item.instantiations[InstantiationTypes.ACCESS]
+        access_files: typing.List[str] = list(access.get_files())
+        if len(access_files) > 1:
+            raise ValueError(
+                f"transform_preservation_file requires item to have exactly "
+                f"one access instance file, "
+                f"found {len(access_files)}"
+            )
+        access_file = access_files[0]
+        mmsid = item.metadata[Metadata.ID]
+        item_id = access.metadata[Metadata.ITEM_NAME]
+        new_file_name = f"{mmsid}-{item_id}.tif"
+
+        logger = logger or logging.getLogger(__name__)
+
+        logger.warning(
+            "Creating preservation file '%s' from access file '%s'.",
+            new_file_name,
+            access_file
+        )
+
+        self.process(
+            source=access_file,
+            dest=os.path.join(
+                dest,
+                typing.cast(str, item.metadata[Metadata.ID]),
+                "preservation",
+                new_file_name
+            ),
+            strategy=transformations.ConvertTiff,
+            logger=logger
+        )
+
+    def transform_access_file(self, item: Item, dest: str,
+                              logger: typing.Optional[logging.Logger]) -> None:
+        logger = logger or logging.getLogger(__name__)
+        access = item.instantiations[InstantiationTypes.ACCESS]
+        access_files: typing.List[str] = list(access.get_files())
+        if len(access_files) > 1:
+            raise ValueError(
+                f"transform_preservation_file requires item to have exactly "
+                f"one access instance file, "
+                f"found {len(access_files)}"
+            )
+        access_file = access_files[0]
+        mmsid = item.metadata[Metadata.ID]
+        item_id = access.metadata[Metadata.ITEM_NAME]
+        new_file_name = f"{mmsid}-{item_id}.jp2"
+
+        self.process(
+            source=access_file,
+            dest=os.path.join(
+                dest,
+                typing.cast(str, item.metadata[Metadata.ID]),
+                "access",
+                new_file_name
+            ),
+            strategy=transformations.CopyFile,
+            logger=logger
+        )
+
+
+class UseAccessTiffs(AbsItemTransformStrategy):
+    """Access tiff files to generate access jp2.
+
+    Output preservation files use preservation files
+    """
+
+    def transform_preservation_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        logger = logger or logging.getLogger(__name__)
+        preservation = item.instantiations[InstantiationTypes.PRESERVATION]
+        preservation_files: typing.List[str] = list(preservation.get_files())
+
+        if len(preservation_files) > 1:
+            raise ValueError(
+                f"transform_preservation_file requires item to have exactly "
+                f"one preservation instance file, "
+                f"found {len(preservation_files)}"
+            )
+
+        preservation_file = preservation_files[0]
+        mmsid = item.metadata[Metadata.ID]
+        item_id = preservation.metadata[Metadata.ITEM_NAME]
+        new_file_name = f"{mmsid}-{item_id}.tif"
+        self.process(
+            source=preservation_file,
+            dest=os.path.join(
+                dest,
+                typing.cast(str, item.metadata[Metadata.ID]),
+                "preservation",
+                new_file_name
+            ),
+            strategy=transformations.CopyFile,
+            logger=logger
+        )
+
+    def transform_access_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        logger = logger or logging.getLogger(__name__)
+        access = item.instantiations[InstantiationTypes.ACCESS]
+        access_files: typing.List[str] = list(access.get_files())
+
+        if len(access_files) > 1:
+            raise ValueError(
+                f"transform_preservation_file requires item to have exactly "
+                f"one preservation instance file, "
+                f"found {len(access_files)}"
+            )
+
+        access_file = access_files[0]
+        mmsid = item.metadata[Metadata.ID]
+        item_id = access.metadata[Metadata.ITEM_NAME]
+        new_file_name = f"{mmsid}-{item_id}.jp2"
+        self.process(
+            source=access_file,
+            dest=os.path.join(
+                dest,
+                typing.cast(str, item.metadata[Metadata.ID]),
+                "access",
+                new_file_name
+            ),
+            strategy=transformations.ConvertJp2Standard,
+            logger=logger
+        )
+
+
+class UsePreservationForAll(AbsItemTransformStrategy):
+    """Use source preservation file for generating access & preservation files.
+
+    Access jp2s and preservation tiff files use the same source file.
+    """
+
+    def __init__(
+            self,
+            package_builder: "DigitalLibraryCompound",
+    ) -> None:
+        super().__init__()
+        self.package_builder = package_builder
+
+    @staticmethod
+    def _get_transformer(
+            logger: logging.Logger,
+            package_builder: "DigitalLibraryCompound",
+            destination_root: str
+    ) -> "Transform":
+        return Transform(logger, package_builder,
+                         destination_root=destination_root)
+
+    def transform_preservation_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        transformer = self._get_transformer(
+            logger=self.logger or logging.getLogger(__name__),
+            package_builder=self.package_builder,
+            destination_root=dest
+        )
+        item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
+        object_name = typing.cast(str, item.metadata[Metadata.ID])
+
+        instance: Instantiation
+        for instance in item:
+
+            file_: str
+            files: typing.List[str] = instance.get_files()
+            for file_ in files:
+                if instance.category == InstantiationTypes.SUPPLEMENTARY:
+                    continue
+
+                transformer.transform_preservation_file(
+                    file_,
+                    item_name,
+                    object_name
+                )
+
+    def transform_access_file(
+            self,
+            item: Item,
+            dest: str,
+            logger: typing.Optional[logging.Logger]
+    ) -> None:
+        item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
+        object_name = typing.cast(str, item.metadata[Metadata.ID])
+
+        transformer = self._get_transformer(
+            logger=self.logger or logging.getLogger(__name__),
+            package_builder=self.package_builder,
+            destination_root=dest
+        )
+
+        instance: Instantiation
+        for instance in item:
+            for file_ in instance.get_files():
+                if instance.category == InstantiationTypes.SUPPLEMENTARY:
+                    continue
+
+                transformer.transform_access_file(
+                    file_,
+                    item_name,
+                    object_name
+                )
 
 
 class DigitalLibraryCompound(AbsPackageBuilder):
@@ -76,42 +421,56 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             dest: File path to save the transformed package
 
         """
-        logger = logging.getLogger(__name__)
+        logger: logging.Logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
+        item: Item
         for item in package:
-            item_name = item.metadata[Metadata.ITEM_NAME]
-            object_name = item.metadata[Metadata.ID]
+            self.transform_one_item(item, dest, logger=logger)
 
-            transformer = self._get_transformer(
-                logger, self, destination_root=dest
-            )
+    def transform_one_item(
+            self,
+            item: Item,
+            dest: str,
+            transformation_strategy: AbsItemTransformStrategy = None,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        """Transform a single item."""
+        strategy = \
+            transformation_strategy or \
+            self._get_item_transformer_strategy(item)
 
-            for inst in item:
-                files = list(inst.get_files())
-                if len(files) != 1:
-                    raise AssertionError(
-                        f"Each instance should have only 1 file, found "
-                        f"{inst.files}: [{', '.join(inst.files)}]")
+        transformer = \
+            DigitalLibraryTransformItem(strategy)
 
-                for file_ in inst.get_files():
-
-                    if inst.category == InstantiationTypes.SUPPLEMENTARY:
-                        transformer.transform_supplementary_data(file_,
-                                                                 item_name,
-                                                                 object_name)
-                        continue
-
-                    transformer.transform_preservation_file(file_, item_name,
-                                                            object_name)
-
-                    transformer.transform_access_file(file_, item_name,
-                                                      object_name)
+        transformer.transform_supplementary_data(item, dest, logger)
+        transformer.transform_preservation_file(item, dest, logger)
+        transformer.transform_access_file(item, dest, logger)
 
     @staticmethod
     def get_file_base_name(item_name: str) -> str:
         """Get the base name of a file, without an extension."""
         return f"{item_name}"
+
+    def _get_item_transformer_strategy(
+            self,
+            item: Item
+    ) -> AbsItemTransformStrategy:
+
+        access = item.instantiations.get(InstantiationTypes.ACCESS)
+        if access is None:
+            return UsePreservationForAll(
+                package_builder=self,
+            )
+        if any(file.lower().endswith(".jp2") for file in access.files):
+            return UsePreservationForAll(
+                package_builder=self,
+            )
+        # If no preservation files, generate them with the access files
+        preservation = item.instantiations.get(InstantiationTypes.PRESERVATION)
+        if preservation is None:
+            return UseAccessJp2ForAll()
+        return UseAccessTiffs()
 
 
 class Transform:
@@ -180,7 +539,7 @@ class Transform:
             self,
             src: str,
             item_name: str,
-            object_name: str
+            object_name: str,
     ) -> None:
         """Transform the file into an access file.
 

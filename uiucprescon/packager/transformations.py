@@ -92,7 +92,7 @@ class ConvertJp2Standard(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
-        """Transform standard jp200.
+        """Transform standard jp2000.
 
         Args:
             source:
