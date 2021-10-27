@@ -618,7 +618,8 @@ class TestCatalogedTransformToDigitalLibraryCompound:
         assert \
             call(ANY, expected_destination, ANY) in \
             transform.call_args_list, \
-            f"Expecting {expected_destination}. Found: {[x[0][1] for x in transform.call_args_list]}"
+            f"Expecting {expected_destination}. " \
+            f"Found: {[x[0][1] for x in transform.call_args_list]}"
 
         assert \
             call(input_file, expected_destination, ANY) in \
