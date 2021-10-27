@@ -13,6 +13,10 @@ from uiucprescon.packager import transformations
 from . import collection_builder
 from .abs_package_builder import AbsPackageBuilder
 
+__all__ = [
+    'DigitalLibraryCompound'
+]
+
 
 class AbsItemTransformStrategy(abc.ABC):
 
@@ -475,8 +479,10 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             transformation_strategy: AbsItemTransformStrategy = None,
             logger: typing.Optional[logging.Logger] = None
     ) -> None:
-        strategy = transformation_strategy or \
-                   self._get_item_transformer_strategy(item)
+        """Transform a single item."""
+        strategy = \
+            transformation_strategy or \
+            self._get_item_transformer_strategy(item)
 
         transformer = \
             DigitalLibraryTransformItem(strategy)
