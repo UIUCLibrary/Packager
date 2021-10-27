@@ -59,6 +59,14 @@ class AbsItemTransformStrategy(abc.ABC):
             strategy: typing.Type[transformations.AbsTransformation],
             logger: logging.Logger
     ) -> None:
+        """Process a file from source to a destination.
+
+        Args:
+            source: path of source file
+            dest: path and file name to generate
+            strategy: the type of transformation to be made
+            logger:
+        """
         transformer = strategy()
         output_path = os.path.split(dest)[0]
         if not os.path.exists(output_path):
@@ -67,6 +75,7 @@ class AbsItemTransformStrategy(abc.ABC):
 
 
 class DigitalLibraryTransformItem:
+    """Transform items for the digital library."""
 
     def __init__(self, strategy: AbsItemTransformStrategy) -> None:
         super().__init__()
@@ -78,6 +87,7 @@ class DigitalLibraryTransformItem:
             dest: str,
             logger: typing.Optional[logging.Logger]
     ) -> None:
+        """Transform supplementary file data to destination."""
         self._strategy.transform_supplementary_data(item, dest, logger)
 
     def transform_preservation_file(
@@ -86,6 +96,7 @@ class DigitalLibraryTransformItem:
             dest: str,
             logger: typing.Optional[logging.Logger] = None
     ) -> None:
+        """Transform preservation file to destination."""
         logger = logger or logging.getLogger(__name__)
         self._strategy.transform_preservation_file(item, dest, logger)
 
@@ -95,10 +106,16 @@ class DigitalLibraryTransformItem:
             dest: str,
             logger: typing.Optional[logging.Logger]
     ) -> None:
+        """Transform access file to destination."""
         self._strategy.transform_access_file(item, dest, logger)
 
 
 class UseAccessJp2ForAll(AbsItemTransformStrategy):
+    """Transform items using the access file as source for all derived files.
+
+    This is not idea but useful if you need to generate a package for the
+    digital library and you only have access files.
+    """
 
     def transform_preservation_file(self, item: Item, dest: str,
                                     logger: typing.Optional[
