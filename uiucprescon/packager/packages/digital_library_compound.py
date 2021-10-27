@@ -43,15 +43,36 @@ class AbsItemTransformStrategy(abc.ABC):
     ) -> None:
         """Transform the access files of an item."""
 
-    @abc.abstractmethod
     def transform_supplementary_data(
             self,
             item: Item,
             dest: str,
-            logger: typing.Optional[logging.Logger]
+            logger: typing.Optional[logging.Logger] = None
     ) -> None:
         """Transform the supplementary data of an item."""
+        logger = logger or logging.getLogger(__name__)
+        supplementary = \
+            item.instantiations.get(
+                InstantiationTypes.SUPPLEMENTARY
+            )
+        if supplementary is None:
+            return
 
+        files: typing.Iterable[str] = supplementary.get_files()
+
+        for file in files:
+            new_file_name = os.path.split(file)[-1]
+            self.process(
+                source=file,
+                dest=os.path.join(
+                    dest,
+                    typing.cast(str, item.metadata[Metadata.ID]),
+                    "supplementary",
+                    new_file_name
+                ),
+                strategy=transformations.CopyFile,
+                logger=logger
+            )
     @staticmethod
     def process(
             source: str,
@@ -182,35 +203,6 @@ class UseAccessJp2ForAll(AbsItemTransformStrategy):
             logger=logger
         )
 
-    def transform_supplementary_data(
-            self, item: Item,
-            dest: str,
-            logger: typing.Optional[logging.Logger]
-    ) -> None:
-        logger = logger or logging.getLogger(__name__)
-        supplementary = \
-            item.instantiations.get(
-                InstantiationTypes.SUPPLEMENTARY
-            )
-        if supplementary is None:
-            return
-
-        files: typing.Iterable[str] = supplementary.get_files()
-
-        for file in files:
-            new_file_name = os.path.split(file)[-1]
-            self.process(
-                source=file,
-                dest=os.path.join(
-                    dest,
-                    typing.cast(str, item.metadata[Metadata.ID]),
-                    "supplementary",
-                    new_file_name
-                ),
-                strategy=transformations.CopyFile,
-                logger=logger
-            )
-
 
 class UseAccessTiffs(AbsItemTransformStrategy):
     """Access tiff files to generate access jp2.
@@ -283,36 +275,6 @@ class UseAccessTiffs(AbsItemTransformStrategy):
             strategy=transformations.ConvertJp2Standard,
             logger=logger
         )
-
-    def transform_supplementary_data(
-            self,
-            item: Item,
-            dest: str,
-            logger: typing.Optional[logging.Logger] = None
-    ) -> None:
-        logger = logger or logging.getLogger(__name__)
-        supplementary = \
-            item.instantiations.get(
-                InstantiationTypes.SUPPLEMENTARY
-            )
-        if supplementary is None:
-            return
-
-        files: typing.Iterable[str] = supplementary.get_files()
-
-        for file in files:
-            new_file_name = os.path.split(file)[-1]
-            self.process(
-                source=file,
-                dest=os.path.join(
-                    dest,
-                    typing.cast(str, item.metadata[Metadata.ID]),
-                    "supplementary",
-                    new_file_name
-                ),
-                strategy=transformations.CopyFile,
-                logger=logger
-            )
 
 
 class UsePreservationForAll(AbsItemTransformStrategy):
@@ -388,33 +350,6 @@ class UsePreservationForAll(AbsItemTransformStrategy):
                     continue
 
                 transformer.transform_access_file(
-                    file_,
-                    item_name,
-                    object_name
-                )
-
-    def transform_supplementary_data(
-            self,
-            item: Item,
-            dest: str,
-            logger: typing.Optional[logging.Logger]
-    ) -> None:
-        item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
-        object_name = typing.cast(str, item.metadata[Metadata.ID])
-
-        instance: Instantiation
-        for instance in item:
-            if instance.category != InstantiationTypes.SUPPLEMENTARY:
-                continue
-            transformer = self._get_transformer(
-                logger=self.logger or logging.getLogger(__name__),
-                package_builder=self.package_builder,
-                destination_root=dest
-            )
-
-            file_: str
-            for file_ in instance.get_files():
-                transformer.transform_supplementary_data(
                     file_,
                     item_name,
                     object_name
