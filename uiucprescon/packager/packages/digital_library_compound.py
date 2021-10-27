@@ -73,6 +73,7 @@ class AbsItemTransformStrategy(abc.ABC):
                 strategy=transformations.CopyFile,
                 logger=logger
             )
+
     @staticmethod
     def process(
             source: str,
