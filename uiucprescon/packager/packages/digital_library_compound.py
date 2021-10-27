@@ -60,6 +60,7 @@ class AbsItemTransformStrategy(abc.ABC):
             os.makedirs(output_path)
         transformer.transform(source, dest, logger)
 
+
 class DigitalLibraryTransformItem:
 
     def __init__(self, strategy: AbsItemTransformStrategy) -> None:
