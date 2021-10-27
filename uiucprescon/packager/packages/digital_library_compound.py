@@ -47,6 +47,18 @@ class AbsItemTransformStrategy(abc.ABC):
     ) -> None:
         pass
 
+    def process(
+            self,
+            source: str,
+            dest: str,
+            strategy: typing.Type[transformations.AbsTransformation],
+            logger: logging.Logger
+    ) -> None:
+        transformer = strategy()
+        output_path = os.path.split(dest)[0]
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        transformer.transform(source, dest, logger)
 
 class DigitalLibraryTransformItem:
 
@@ -118,16 +130,6 @@ class UseAccessJp2ForAll(AbsItemTransformStrategy):
             strategy=transformations.ConvertTiff,
             logger=logger
         )
-
-    def process(
-            self,
-            source: str,
-            dest: str,
-            strategy: typing.Type[transformations.AbsTransformation],
-            logger: logging.Logger
-    ) -> None:
-        transformer = strategy()
-        transformer.transform(source, dest, logger)
 
     def transform_access_file(self, item: Item, dest: str,
                               logger: typing.Optional[logging.Logger]) -> None:
@@ -223,16 +225,6 @@ class UseAccessTiffs(AbsItemTransformStrategy):
             strategy=transformations.CopyFile,
             logger=logger
         )
-
-    def process(
-            self,
-            source: str,
-            dest: str,
-            strategy: typing.Type[transformations.AbsTransformation],
-            logger: logging.Logger
-    ) -> None:
-        transformer = strategy()
-        transformer.transform(source, dest, logger)
 
     def transform_access_file(
             self,
