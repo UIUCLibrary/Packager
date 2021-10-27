@@ -462,7 +462,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
             return UsePreservationForAll(
                 package_builder=self,
             )
-        if any(file.lower().endswith(".jp2") for file in access.files):
+        if any(file.lower().endswith(".jp2") for file in access.get_files()):
             return UsePreservationForAll(
                 package_builder=self,
             )
