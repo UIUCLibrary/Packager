@@ -160,7 +160,7 @@ class Item(AbsPackageComponent):
              parent: parent this item belongs to
         """
         super().__init__(parent)
-        self.instantiations: Dict[str, Instantiation] = {}
+        self.instantiations: Dict[InstantiationTypes, Instantiation] = {}
 
     @property
     def children(self):

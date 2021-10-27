@@ -1,6 +1,6 @@
 import os.path
 import pathlib
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, ANY
 
 import pytest
 
@@ -122,8 +122,14 @@ class TestEASCollection:
         output = "out"
 
         transform = Mock()
+        process = Mock()
         with monkeypatch.context() as mp:
 
+            mp.setattr(
+                packager.packages.digital_library_compound.UseAccessJp2ForAll,
+                "process",
+                process
+            )
             mp.setattr(
                 packager.transformations.Transformers,
                 "transform",
@@ -132,80 +138,94 @@ class TestEASCollection:
 
             for p in packages:
                 destination_type.transform(p, output)
-                assert transform.called is True
-
-        transform.assert_has_calls(
-            [
-                call(
-                    os.path.join(sample_collection_path,
-                                 "access",
-                                 "99338384012205899-00000001.tif"),
-                    os.path.join(output,
-                                 "99338384012205899",
-                                 "access",
-                                 "99338384012205899-00000001.jp2")
+        calls = [
+            call(
+                source=os.path.join(sample_collection_path, "access",
+                                    "99338384012205899-00000001.tif"),
+                dest=os.path.join(output,
+                                         "99338384012205899",
+                                         "preservation",
+                                         "99338384012205899-00000001.tif"),
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(sample_collection_path,
+                             "access",
+                             "99338384012205899-00000002.tif"),
+                dest=os.path.join(output,
+                             "99338384012205899",
+                             "access",
+                             "99338384012205899-00000002.jp2"),
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(sample_collection_path,
+                                    "access",
+                                    "99338384012205899-00000002.tif"),
+                dest=os.path.join(output,
+                                         "99338384012205899",
+                                         "preservation",
+                                         "99338384012205899-00000002.tif"),
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(sample_collection_path,
+                             "access",
+                             "99350592312205899-00000001.tif"),
+                dest=os.path.join(output,
+                             "99350592312205899",
+                             "access",
+                             "99350592312205899-00000001.jp2"),
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(sample_collection_path, "access",
+                                    "99350592312205899-00000001.tif"),
+                dest=os.path.join(output,
+                                         "99350592312205899",
+                                         "preservation",
+                                         "99350592312205899-00000001.tif"),
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99350592312205899-00000002.tif"
                 ),
-                call(
-                    source=os.path.join(sample_collection_path, "access",
-                                        "99338384012205899-00000001.tif"),
-                    destination=os.path.join(output,
-                                             "99338384012205899",
-                                             "preservation",
-                                             "99338384012205899-00000001.tif")
+                dest=os.path.join(
+                    output,
+                    "99350592312205899",
+                    "access",
+                    "99350592312205899-00000002.jp2"
                 ),
-                call(
-                    os.path.join(sample_collection_path,
-                                 "access",
-                                 "99338384012205899-00000002.tif"),
-                    os.path.join(output,
-                                 "99338384012205899",
-                                 "access",
-                                 "99338384012205899-00000002.jp2")
+                strategy=ANY,
+                logger=ANY
+            ),
+            call(
+                source=os.path.join(
+                    sample_collection_path,
+                    "access",
+                    "99350592312205899-00000002.tif"
                 ),
-                call(
-                    source=os.path.join(sample_collection_path,
-                                        "access",
-                                        "99338384012205899-00000002.tif"),
-                    destination=os.path.join(output,
-                                             "99338384012205899",
-                                             "preservation",
-                                             "99338384012205899-00000002.tif")
+                dest=os.path.join(
+                    output,
+                    "99350592312205899",
+                    "preservation",
+                    "99350592312205899-00000002.tif"
                 ),
-                call(
-                    os.path.join(sample_collection_path,
-                                 "access",
-                                 "99350592312205899-00000001.tif"),
-                    os.path.join(output,
-                                 "99350592312205899",
-                                 "access",
-                                 "99350592312205899-00000001.jp2")
-                ),
-                call(
-                    source=os.path.join(sample_collection_path, "access",
-                                        "99350592312205899-00000001.tif"),
-                    destination=os.path.join(output,
-                                             "99350592312205899",
-                                             "preservation",
-                                             "99350592312205899-00000001.tif")
-                ),
-                call(
-                    os.path.join(sample_collection_path,
-                                 "access",
-                                 "99350592312205899-00000002.tif"),
-                    os.path.join(output,
-                                 "99350592312205899",
-                                 "access",
-                                 "99350592312205899-00000002.jp2")),
-                call(
-                    source=os.path.join(sample_collection_path, "access",
-                                        "99350592312205899-00000002.tif"),
-                    destination=os.path.join(output,
-                                             "99350592312205899",
-                                             "preservation",
-                                             "99350592312205899-00000002.tif"))
-            ],
-            any_order=True
-        )
+                strategy=ANY,
+                logger=ANY
+            )
+        ]
+        for c in calls:
+            assert c in process.mock_calls, \
+                f"Expected: {c} found: {process.mock_calls}"
 
 
 class TestEASBuilder:
