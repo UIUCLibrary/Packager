@@ -51,7 +51,7 @@ class CopyFile(AbsTransformation):
         """
         dest = os.path.abspath(os.path.dirname(destination))
         source_name = os.path.basename(source)
-        logger.debug("Copying {} to {}".format(source_name, dest))
+        logger.debug(f"Copying {source_name} to {dest}")
         self.copy(source, destination)
         return destination
 
@@ -78,7 +78,7 @@ class ConvertTiff(AbsTransformation):
         new_name = f"{base_name}.tif"
         dest = os.path.abspath(os.path.dirname(destination))
         self.make_tiff(source, destination)
-        logger.info("Generated {} in {}".format(new_name, dest))
+        logger.info(f"Generated {new_name} in {dest}")
         return new_name
 
     @staticmethod
@@ -92,7 +92,7 @@ class ConvertJp2Standard(AbsTransformation):
 
     def transform(self, source: str, destination: str,
                   logger: logging.Logger) -> str:
-        """Transform standard jp200.
+        """Transform standard jp2000.
 
         Args:
             source:

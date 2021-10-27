@@ -326,6 +326,11 @@ pipeline {
                                                 }
                                             }
                                         }
+                                        stage('Task Scanner'){
+                                            steps{
+                                                recordIssues(tools: [taskScanner(highTags: 'FIXME', includePattern: 'uiucprescon/**/*.py', normalTags: 'TODO')])
+                                            }
+                                        }
                                         stage("Run Doctest Tests"){
                                             steps {
                                                 sh "coverage run --parallel-mode --source uiucprescon -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log"

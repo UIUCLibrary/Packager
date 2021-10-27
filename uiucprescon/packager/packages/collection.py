@@ -47,16 +47,20 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
         self.parent.children.append(child)
 
     def __len__(self) -> int:
+        """Get the number of children."""
         return len(self.children)
 
     def __getitem__(self, item) -> Type["AbsPackageComponent"]:
+        """Get a specific child."""
         return self.children[item]
 
     def __iter__(self):
+        """Iterate of the children."""
         return self.children.__iter__()
 
     def __str__(self) -> str:
-        return "{} {}".format(super().__str__(), dict(self.metadata))
+        """Present the name and metadata of the given component."""
+        return f"{super().__str__()} {dict(self.metadata)}"
 
     @property
     @abc.abstractmethod
@@ -83,6 +87,7 @@ class Batch(AbsPackageComponent):
 
     @property
     def children(self):
+        """Get the packages that belong to the given batch."""
         return self.packages
 
     def __init__(
@@ -160,7 +165,7 @@ class Item(AbsPackageComponent):
              parent: parent this item belongs to
         """
         super().__init__(parent)
-        self.instantiations: Dict[str, Instantiation] = {}
+        self.instantiations: Dict[InstantiationTypes, Instantiation] = {}
 
     @property
     def children(self):

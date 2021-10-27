@@ -1,5 +1,5 @@
 import os
-from unittest.mock import Mock, ANY
+from unittest.mock import Mock, ANY, call
 import typing
 import pytest
 
@@ -155,6 +155,16 @@ class TestArchivalNonEAS:
             mp.setattr(
                 packager.transformations.Transformers, "transform", transform
             )
+            mp.setattr(
+                uiucprescon.packager.transformations.CopyFile,
+                "transform",
+                transform
+            )
+            mp.setattr(
+                uiucprescon.packager.transformations.ConvertJp2Standard,
+                "transform",
+                transform
+            )
             mp.setattr(shutil, "copyfile", Mock())
             mp.setattr(shutil, "copy", Mock())
             import pykdu_compress
@@ -191,7 +201,12 @@ class TestArchivalNonEAS:
         assert transform.called is True
         expected_source = os.path.join(root, input_file)
         expected_destination = os.path.join(output_path, output_file)
-        transform.assert_any_call(expected_source, expected_destination)
+
+        assert \
+            call(expected_source, expected_destination, ANY) in \
+            transform.call_args_list, \
+            f"Expected {expected_source} source, " \
+            f"got {[x.args[0] for x in transform.call_args_list]}"
 
     @pytest.mark.parametrize('input_file, output_file', [
         (
@@ -223,8 +238,9 @@ class TestArchivalNonEAS:
         output_path, transform = transformed_to_dl_compound
         assert transform.called is True
         transform.assert_any_call(
-            source=os.path.join(root, input_file),
-            destination=os.path.join(output_path, output_file)
+            os.path.join(root, input_file),
+            os.path.join(output_path, output_file),
+            ANY
         )
 
     @pytest.fixture()
@@ -534,6 +550,17 @@ class TestCatalogedTransformToDigitalLibraryCompound:
                 packager.transformations.Transformers,
                 "transform", mock_transform
             )
+            monkeypatch.setattr(
+                uiucprescon.packager.transformations.CopyFile,
+                "transform",
+                transform
+            )
+            monkeypatch.setattr(
+                uiucprescon.packager.transformations.ConvertJp2Standard,
+                "transform",
+                transform
+            )
+
             for package in list(factory.locate_packages(root)):
                 digital_library_format.transform(package, output_path)
 
@@ -578,13 +605,25 @@ class TestCatalogedTransformToDigitalLibraryCompound:
         ),
     ])
     def test_transform(
-            self, transformed_to_dl_compound, input_file, output_file):
+            self,
+            transformed_to_dl_compound,
+            input_file,
+            output_file,
+            monkeypatch
+    ):
 
         output_path, transform = transformed_to_dl_compound
         assert transform.called is True
         expected_destination = os.path.join(output_path, output_file)
-        transform.assert_any_call(source=input_file,
-                                  destination=expected_destination)
+        assert \
+            call(ANY, expected_destination, ANY) in \
+            transform.call_args_list, \
+            f"Expecting {expected_destination}. " \
+            f"Found: {[x[0][1] for x in transform.call_args_list]}"
+
+        assert \
+            call(input_file, expected_destination, ANY) in \
+            transform.call_args_list
 
 
 class TestTransform:
@@ -688,9 +727,32 @@ class TestTransform:
             "transform",
             transform
         )
+
+        transform2 = Mock(spec=lambda source, destination, logger: None)
+        monkeypatch.setattr(
+            uiucprescon.packager.transformations.CopyFile,
+            "transform",
+            transform2
+        )
+        monkeypatch.setattr(
+            uiucprescon.packager.transformations.ConvertJp2Standard,
+            "transform",
+            transform2
+        )
+
         output_dir = "output"
         factory = packager.PackageFactory(noneas.CatalogedNonEAS())
         for p in factory.locate_packages(cataloged_collection(source_file)):
             packager.PackageFactory(package_type()).transform(p, output_dir)
 
-        transform.assert_any_call(ANY, os.path.join(output_dir, expected_out))
+        if package_type == hathi_jp2_package.HathiJp2:
+            transform.assert_any_call(
+                ANY, os.path.join(output_dir, expected_out)
+            )
+
+        elif package_type == digital_library_compound.DigitalLibraryCompound:
+            transform2.assert_any_call(
+                ANY, os.path.join(output_dir, expected_out), ANY
+            )
+        else:
+            assert False, f"testing '{package_type}' not supported"

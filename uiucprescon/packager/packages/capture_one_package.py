@@ -84,7 +84,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
                 group_ids.add(group_id)
             except ValueError as error:
                 raise ValueError(
-                    "Unable to split {}".format(file_.name)) from error
+                    f"Unable to split {file_.name}") from error
 
         for object_name in sorted(group_ids):
             new_object = collection.PackageObject(parent=new_batch)
@@ -128,8 +128,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             file_name_parts = self.identify_file_name_parts(item.name)
             if file_name_parts is None:
                 raise ValueError(
-                    "File does not match expected naming pattern {}".format(
-                        item.path)
+                    f"File does not match expected naming pattern {item.path}"
                 )
             item_group = file_name_parts['group']
             item_inst = file_name_parts['part']
@@ -165,8 +164,7 @@ class CaptureOneBuilder(collection_builder.AbsCollectionBuilder):
             file_name_parts = self.identify_file_name_parts(file_.name)
             if file_name_parts is None:
                 raise ValueError(
-                    "File does not match expected naming pattern {}".format(
-                        file_.path)
+                    f"File does not match expected naming pattern {file_.path}"
                 )
             if file_name_parts['extension'].lower() != ".tif":
                 continue
