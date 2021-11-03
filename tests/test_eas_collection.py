@@ -100,7 +100,7 @@ class TestEASCollection:
         transform = Mock()
 
         monkeypatch.setattr(
-            packager.packages.hathi_jp2_package.transformations.Transformers,
+            packager.transformations.Transformers,
             "transform",
             transform
         )
