@@ -439,9 +439,11 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             **kwargs
     ) -> None:
         """Build Instance."""
-        access_file = os.path.join(path, "access", filename + ".jp2")
+        access_path = os.path.join(path, "access")
+        access_file = os.path.join(access_path, filename + ".jp2")
 
-        preservation_file = os.path.join(path, "preservation",
+        preservation_path = os.path.join(path, "preservation")
+        preservation_file = os.path.join(preservation_path,
                                          filename + ".tif")
 
         if not os.path.exists(access_file):
@@ -451,15 +453,24 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             raise FileNotFoundError(
                 f"Preservation file {preservation_file} not found")
 
-        Instantiation(category=InstantiationTypes.ACCESS,
-                      parent=parent,
-                      files=[access_file])
+        access_instance = \
+            Instantiation(
+                category=InstantiationTypes.ACCESS,
+                parent=parent,
+                files=[access_file]
+            )
 
-        Instantiation(
+        access_instance.component_metadata[Metadata.PATH] = \
+            access_path
+
+        preservation_instance = Instantiation(
             category=InstantiationTypes.PRESERVATION,
             parent=parent,
             files=[preservation_file]
         )
+
+        preservation_instance.component_metadata[Metadata.PATH] = \
+            preservation_path
 
     @staticmethod
     def file_type_filter(item: 'os.DirEntry[str]',
@@ -505,9 +516,11 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
                     f"{os.path.splitext(access_file.name)[0]} should be the "
                     f"same name {os.path.splitext(preservation_file.name)[0]}")
 
-            item_id = os.path.splitext(access_file.name)[0]
+            base_name = os.path.splitext(access_file.name)[0]
+            item_id = base_name.split("-")[-1]
             new_item = Item(parent=parent)
-            self.build_instance(new_item, filename=item_id, path=path)
+            new_item.component_metadata[Metadata.ITEM_NAME] = item_id
+            self.build_instance(new_item, filename=base_name, path=path)
 
 
 class HathiLimitedViewBuilder(AbsCollectionBuilder):
