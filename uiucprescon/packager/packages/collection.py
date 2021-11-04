@@ -214,14 +214,29 @@ class Instantiation(AbsPackageComponent):
 
         """
         temp_dir = TemporaryDirectory()
+        if self.parent is None:
+            raise ValueError(
+                "Unable to get files if instance is missing a parent"
+            )
+
+        parent_path = self.parent.metadata.get(Metadata.PATH)
+        if parent_path is None:
+            raise KeyError(f"parent for {self} is missing path metadata")
+        parent_path = typing.cast(str, parent_path)
+
+        instance_path = self.metadata.get(Metadata.PATH)
+        if instance_path is None:
+            raise KeyError('Instance is missing path metadata')
+        instance_path = typing.cast(str, instance_path)
+
         for pkg_file in self._files:
-            if ".zip" in self.parent.metadata[Metadata.PATH]:
-                zip_file_name = self.parent.metadata[Metadata.PATH]
+            if ".zip" in parent_path:
+                zip_file_name = parent_path
                 with ZipFile(zip_file_name) as zip_file:
 
                     # On Windows ZipFile expects unix-style slashes
                     file_to_extract = \
-                        os.path.join(self.metadata[Metadata.PATH],
+                        os.path.join(instance_path,
                                      pkg_file).replace("\\", "/")
                     try:
                         yield zip_file.extract(file_to_extract,
@@ -234,7 +249,7 @@ class Instantiation(AbsPackageComponent):
                         ) from error
 
             else:
-                yield os.path.join(self.metadata[Metadata.PATH], pkg_file)
+                yield os.path.join(instance_path, pkg_file)
 
     @property
     def children(self):
