@@ -1,6 +1,7 @@
 """Packaged files for submitting to HathiTrust with JPEG 2000 files."""
 
 # pylint: disable=unsubscriptable-object
+import abc
 import itertools
 import logging
 import os
@@ -16,6 +17,128 @@ from uiucprescon.packager.common import \
     InstantiationTypes
 from .abs_package_builder import AbsPackageBuilder
 from .collection_builder import AbsCollectionBuilder
+
+
+class AbsItemTransformStrategy(abc.ABC):
+    """Abstract class for transforming Item objects."""
+
+    def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
+        self.logger = logger or logging.getLogger(__name__)
+        super().__init__()
+
+    @abc.abstractmethod
+    def transform_access_file(
+            self,
+            item: Item,
+            dest: str
+    ) -> None:
+        """Transform the access files of an item."""
+
+
+class CopyStrategy(AbsItemTransformStrategy):
+
+    def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
+        super().__init__(logger)
+        self.transformer = packager.transformations.Transformers(
+            strategy=packager.transformations.CopyFile(),
+            logger=logger
+        )
+
+    def transform_access_file(self, item: Item, dest: str) -> None:
+        item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
+        object_name = typing.cast(str, item.metadata[Metadata.ID])
+        new_item_path = os.path.join(dest, object_name)
+
+        inst: Instantiation = self.get_instance(
+            item,
+            InstantiationTypes.ACCESS
+        )
+
+        files = list(inst.get_files())
+        if len(files) != 1:
+            raise AssertionError(
+                f"Expected 1 file, found {len(files)}")
+
+        for file_ in files:
+            file_name = pathlib.Path(file_).name
+            _, ext = os.path.splitext(file_name)
+
+            new_file_name = str(int(item_name)).zfill(8) + ".jp2"
+            new_file_path = os.path.join(new_item_path, new_file_name)
+            self.transform_file(file_, new_file_path)
+
+    def transform_file(self, source: str, destination: str) -> None:
+        self.transformer.transform(
+            source=source,
+            destination=destination)
+
+    @staticmethod
+    def get_instance(
+            item: Item,
+            instance_type: InstantiationTypes
+    ) -> Instantiation:
+        for inst in item:
+            if inst.category == instance_type:
+                return inst
+        raise KeyError(f"Missing instance type: {instance_type.name}")
+
+
+class ConvertStrategy(AbsItemTransformStrategy):
+
+    def __init__(
+            self,
+            instance_source: InstantiationTypes,
+            logger: typing.Optional[logging.Logger] = None
+    ) -> None:
+        super().__init__(logger)
+        self._instance_type = instance_source
+
+    def transform_access_file(self, item: Item, dest: str) -> None:
+
+        inst = item.instantiations[self._instance_type]
+        files = list(inst.get_files())
+        if len(files) != 1:
+            raise AssertionError(
+                "transform_access_file only works with an instance that has "
+                "a single file"
+            )
+        source = files[0]
+        new_file_path = self.get_output_name(item, source, dest)
+        self.convert(source, new_file_path)
+
+    @staticmethod
+    def get_output_name(
+            reference_item: Item,
+            reference_file: str,
+            dest: str
+    ) -> str:
+
+        item_name = typing.cast(
+            str,
+            reference_item.metadata[Metadata.ITEM_NAME]
+        )
+
+        object_name = typing.cast(
+            str,
+            reference_item.metadata[Metadata.ID]
+        )
+
+        new_item_path = os.path.join(dest, object_name)
+
+        file_name = pathlib.Path(reference_file).name
+        _, ext = os.path.splitext(file_name)
+
+        new_file_name = str(int(item_name)).zfill(8) + ".jp2"
+        return os.path.join(new_item_path, new_file_name)
+
+    def convert(self, source: str, destination: str) -> None:
+        file_transformer = packager.transformations.Transformers(
+            strategy=packager.transformations.ConvertJp2Hathi(),
+            logger=self.logger
+        )
+        if pathlib.Path(destination).parent.exists() is False:
+            pathlib.Path(destination).parent.mkdir()
+        file_transformer.transform(source, destination)
 
 
 class HathiJp2(AbsPackageBuilder):
@@ -47,7 +170,21 @@ class HathiJp2(AbsPackageBuilder):
         logger.setLevel(AbsPackageBuilder.log_level)
         item: Item
         for item in package:
-            self.transform_one(item, dest, logger)
+            transformation_strategy = self._get_item_transformer_strategy(item)
+            self.transform_one_item(item, dest, transformation_strategy)
+
+    def transform_one_item(
+            self,
+            item: Item,
+            dest: str,
+            transformation_strategy: AbsItemTransformStrategy = None,
+    ) -> None:
+        """Transform a single item."""
+        strategy = \
+            transformation_strategy or \
+            self._get_item_transformer_strategy(item)
+
+        strategy.transform_access_file(item, dest)
 
     @staticmethod
     def transform_one(
@@ -76,10 +213,10 @@ class HathiJp2(AbsPackageBuilder):
                 raise AssertionError(
                     f"Expected 1 file, found {len(files)}")
 
-            file_: str
+            # file_: str
             for file_ in files:
-                file_ = pathlib.Path(file_).name
-                _, ext = os.path.splitext(file_)
+                file_name = pathlib.Path(file_).name
+                _, ext = os.path.splitext(file_name)
 
                 if ext.lower() == ".jp2":
 
@@ -98,11 +235,20 @@ class HathiJp2(AbsPackageBuilder):
                 new_file_path = os.path.join(new_item_path, new_file_name)
 
                 file_transformer.transform(
-                    source=os.path.join(
-                        typing.cast(str, inst.metadata[Metadata.PATH]),
-                        file_
-                    ),
+                    source=file_,
                     destination=new_file_path)
+
+    def _get_item_transformer_strategy(
+            self,
+            item: Item
+    ) -> AbsItemTransformStrategy:
+
+        if InstantiationTypes.ACCESS in item.instantiations:
+            access = item.instantiations[InstantiationTypes.ACCESS]
+            if any(f.lower().endswith(".tif") for f in access.get_files()):
+                return ConvertStrategy(InstantiationTypes.ACCESS)
+            return CopyStrategy()
+        return ConvertStrategy(InstantiationTypes.PRESERVATION)
 
 
 class HathiJp2Builder(AbsCollectionBuilder):
