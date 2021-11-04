@@ -618,11 +618,8 @@ class HathiLimitedViewBuilder(AbsCollectionBuilder):
             raise AssertionError(f"Expected {path} to have 1 mets.xml file, "
                                  f"found {len(mets_files)}")
         if len(invalid_files) != 0:
-            print(
-                "Found invalid files {}".format(
-                    ",".join(file.path for file in invalid_files)
-                )
-            )
+            invalid_file_paths = ",".join(file.path for file in invalid_files)
+            print(f"Found invalid files {invalid_file_paths}")
 
         contents = self.get_zip_content(package_builder, zip_files)
 
