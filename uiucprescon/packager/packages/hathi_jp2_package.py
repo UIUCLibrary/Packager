@@ -19,7 +19,10 @@ from .abs_package_builder import AbsPackageBuilder
 from .collection_builder import AbsCollectionBuilder
 
 
-class AbsItemTransformStrategy(abc.ABC):
+__all__ = ['HathiJp2']
+
+
+class AbsItemTransformStrategy(abc.ABC):  # pylint: disable=R0903
     """Abstract class for transforming Item objects."""
 
     def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
@@ -36,6 +39,7 @@ class AbsItemTransformStrategy(abc.ABC):
 
 
 class CopyStrategy(AbsItemTransformStrategy):
+    """Copy files without modifying them."""
 
     def __init__(self, logger: typing.Optional[logging.Logger] = None) -> None:
         super().__init__(logger)
@@ -48,11 +52,7 @@ class CopyStrategy(AbsItemTransformStrategy):
         item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
         object_name = typing.cast(str, item.metadata[Metadata.ID])
         new_item_path = os.path.join(dest, object_name)
-
-        inst: Instantiation = self.get_instance(
-            item,
-            InstantiationTypes.ACCESS
-        )
+        inst = item.instantiations[InstantiationTypes.ACCESS]
 
         files = list(inst.get_files())
         if len(files) != 1:
@@ -68,22 +68,17 @@ class CopyStrategy(AbsItemTransformStrategy):
             self.transform_file(file_, new_file_path)
 
     def transform_file(self, source: str, destination: str) -> None:
+        """Copy file from source to destination."""
         self.transformer.transform(
             source=source,
             destination=destination)
 
-    @staticmethod
-    def get_instance(
-            item: Item,
-            instance_type: InstantiationTypes
-    ) -> Instantiation:
-        for inst in item:
-            if inst.category == instance_type:
-                return inst
-        raise KeyError(f"Missing instance type: {instance_type.name}")
-
 
 class ConvertStrategy(AbsItemTransformStrategy):
+    """Convert file from one format into another.
+
+    This is most likely going to be a jp2000 file format.
+    """
 
     def __init__(
             self,
@@ -108,7 +103,7 @@ class ConvertStrategy(AbsItemTransformStrategy):
 
     @staticmethod
     def get_output_name(reference_item: Item, dest: str) -> str:
-
+        """Derive output file name and path from reference item."""
         item_name = typing.cast(
             str,
             reference_item.metadata[Metadata.ITEM_NAME]
@@ -125,6 +120,7 @@ class ConvertStrategy(AbsItemTransformStrategy):
         return os.path.join(new_item_path, new_file_name)
 
     def convert(self, source: str, destination: str) -> None:
+        """Generate a new image file into the destination path."""
         file_transformer = packager.transformations.Transformers(
             strategy=packager.transformations.ConvertJp2Hathi(),
             logger=self.logger
