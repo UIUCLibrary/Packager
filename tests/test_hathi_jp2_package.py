@@ -195,7 +195,10 @@ class TestConvertStrategy:
         capture_one_tiff = collection.Item()
 
         capture_one_tiff.component_metadata[collection.Metadata.ID] = "123"
-        capture_one_tiff.component_metadata[collection.Metadata.PATH] = "source"
+
+        capture_one_tiff.component_metadata[collection.Metadata.PATH] \
+            = "source"
+
         capture_one_tiff.component_metadata[
             collection.Metadata.ITEM_NAME] = '00000001'
 
