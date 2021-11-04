@@ -5,7 +5,7 @@ import collections
 import os
 import typing
 from tempfile import TemporaryDirectory
-from typing import Optional, Union, Dict, ChainMap, Type, List, Tuple
+from typing import Optional, Union, Dict, ChainMap, List, Tuple
 import warnings
 from zipfile import ZipFile
 
