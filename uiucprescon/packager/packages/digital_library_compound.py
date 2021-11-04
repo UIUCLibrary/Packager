@@ -318,7 +318,7 @@ class UsePreservationForAll(AbsItemTransformStrategy):
         for instance in item:
 
             file_: str
-            files: typing.List[str] = instance.get_files()
+            files: typing.Iterable[str] = instance.get_files()
             for file_ in files:
                 if instance.category == InstantiationTypes.SUPPLEMENTARY:
                     continue
@@ -374,7 +374,7 @@ class DigitalLibraryCompound(AbsPackageBuilder):
              - uniqueID2-00000001.tif
              - uniqueID2-00000002.tif
          + access (folder)
-             - uniqueID2=00000001.jp2
+             - uniqueID2-00000001.jp2
              - uniqueID2-00000002.jp2
 
     .. versionchanged:: 0.1.3

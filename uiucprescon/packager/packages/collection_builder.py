@@ -418,6 +418,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
 
+        dir_: os.DirEntry[str]
         for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
             new_object = PackageObject(parent=new_batch)
             new_object.component_metadata[Metadata.ID] = dir_.name
@@ -438,9 +439,11 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             **kwargs
     ) -> None:
         """Build Instance."""
-        access_file = os.path.join(path, "access", filename + ".jp2")
+        access_path = os.path.join(path, "access")
+        access_file = os.path.join(access_path, filename + ".jp2")
 
-        preservation_file = os.path.join(path, "preservation",
+        preservation_path = os.path.join(path, "preservation")
+        preservation_file = os.path.join(preservation_path,
                                          filename + ".tif")
 
         if not os.path.exists(access_file):
@@ -450,15 +453,24 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
             raise FileNotFoundError(
                 f"Preservation file {preservation_file} not found")
 
-        Instantiation(category=InstantiationTypes.ACCESS,
-                      parent=parent,
-                      files=[access_file])
+        access_instance = \
+            Instantiation(
+                category=InstantiationTypes.ACCESS,
+                parent=parent,
+                files=[access_file]
+            )
 
-        Instantiation(
+        access_instance.component_metadata[Metadata.PATH] = \
+            access_path
+
+        preservation_instance = Instantiation(
             category=InstantiationTypes.PRESERVATION,
             parent=parent,
             files=[preservation_file]
         )
+
+        preservation_instance.component_metadata[Metadata.PATH] = \
+            preservation_path
 
     @staticmethod
     def file_type_filter(item: 'os.DirEntry[str]',
@@ -504,88 +516,11 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
                     f"{os.path.splitext(access_file.name)[0]} should be the "
                     f"same name {os.path.splitext(preservation_file.name)[0]}")
 
-            item_id = os.path.splitext(access_file.name)[0]
+            base_name = os.path.splitext(access_file.name)[0]
+            item_id = base_name.split("-")[-1]
             new_item = Item(parent=parent)
-            self.build_instance(new_item, filename=item_id, path=path)
-
-
-class HathiJp2Builder(AbsCollectionBuilder):
-    """HathiJp2Builder."""
-
-    def build_batch(self, root: str) -> AbsPackageComponent:
-        """Build batch."""
-        new_batch = Package(root)
-        new_batch.component_metadata[Metadata.PATH] = root
-
-        for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
-            new_object = PackageObject(parent=new_batch)
-            new_object.component_metadata[Metadata.ID] = dir_.name
-            new_object.component_metadata[Metadata.PATH] = dir_.path
-
-            new_object.component_metadata[Metadata.PACKAGE_TYPE] = \
-                PackageTypes.HATHI_TRUST_JP2_SUBMISSION
-
-            self.build_package(new_object, path=dir_.path)
-
-        return new_batch
-
-    @staticmethod
-    def filter_tiff_files(item: 'os.DirEntry[str]') -> bool:
-        """Identify if file given is a tiff file."""
-        if not item.is_file():
-            return False
-
-        ext = os.path.splitext(item.name)[1]
-        return ext.lower() == ".jp2"
-
-    def build_package(self, parent, path: str, *args, **kwargs) -> None:
-        """Build package."""
-        for file_ in filter(self.filter_tiff_files, os.scandir(path)):
-            new_item = Item(parent=parent)
-            item_part, _ = os.path.splitext(file_.name)
-            new_item.component_metadata[Metadata.ITEM_NAME] = item_part
-            self.build_instance(new_item, path=path, filename=item_part)
-
-    @staticmethod
-    def _organize_files(item: 'os.DirEntry[str]') -> str:
-        ext = os.path.splitext(item.name)[1]
-        if ext.lower() == ".jp2":
-            return "main_files"
-        return "sidecar"
-
-    def build_instance(
-            self,
-            parent,
-            path,
-            filename,
-            *args,
-            **kwargs
-    ):
-        """Build Instance."""
-        matching_files = \
-            filter(lambda x, file_name=filename:
-                   self.filter_same_name_files(x, file_name), os.scandir(path))
-
-        sidecar_files = []
-
-        main_files = []
-        for key, value in itertools.groupby(
-                matching_files,
-                key=self._organize_files
-        ):
-            for file_ in value:
-                if key == "sidecar":
-                    sidecar_files.append(file_)
-                elif key == "main_files":
-                    main_files.append(file_)
-
-        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
-                                          parent=parent,
-                                          files=main_files
-                                          )
-
-        for file_ in sidecar_files:
-            new_instantiation.sidecar_files.append(file_.path)
+            new_item.component_metadata[Metadata.ITEM_NAME] = item_id
+            self.build_instance(new_item, filename=base_name, path=path)
 
 
 class HathiLimitedViewBuilder(AbsCollectionBuilder):

@@ -3,8 +3,9 @@
 import abc
 import collections
 import os
+import typing
 from tempfile import TemporaryDirectory
-from typing import Optional, Union, Dict, ChainMap, Type, List, Tuple
+from typing import Optional, Union, Dict, ChainMap, List, Tuple
 import warnings
 from zipfile import ZipFile
 
@@ -50,7 +51,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
         """Get the number of children."""
         return len(self.children)
 
-    def __getitem__(self, item) -> Type["AbsPackageComponent"]:
+    def __getitem__(self, item) -> "AbsPackageComponent":
         """Get a specific child."""
         return self.children[item]
 
@@ -64,7 +65,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def children(self) -> List[Type["AbsPackageComponent"]]:
+    def children(self) -> List["AbsPackageComponent"]:
         """Child components of the package."""
 
     def _gen_combined_metadata(self) -> ChainMap[Metadata, MetadataTypes]:
@@ -203,7 +204,7 @@ class Instantiation(AbsPackageComponent):
         warnings.warn("Use get_files instead", DeprecationWarning)
         return self._files
 
-    def get_files(self):
+    def get_files(self) -> typing.Iterable[str]:
         """Make the files contained available.
 
         If source is a zip file, files are extracted
@@ -213,14 +214,29 @@ class Instantiation(AbsPackageComponent):
 
         """
         temp_dir = TemporaryDirectory()
+        if self.parent is None:
+            raise ValueError(
+                "Unable to get files if instance is missing a parent"
+            )
+
+        parent_path = self.parent.metadata.get(Metadata.PATH)
+        if parent_path is None:
+            raise KeyError(f"parent for {self} is missing path metadata")
+        parent_path = typing.cast(str, parent_path)
+
+        instance_path = self.metadata.get(Metadata.PATH)
+        if instance_path is None:
+            raise KeyError('Instance is missing path metadata')
+        instance_path = typing.cast(str, instance_path)
+
         for pkg_file in self._files:
-            if ".zip" in self.parent.metadata[Metadata.PATH]:
-                zip_file_name = self.parent.metadata[Metadata.PATH]
+            if ".zip" in parent_path:
+                zip_file_name = parent_path
                 with ZipFile(zip_file_name) as zip_file:
 
                     # On Windows ZipFile expects unix-style slashes
                     file_to_extract = \
-                        os.path.join(self.metadata[Metadata.PATH],
+                        os.path.join(instance_path,
                                      pkg_file).replace("\\", "/")
                     try:
                         yield zip_file.extract(file_to_extract,
@@ -233,7 +249,7 @@ class Instantiation(AbsPackageComponent):
                         ) from error
 
             else:
-                yield os.path.join(self.metadata[Metadata.PATH], pkg_file)
+                yield os.path.join(instance_path, pkg_file)
 
     @property
     def children(self):

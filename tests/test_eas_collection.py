@@ -97,14 +97,19 @@ class TestEASCollection:
         destination_type = packager.PackageFactory(HathiJp2())
         output = "out"
 
-        transform = Mock()
+        def spec(source, destination): pass
+        transform = Mock(spec=spec)
 
         monkeypatch.setattr(
-            packager.packages.hathi_jp2_package.transformations.Transformers,
+            packager.transformations.Transformers,
             "transform",
             transform
         )
-
+        monkeypatch.setattr(
+            packager.packages.hathi_jp2_package.pathlib.Path,
+            "mkdir",
+            Mock()
+        )
         for p in packages:
 
             destination_type.transform(p, output)

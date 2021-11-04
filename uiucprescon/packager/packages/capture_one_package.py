@@ -264,9 +264,12 @@ class CaptureOnePackage(AbsPackageBuilder):
         logger = logging.getLogger(__name__)
         logger.setLevel(AbsPackageBuilder.log_level)
 
+        item: collection.Item
         for item in package:
             item_name = item.metadata[Metadata.ITEM_NAME]
             object_name = item.metadata[Metadata.ID]
+
+            inst: collection.Instantiation
             for inst in item:
                 files = list(inst.get_files())
                 if len(files) != 1:
