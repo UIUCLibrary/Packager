@@ -7,7 +7,7 @@ import logging
 import os
 import pathlib
 import typing
-from typing import Optional, Iterator
+from typing import Iterator
 from uiucprescon.packager.packages.collection import \
     Package, Item, Instantiation, AbsPackageComponent, PackageObject
 from uiucprescon import packager
@@ -174,58 +174,6 @@ class HathiJp2(AbsPackageBuilder):
             self._get_item_transformer_strategy(item)
 
         strategy.transform_access_file(item, dest)
-
-    @staticmethod
-    def transform_one(
-            item: Item,
-            dest: str,
-            logger: Optional[logging.Logger] = None
-    ) -> None:
-        """Transform a single item one.
-
-        Args:
-            item:
-            dest:
-            logger:
-
-        """
-        item_name = typing.cast(str, item.metadata[Metadata.ITEM_NAME])
-        object_name = typing.cast(str, item.metadata[Metadata.ID])
-        new_item_path = os.path.join(dest, object_name)
-
-        if not os.path.exists(new_item_path):
-            os.makedirs(new_item_path)
-        inst: Instantiation
-        for inst in item:
-            files = list(inst.get_files())
-            if len(files) != 1:
-                raise AssertionError(
-                    f"Expected 1 file, found {len(files)}")
-
-            # file_: str
-            for file_ in files:
-                file_name = pathlib.Path(file_).name
-                _, ext = os.path.splitext(file_name)
-
-                if ext.lower() == ".jp2":
-
-                    # If the item is already a jp2 then copy
-                    file_transformer = packager.transformations.Transformers(
-                        strategy=packager.transformations.CopyFile(),
-                        logger=logger
-                    )
-                else:
-                    # If it's not the same extension, convert it to jp2
-                    file_transformer = packager.transformations.Transformers(
-                        strategy=packager.transformations.ConvertJp2Hathi(),
-                        logger=logger
-                    )
-                new_file_name = str(int(item_name)).zfill(8) + ".jp2"
-                new_file_path = os.path.join(new_item_path, new_file_name)
-
-                file_transformer.transform(
-                    source=file_,
-                    destination=new_file_path)
 
     @staticmethod
     def _get_item_transformer_strategy(
