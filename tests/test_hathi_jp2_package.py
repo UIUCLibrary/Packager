@@ -123,7 +123,10 @@ class TestCopyStrategy:
 
         compound_item.component_metadata[collection.Metadata.ID] = "123"
         compound_item.component_metadata[collection.Metadata.PATH] = "source"
-        compound_item.component_metadata[collection.Metadata.ITEM_NAME] = '00000001'
+
+        compound_item.component_metadata[collection.Metadata.ITEM_NAME] \
+            = '00000001'
+
         collection.Instantiation(
             category=collection.InstantiationTypes.ACCESS,
             parent=compound_item,
