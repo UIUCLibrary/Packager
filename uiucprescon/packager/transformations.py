@@ -191,6 +191,6 @@ class Transformers:
         path, filename = os.path.split(new_name)
         self._logger.info("Added %s in %s", filename, path)
 
-    def change_strategy(self, strategy: AbsTransformation):
+    def change_strategy(self, strategy: AbsTransformation) -> None:
         """Change the transformation strategy."""
         self._strategy = strategy

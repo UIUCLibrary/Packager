@@ -418,6 +418,7 @@ class DigitalLibraryCompoundBuilder(AbsCollectionBuilder):
         new_batch = Package(root)
         new_batch.component_metadata[Metadata.PATH] = root
 
+        dir_: os.DirEntry[str]
         for dir_ in filter(lambda i: i.is_dir(), os.scandir(root)):
             new_object = PackageObject(parent=new_batch)
             new_object.component_metadata[Metadata.ID] = dir_.name

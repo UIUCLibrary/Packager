@@ -318,7 +318,7 @@ class UsePreservationForAll(AbsItemTransformStrategy):
         for instance in item:
 
             file_: str
-            files: typing.List[str] = instance.get_files()
+            files: typing.Iterable[str] = instance.get_files()
             for file_ in files:
                 if instance.category == InstantiationTypes.SUPPLEMENTARY:
                     continue

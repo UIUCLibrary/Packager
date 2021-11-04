@@ -3,6 +3,7 @@
 import abc
 import collections
 import os
+import typing
 from tempfile import TemporaryDirectory
 from typing import Optional, Union, Dict, ChainMap, Type, List, Tuple
 import warnings
@@ -50,7 +51,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
         """Get the number of children."""
         return len(self.children)
 
-    def __getitem__(self, item) -> Type["AbsPackageComponent"]:
+    def __getitem__(self, item) -> "AbsPackageComponent":
         """Get a specific child."""
         return self.children[item]
 
@@ -64,7 +65,7 @@ class AbsPackageComponent(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def children(self) -> List[Type["AbsPackageComponent"]]:
+    def children(self) -> List["AbsPackageComponent"]:
         """Child components of the package."""
 
     def _gen_combined_metadata(self) -> ChainMap[Metadata, MetadataTypes]:
@@ -203,7 +204,7 @@ class Instantiation(AbsPackageComponent):
         warnings.warn("Use get_files instead", DeprecationWarning)
         return self._files
 
-    def get_files(self):
+    def get_files(self) -> typing.Iterable[str]:
         """Make the files contained available.
 
         If source is a zip file, files are extracted

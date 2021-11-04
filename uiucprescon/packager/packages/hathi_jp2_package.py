@@ -152,19 +152,34 @@ class HathiJp2Builder(AbsCollectionBuilder):
     def build_instance(
             self,
             parent,
-            path,
-            filename,
+            path: str,
+            filename: str,
             *args,
             **kwargs
-    ):
+    ) -> None:
         """Build Instance."""
+        sidecar_files: typing.List[os.DirEntry[str]]
+        main_files: typing.List[os.DirEntry[str]]
+        main_files, sidecar_files = self._locate_instance_files(filename, path)
+
+        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
+                                          parent=parent,
+                                          files=main_files
+                                          )
+
+        for file_ in sidecar_files:
+            new_instantiation.sidecar_files.append(file_.path)
+
+    def _locate_instance_files(self, filename, path):
         matching_files = \
             filter(lambda x, file_name=filename:
                    self.filter_same_name_files(x, file_name), os.scandir(path))
+        sidecar_files: typing.List[os.DirEntry[str]] = []
+        main_files: typing.List[os.DirEntry[str]] = []
+        key: str
+        value: typing.Iterator[os.DirEntry[str]]
+        file_: os.DirEntry[str]
 
-        sidecar_files = []
-
-        main_files = []
         for key, value in itertools.groupby(
                 matching_files,
                 key=self._organize_files
@@ -174,11 +189,4 @@ class HathiJp2Builder(AbsCollectionBuilder):
                     sidecar_files.append(file_)
                 elif key == "main_files":
                     main_files.append(file_)
-
-        new_instantiation = Instantiation(category=InstantiationTypes.ACCESS,
-                                          parent=parent,
-                                          files=main_files
-                                          )
-
-        for file_ in sidecar_files:
-            new_instantiation.sidecar_files.append(file_.path)
+        return main_files, sidecar_files
