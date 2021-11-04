@@ -118,6 +118,39 @@ class TestCopyStrategy:
             destination=os.path.join("out", "123", "00000001.jp2"),
         ) not in strategy.transformer.transform.mock_calls
 
+    def test_transform_access_error_on_multiple_access(self):
+        compound_item = collection.Item()
+
+        compound_item.component_metadata[collection.Metadata.ID] = "123"
+        compound_item.component_metadata[collection.Metadata.PATH] = "source"
+        compound_item.component_metadata[collection.Metadata.ITEM_NAME] = '00000001'
+        collection.Instantiation(
+            category=collection.InstantiationTypes.ACCESS,
+            parent=compound_item,
+            files=[
+                os.path.join("123", "access", "123-00000001.jp2"),
+                os.path.join("123", "access", "123-00000001a.jp2")
+            ]
+        )
+
+        collection.Instantiation(
+            category=collection.InstantiationTypes.PRESERVATION,
+            parent=compound_item,
+            files=[
+                os.path.join(
+                    "123", "preservation", "123-00000001.tif"
+                ),
+                os.path.join(
+                    "123", "preservation", "123-00000001a.tif"
+                ),
+            ]
+        )
+        strategy = packages.hathi_jp2_package.CopyStrategy()
+
+        strategy.convert = Mock()
+        with pytest.raises(AssertionError):
+            strategy.transform_access_file(compound_item, dest="out")
+
 
 @pytest.fixture
 def capture_one_item():
@@ -154,3 +187,31 @@ class TestConvertStrategy:
             os.path.join("source", "123", "123_00000001.tif"),
             os.path.join("out", "123",  "00000001.jp2"),
         ) in strategy.convert.mock_calls
+
+    def test_transform_access_error_on_multiple_access(self):
+        capture_one_tiff = collection.Item()
+
+        capture_one_tiff.component_metadata[collection.Metadata.ID] = "123"
+        capture_one_tiff.component_metadata[collection.Metadata.PATH] = "source"
+        capture_one_tiff.component_metadata[
+            collection.Metadata.ITEM_NAME] = '00000001'
+
+        collection.Instantiation(
+            category=collection.InstantiationTypes.PRESERVATION,
+            parent=capture_one_tiff,
+            files=[
+                os.path.join(
+                    "123", "123_00000001.tif"
+                ),
+                os.path.join(
+                    "123", "123_00000001b.tif"
+                )
+            ]
+        )
+        strategy = packages.hathi_jp2_package.ConvertStrategy(
+            instance_source=collection.InstantiationTypes.PRESERVATION
+        )
+
+        strategy.convert = Mock()
+        with pytest.raises(AssertionError):
+            strategy.transform_access_file(capture_one_tiff, dest="out")
