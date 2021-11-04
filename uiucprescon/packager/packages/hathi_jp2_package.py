@@ -63,7 +63,7 @@ class CopyStrategy(AbsItemTransformStrategy):
             file_name = pathlib.Path(file_).name
             _, ext = os.path.splitext(file_name)
 
-            new_file_name = str(int(item_name)).zfill(8) + ".jp2"
+            new_file_name = str(int(item_name)).zfill(8) + ext
             new_file_path = os.path.join(new_item_path, new_file_name)
             self.transform_file(file_, new_file_path)
 
