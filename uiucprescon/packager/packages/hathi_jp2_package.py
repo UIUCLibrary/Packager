@@ -103,15 +103,11 @@ class ConvertStrategy(AbsItemTransformStrategy):
                 "a single file"
             )
         source = files[0]
-        new_file_path = self.get_output_name(item, source, dest)
+        new_file_path = self.get_output_name(item, dest)
         self.convert(source, new_file_path)
 
     @staticmethod
-    def get_output_name(
-            reference_item: Item,
-            reference_file: str,
-            dest: str
-    ) -> str:
+    def get_output_name(reference_item: Item, dest: str) -> str:
 
         item_name = typing.cast(
             str,
@@ -124,9 +120,6 @@ class ConvertStrategy(AbsItemTransformStrategy):
         )
 
         new_item_path = os.path.join(dest, object_name)
-
-        file_name = pathlib.Path(reference_file).name
-        _, ext = os.path.splitext(file_name)
 
         new_file_name = str(int(item_name)).zfill(8) + ".jp2"
         return os.path.join(new_item_path, new_file_name)
@@ -238,8 +231,8 @@ class HathiJp2(AbsPackageBuilder):
                     source=file_,
                     destination=new_file_path)
 
+    @staticmethod
     def _get_item_transformer_strategy(
-            self,
             item: Item
     ) -> AbsItemTransformStrategy:
 
