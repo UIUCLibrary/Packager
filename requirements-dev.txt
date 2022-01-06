@@ -5,7 +5,7 @@ sphinx
 pytest
 build
 pytest-runner
-pytest-bdd >= 3.1.0
+pytest-bdd >= 3.1.0,<4.0
 tox
 behave
 flake8
