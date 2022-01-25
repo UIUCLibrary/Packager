@@ -5,6 +5,7 @@ devpi-client
 flake8
 lxml
 mypy
+paramiko
 pydocstyle
 pykdu-compress>=0.1.7b2
 pylint

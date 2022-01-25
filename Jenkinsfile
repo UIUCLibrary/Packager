@@ -214,7 +214,7 @@ pipeline {
         booleanParam(name: "DEPLOY_DEVPI_PRODUCTION", defaultValue: false, description: "Deploy to production devpi on https://devpi.library.illinois.edu/production/release. Master branch Only")
         booleanParam(name: 'DEPLOY_PYPI', defaultValue: false, description: 'Deploy to pypi')
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
-        string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
+//         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
     stages {
         stage('Build') {
@@ -1128,41 +1128,76 @@ pipeline {
                         }
                     }
                 }
-                stage("Deploy Online Documentation") {
+                stage('Deploy Online Documentation') {
                     when{
                         equals expected: true, actual: params.DEPLOY_DOCS
+                        beforeAgent true
+                        beforeInput true
                     }
-                    agent any
+                    agent {
+                        dockerfile {
+                            filename 'ci/docker/python/linux/jenkins/Dockerfile'
+                            label 'linux && docker'
+                        }
+                    }
+                    options{
+                        timeout(time: 1, unit: 'DAYS')
+                    }
+                    input {
+                        message 'Update project documentation?'
+                    }
                     steps{
-                        unstash "DOCS_ARCHIVE"
-                        dir("build/docs/html/"){
-                            input 'Update project documentation?'
-                            sshPublisher(
-                                publishers: [
-                                    sshPublisherDesc(
-                                        configName: 'apache-ns - lib-dccuser-updater', 
-                                        sshLabel: [label: 'Linux'], 
-                                        transfers: [sshTransfer(excludes: '', 
-                                        execCommand: '', 
-                                        execTimeout: 120000, 
-                                        flatten: false, 
-                                        makeEmptyDirs: false, 
-                                        noDefaultExcludes: false, 
-                                        patternSeparator: '[, ]+', 
-                                        remoteDirectory: params.DEPLOY_DOCS_URL_SUBFOLDER,
-                                        remoteDirectorySDF: false, 
-                                        removePrefix: '', 
-                                        sourceFiles: '**')], 
-                                    usePromotionTimestamp: false, 
-                                    useWorkspaceInPromotion: false, 
-                                    verbose: true
-                                    )
+                        unstash 'DOCS_ARCHIVE'
+                        withCredentials([usernamePassword(credentialsId: 'dccdocs-server', passwordVariable: 'docsPassword', usernameVariable: 'docsUsername')]) {
+                            sh 'python utils/upload_docs.py --username=$docsUsername --password=$docsPassword --subroute=packager build/docs/html apache-ns.library.illinois.edu'
+                        }
+                    }
+                    post{
+                        cleanup{
+                            cleanWs(
+                                deleteDirs: true,
+                                patterns: [
+                                    [pattern: 'build/', type: 'INCLUDE'],
+                                    [pattern: 'dist/', type: 'INCLUDE'],
                                 ]
                             )
                         }
                     }
                 }
-
+//                 stage("Deploy Online Documentation") {
+//                     when{
+//                         equals expected: true, actual: params.DEPLOY_DOCS
+//                     }
+//                     agent any
+//                     steps{
+//                         unstash "DOCS_ARCHIVE"
+//                         dir("build/docs/html/"){
+//                             input 'Update project documentation?'
+//                             sshPublisher(
+//                                 publishers: [
+//                                     sshPublisherDesc(
+//                                         configName: 'apache-ns - lib-dccuser-updater',
+//                                         sshLabel: [label: 'Linux'],
+//                                         transfers: [sshTransfer(excludes: '',
+//                                         execCommand: '',
+//                                         execTimeout: 120000,
+//                                         flatten: false,
+//                                         makeEmptyDirs: false,
+//                                         noDefaultExcludes: false,
+//                                         patternSeparator: '[, ]+',
+//                                         remoteDirectory: params.DEPLOY_DOCS_URL_SUBFOLDER,
+//                                         remoteDirectorySDF: false,
+//                                         removePrefix: '',
+//                                         sourceFiles: '**')],
+//                                     usePromotionTimestamp: false,
+//                                     useWorkspaceInPromotion: false,
+//                                     verbose: true
+//                                     )
+//                                 ]
+//                             )
+//                         }
+//                     }
+//                 }
             }
         }
     }
