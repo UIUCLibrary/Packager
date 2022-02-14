@@ -708,6 +708,7 @@ pipeline {
                                                 additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         glob: 'dist/*.tar.gz',
                                         stash: 'PYTHON_PACKAGES',
                                         pythonVersion: pythonVersion
@@ -722,6 +723,7 @@ pipeline {
                                                 additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         glob: 'dist/*.whl',
                                         stash: 'PYTHON_PACKAGES',
                                         pythonVersion: pythonVersion
@@ -739,6 +741,7 @@ pipeline {
                                                     additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE'
                                                 ]
                                             ],
+                                            retryTimes: 3,
                                             glob: 'dist/*.tar.gz,dist/*.zip',
                                             stash: 'PYTHON_PACKAGES',
                                             pythonVersion: pythonVersion
@@ -753,6 +756,7 @@ pipeline {
                                                     additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE'
                                                 ]
                                             ],
+                                            retryTimes: 3,
                                             glob: 'dist/*.whl',
                                             stash: 'PYTHON_PACKAGES',
                                             pythonVersion: pythonVersion
@@ -910,6 +914,7 @@ pipeline {
                                                 label: 'windows && docker'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         devpi: DEVPI_CONFIG,
                                         package:[
                                             name: props.Name,
@@ -930,6 +935,7 @@ pipeline {
                                                 label: 'windows && docker'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         devpi: DEVPI_CONFIG,
                                         package:[
                                             name: props.Name,
@@ -953,6 +959,7 @@ pipeline {
                                                 label: 'linux && docker'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         devpi: DEVPI_CONFIG,
                                         package:[
                                             name: props.Name,
@@ -973,6 +980,7 @@ pipeline {
                                                 label: 'linux && docker'
                                             ]
                                         ],
+                                        retryTimes: 3,
                                         devpi: DEVPI_CONFIG,
                                         package:[
                                             name: props.Name,
