@@ -800,6 +800,9 @@ pipeline {
                             additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                           }
                     }
+                    options{
+                        retry(3)
+                    }
                     steps {
                         unstash 'DOCS_ARCHIVE'
                         unstash 'PYTHON_PACKAGES'
