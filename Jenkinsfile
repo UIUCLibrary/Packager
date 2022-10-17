@@ -216,6 +216,9 @@ pipeline {
         booleanParam(name: "DEPLOY_DOCS", defaultValue: false, description: "Update online documentation. Master branch Only")
         string(name: 'DEPLOY_DOCS_URL_SUBFOLDER', defaultValue: "packager", description: 'The directory that the docs should be saved under')
     }
+    options {
+      timeout(time: 1, unit: 'DAYS')
+    }
     stages {
         stage('Build') {
             parallel {
