@@ -798,7 +798,7 @@ pipeline {
                 stage("Deploy to Devpi Staging") {
                     agent {
                         dockerfile {
-                            filename 'ci/docker/deploy/devpi/deploy/Dockerfile'
+                            filename 'ci/docker/python/linux/tox/Dockerfile'
                             label 'linux && docker && devpi-access'
                             additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                           }
@@ -1087,7 +1087,7 @@ pipeline {
                 }
             }
         }
-        stage("Deploy"){
+        stage('Deploy'){
             parallel {
                 stage('Deploy to pypi') {
                     agent {
