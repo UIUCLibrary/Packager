@@ -663,7 +663,7 @@ pipeline {
                                                     label:'Install Tox',
                                                     script: '''python3 -m venv venv
                                                                venv/bin/pip install pip --upgrade
-                                                               venv/bin/pip install tox
+                                                               venv/bin/pip install -r requirements/requirements_tox.txt
                                                                '''
                                                 )
                                             },
@@ -697,7 +697,7 @@ pipeline {
                                                     label:'Install Tox',
                                                     script: '''python3 -m venv venv
                                                                venv/bin/pip install pip --upgrade
-                                                               venv/bin/pip install tox
+                                                               venv/bin/pip install -r requirements/requirements_tox.txt
                                                                '''
                                                 )
                                             },
@@ -771,7 +771,7 @@ pipeline {
                                             stash: 'PYTHON_PACKAGES',
                                             pythonVersion: pythonVersion,
                                             onFailure: {
-                                                sh(script:'pip list')
+                                                bat(script:'pip list')
                                             },
                                         )
                                     }
