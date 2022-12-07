@@ -669,7 +669,15 @@ pipeline {
                                             },
                                             testTeardown: {
                                                 sh 'rm -r venv/'
-                                            }
+                                            },
+                                            onFailure: {
+                                                sh(label: 'Getting installed packages',
+                                                   script:
+                                                    '''. ./venv/bin/activate
+                                                        pip list
+                                                    '''
+                                                    )
+                                            },
 
                                         )
                                 }
@@ -693,6 +701,14 @@ pipeline {
                                                                '''
                                                 )
                                             },
+                                            onFailure: {
+                                                sh(label: 'Getting installed packages',
+                                                   script:
+                                                    '''. ./venv/bin/activate
+                                                        pip list
+                                                    '''
+                                                    )
+                                            },
                                             testTeardown: {
                                                 sh 'rm -r venv/'
                                             }
@@ -714,7 +730,10 @@ pipeline {
                                         retryTimes: 3,
                                         glob: 'dist/*.tar.gz',
                                         stash: 'PYTHON_PACKAGES',
-                                        pythonVersion: pythonVersion
+                                        pythonVersion: pythonVersion,
+                                        onFailure: {
+                                            sh(script:'pip list')
+                                        },
                                     )
                                 }
                                 linuxTests["Linux - Python ${pythonVersion}: wheel"] = {
@@ -729,7 +748,10 @@ pipeline {
                                         retryTimes: 3,
                                         glob: 'dist/*.whl',
                                         stash: 'PYTHON_PACKAGES',
-                                        pythonVersion: pythonVersion
+                                        pythonVersion: pythonVersion,
+                                        onFailure: {
+                                            sh(script:'pip list')
+                                        },
                                     )
                                 }
                             }
@@ -747,7 +769,10 @@ pipeline {
                                             retryTimes: 3,
                                             glob: 'dist/*.tar.gz,dist/*.zip',
                                             stash: 'PYTHON_PACKAGES',
-                                            pythonVersion: pythonVersion
+                                            pythonVersion: pythonVersion,
+                                            onFailure: {
+                                                sh(script:'pip list')
+                                            },
                                         )
                                     }
                                 windowsTests["Windows - Python ${pythonVersion}: wheel"] = {
@@ -762,7 +787,10 @@ pipeline {
                                             retryTimes: 3,
                                             glob: 'dist/*.whl',
                                             stash: 'PYTHON_PACKAGES',
-                                            pythonVersion: pythonVersion
+                                            pythonVersion: pythonVersion,
+                                            onFailure: {
+                                                bat(script:'pip list')
+                                            },
                                         )
                                     }
                             }
@@ -1158,21 +1186,21 @@ pipeline {
                             sshPublisher(
                                 publishers: [
                                     sshPublisherDesc(
-                                        configName: 'apache-ns - lib-dccuser-updater', 
-                                        sshLabel: [label: 'Linux'], 
-                                        transfers: [sshTransfer(excludes: '', 
-                                        execCommand: '', 
-                                        execTimeout: 120000, 
-                                        flatten: false, 
-                                        makeEmptyDirs: false, 
-                                        noDefaultExcludes: false, 
-                                        patternSeparator: '[, ]+', 
+                                        configName: 'apache-ns - lib-dccuser-updater',
+                                        sshLabel: [label: 'Linux'],
+                                        transfers: [sshTransfer(excludes: '',
+                                        execCommand: '',
+                                        execTimeout: 120000,
+                                        flatten: false,
+                                        makeEmptyDirs: false,
+                                        noDefaultExcludes: false,
+                                        patternSeparator: '[, ]+',
                                         remoteDirectory: params.DEPLOY_DOCS_URL_SUBFOLDER,
-                                        remoteDirectorySDF: false, 
-                                        removePrefix: '', 
-                                        sourceFiles: '**')], 
-                                    usePromotionTimestamp: false, 
-                                    useWorkspaceInPromotion: false, 
+                                        remoteDirectorySDF: false,
+                                        removePrefix: '',
+                                        sourceFiles: '**')],
+                                    usePromotionTimestamp: false,
+                                    useWorkspaceInPromotion: false,
                                     verbose: true
                                     )
                                 ]
