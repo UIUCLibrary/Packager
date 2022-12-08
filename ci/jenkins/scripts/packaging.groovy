@@ -54,6 +54,7 @@ def testPkg(args = [:]){
         unstash "${args.stash}"
     }
     def teardown =  args['testTeardown'] ? args['testTeardown']: {}
+    def onFailure =  args['onFailure'] ? args['onFailure']: {}
     def retryTimes = args['retryTimes'] ? args['retryTimes']: 1
     retry(retryTimes){
         def agentRunner = getAgent(args)
@@ -72,6 +73,9 @@ def testPkg(args = [:]){
                         bat(label: "Running Tox", script: toxCommand)
                     }
                 }
+            } catch (e){
+                onFailure()
+                throw e;
             } finally{
                 teardown()
             }

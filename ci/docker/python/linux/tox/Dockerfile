@@ -14,6 +14,7 @@ ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
 COPY requirements.txt  requirements-dev.txt requirements-freeze.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
+COPY requirements /tmp/requirements
 ENV PYTHON=python3.7
 RUN $PYTHON -m pip install pip --upgrade pip && \
     $PYTHON -m pip install wheel && \
@@ -27,6 +28,7 @@ ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
 COPY requirements.txt  requirements-dev.txt requirements-freeze.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
+COPY requirements /tmp/requirements
 ENV PYTHON=python3.8
 RUN $PYTHON -m pip install pip --upgrade pip && \
     $PYTHON -m pip install wheel && \
@@ -40,6 +42,7 @@ ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
 COPY requirements.txt  requirements-dev.txt requirements-freeze.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
+COPY requirements /tmp/requirements
 ENV PYTHON=python3.9
 RUN $PYTHON -m pip install pip --upgrade pip && \
     $PYTHON -m pip install wheel && \
@@ -53,6 +56,7 @@ ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
 COPY requirements.txt  requirements-dev.txt requirements-freeze.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
+COPY requirements /tmp/requirements
 ENV PYTHON=python3.10
 RUN $PYTHON -m ensurepip --upgrade && \
     $PYTHON -m pip install pip --upgrade pip && \
@@ -72,6 +76,7 @@ COPY --from=WHEEL_BUILDER_PY38 /wheels/* /wheels/
 COPY --from=WHEEL_BUILDER_PY39 /wheels/* /wheels/
 COPY --from=WHEEL_BUILDER_PY310 /wheels/* /wheels/
 ENV PIP_FIND_LINKS=/wheels
-RUN pip3 install tox "devpi-client<6.0" build
+COPY requirements /tmp/
+RUN pip3 install -r /tmp/requirements_tox.txt "devpi-client<6.0" build
 WORKDIR /src
 CMD tox --workdir /tmp/tox --recreate
