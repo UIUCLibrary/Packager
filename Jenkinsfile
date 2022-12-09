@@ -888,11 +888,13 @@ pipeline {
                                             ],
                                             test:[
                                                 setup: {
+                                                    checkout scm
                                                     sh(
                                                         label:'Installing Devpi client',
                                                         script: '''python3 -m venv venv
-                                                                    venv/bin/python -m pip install pip --upgrade
-                                                                    venv/bin/python -m pip install devpi_client tox
+                                                                   . ./venv/bin/activate
+                                                                   python -m pip install pip --upgrade
+                                                                   python -m pip install devpi_client -r requirements/requirements_tox.txt
                                                                     '''
                                                     )
                                                 },
@@ -927,8 +929,9 @@ pipeline {
                                                     sh(
                                                         label:'Installing Devpi client',
                                                         script: '''python3 -m venv venv
-                                                                    venv/bin/python -m pip install pip --upgrade
-                                                                    venv/bin/python -m pip install devpi_client tox
+                                                                   . ./venv/bin/activate
+                                                                   python -m pip install pip --upgrade
+                                                                   python -m pip install devpi_client -r requirements/requirements_tox.txt
                                                                     '''
                                                     )
                                                 },
