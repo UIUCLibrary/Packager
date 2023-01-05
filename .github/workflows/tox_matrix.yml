@@ -1,0 +1,35 @@
+on: [push, pull_request]
+name: Tox Multi-platform Compatibility Test
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2019]
+        python-version: ['3.7', '3.8' ,'3.9', '3.10', '3.11']
+        include:
+          - os: macos-latest
+          - os: ubuntu-latest
+          - os: windows-2019
+      fail-fast: false
+    name: Python ${{ matrix.python-version }} ${{ matrix.os }} build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip' # caching pip dependencies
+      - name: Install requirements
+        run: |
+          pip install wheel
+          pip install -r requirements/requirements-tox.txt
+      - name: Run tox
+        if: "!contains(matrix.os, 'windows')"
+        run: tox -e py -vvv
+      - name: Run tox with MSVC
+        if: contains(matrix.os, 'windows')
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cl
+          tox -e py
