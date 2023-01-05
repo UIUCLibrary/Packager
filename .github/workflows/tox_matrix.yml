@@ -25,3 +25,5 @@ jobs:
           pip install -r requirements/requirements_tox.txt
       - name: Run tox
         run: tox -e py -vvv
+        env:
+          PIP_EXTRA_INDEX_URL: https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_public/simple/
