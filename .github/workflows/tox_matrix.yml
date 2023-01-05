@@ -24,12 +24,4 @@ jobs:
           pip install wheel
           pip install -r requirements/requirements_tox.txt
       - name: Run tox
-        if: "!contains(matrix.os, 'windows')"
         run: tox -e py -vvv
-      - name: Run tox with MSVC
-        if: contains(matrix.os, 'windows')
-        shell: cmd
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          cl
-          tox -e py
