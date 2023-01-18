@@ -566,7 +566,7 @@ pipeline {
                             }
                             def windowsJobs = [:]
                             def linuxJobs = [:]
-                            stage('Scanning Tox Environments'){
+                            script{
                                 parallel(
                                     'Linux': {
                                         linuxJobs = tox.getToxTestsParallel(
