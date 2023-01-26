@@ -1,9 +1,15 @@
-ARG PYTHON_DOCKER_IMAGE_BASE="python:3.8"
-FROM ${PYTHON_DOCKER_IMAGE_BASE} as wheel_builder
+ARG PYTHON_VERSION=3.8
 ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
+ARG SONAR_SCANNER_VERSION=4.6.2.2472
+FROM python:${PYTHON_VERSION} as base_image
 ENV PIP_NO_CACHE_DIR=1
+
+FROM base_image as wheel_builder
+ARG PIP_INDEX_URL
+ARG PIP_EXTRA_INDEX_URL
+ARG PIP_TRUSTED_HOST
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
 RUN python -m pip install --upgrade pip &&  \
     pip install setuptools --upgrade && \
@@ -13,34 +19,38 @@ RUN python -m pip install --upgrade pip &&  \
         -r /tmp/requirements-ci.txt && \
     pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt && \
     rm -rf  /root/.cache
+#==============================================================================
+FROM base_image as SONAR_BUILDER
+RUN apt-get update && \
+    apt-get install -y unzip
 
-FROM ${PYTHON_DOCKER_IMAGE_BASE}
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-
-RUN if id $USER_ID ; then \
-        echo 'Existing user id found: Creating an alias' ;\
-        groupadd --non-unique --gid $GROUP_ID user ; \
-        useradd  --non-unique --uid $USER_ID -s /bin/sh -m -d /home/user -g user user  ; \
-    else \
-        groupadd -g $GROUP_ID user ; \
-        useradd  -u $USER_ID -s /bin/sh -m -d /home/user -g user user ;\
-    fi && \
-    mkdir -p /.cache/pip && chown -R user /.cache/pip
-
-
-USER user
-ENV SONAR_SCANNER_VERSION=4.4.0.2170
-ENV SONAR_SCANNER_HOME=/home/user/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-RUN curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip \
+ARG SONAR_SCANNER_VERSION
+ARG SONAR_SCANNER_HOME=/opt/sonar/${SONAR_SCANNER_VERSION}-linux
+ENV SONAR_USER_HOME=/opt/sonar/.sonar
+RUN curl --create-dirs -sSLo /tmp/sonar-scanner.zip \
         https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip && \
-    unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/ && \
-    rm $HOME/.sonar/sonar-scanner.zip && \
-    mkdir -p /home/user/.sonar/cache && \
-    chown user:user /home/user/.sonar/cache
-ENV PATH=$SONAR_SCANNER_HOME/bin:$PATH
-ENV SONAR_SCANNER_OPTS="-server"
-USER root
+    unzip -o /tmp/sonar-scanner.zip -d /opt/sonar/ && \
+    rm /tmp/sonar-scanner.zip && \
+    mkdir -p $SONAR_USER_HOME/cache && \
+    chmod -R 777 "${SONAR_USER_HOME}" &&\
+    ln -s /opt/sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux/bin/sonar-scanner /usr/local/bin/sonar-scanner && \
+    which sonar-scanner
+
+FROM base_image
+COPY --from=SONAR_BUILDER /opt/sonar /opt/sonar/
+ARG SONAR_SCANNER_VERSION
+ENV SONAR_SCANNER_VERSION=${SONAR_SCANNER_VERSION}
+ARG SONAR_SCANNER_HOME=/opt/sonar/${SONAR_SCANNER_VERSION}-linux
+ENV SONAR_USER_HOME=/opt/sonar/.sonar
+RUN ln -s /opt/sonar/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin/sonar-scanner /usr/local/bin/sonar-scanner && \
+    which sonar-scanner
+RUN mkdir -p /home/user/.sonar/ && chmod -R 777 /home/user/
+
+ARG PIP_INDEX_URL
+ARG PIP_EXTRA_INDEX_URL
+ARG PIP_TRUSTED_HOST
+
+
 COPY --from=wheel_builder /wheels /wheels/
 ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
 
