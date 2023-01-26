@@ -1,5 +1,3 @@
-#!groovy
-@Library(["devpi", "PythonHelpers"]) _
 // ============================================================================
 // Versions of python that are supported
 // ----------------------------------------------------------------------------
@@ -7,82 +5,35 @@ SUPPORTED_MAC_VERSIONS = ['3.8', '3.9', '3.10', '3.11']
 SUPPORTED_LINUX_VERSIONS = [ '3.7', '3.8', '3.9', '3.10', '3.11']
 SUPPORTED_WINDOWS_VERSIONS = [ '3.7', '3.8', '3.9', '3.10', '3.11']
 
-PYPI_SERVERS = [
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_public/',
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python/',
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_testing/'
-    ]
-
-def getDevPiStagingIndex(){
-
-    if (env.TAG_NAME?.trim()){
-        return "tag_staging"
-    } else{
-        return "${env.BRANCH_NAME}_staging"
+def getPypiConfig() {
+    node(){
+        configFileProvider([configFile(fileId: 'pypi_config', variable: 'CONFIG_FILE')]) {
+            def config = readJSON( file: CONFIG_FILE)
+            return config['deployment']['indexes']
+        }
     }
 }
 
-DEVPI_CONFIG = [
-    index: getDevPiStagingIndex(),
-    server: 'https://devpi.library.illinois.edu',
-    credentialsId: 'DS_devpi',
-]
+def getDevpiConfig() {
+    node(){
+        configFileProvider([configFile(fileId: 'devpi_config', variable: 'CONFIG_FILE')]) {
+            def configProperties = readProperties(file: CONFIG_FILE)
+            configProperties.stagingIndex = {
+                if (env.TAG_NAME?.trim()){
+                    return 'tag_staging'
+                } else{
+                    return "${env.BRANCH_NAME}_staging"
+                }
+            }()
+            return configProperties
+        }
+    }
+}
+def DEVPI_CONFIG = getDevpiConfig()
 defaultParameterValues = [
     USE_SONARQUBE: false
 ]
 
-
-CONFIGURATIONS = [
-    "3.6": [
-            package_testing: [
-                whl: [
-                    pkgRegex: "*.whl",
-                ],
-                sdist: [
-                    pkgRegex: "*.zip",
-                ]
-            ],
-            test_docker_image: [
-                windows: "python:3.6-windowsservercore",
-                linux: "python:3.6"
-            ],
-            tox_env: "py36",
-            devpi_wheel_regex: "cp36"
-
-        ],
-    "3.7": [
-            package_testing: [
-                whl: [
-                    pkgRegex: "*.whl",
-                ],
-                sdist:[
-                    pkgRegex: "*.zip",
-                ]
-            ],
-            test_docker_image: [
-                windows: "python:3.7",
-                linux: "python:3.7"
-            ],
-            tox_env: "py37",
-            devpi_wheel_regex: "cp37"
-        ],
-    "3.8": [
-            package_testing: [
-                whl: [
-                    pkgRegex: "*.whl",
-                ],
-                sdist:[
-                    pkgRegex: "*.zip",
-                ]
-            ],
-            test_docker_image: [
-                windows: "python:3.8",
-                linux: "python:3.8"
-            ],
-            tox_env: "py38",
-            devpi_wheel_regex: "cp38"
-        ]
-]
 
 
 SONARQUBE_CREDENTIAL_ID = 'sonarcloud-uiucprescon.packager'
@@ -96,43 +47,7 @@ def get_sonarqube_unresolved_issues(report_task_file){
     }
 }
 
-def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
-    script {
-                try {
-                    bat "${devpiExecutable} login ${devpiUsername} --password ${devpiPassword}"
-                    bat "${devpiExecutable} use ${devpiIndex}"
-                    bat "${devpiExecutable} remove -y ${pkgName}==${pkgVersion}"
-                } catch (Exception ex) {
-                    echo "Failed to remove ${pkgName}==${pkgVersion} from ${devpiIndex}"
-            }
 
-    }
-}
-
-
-
-
-def get_package_version(stashName, metadataFile){
-    ws {
-        unstash "${stashName}"
-        script{
-            def props = readProperties interpolate: true, file: "${metadataFile}"
-            deleteDir()
-            return props.Version
-        }
-    }
-}
-
-def get_package_name(stashName, metadataFile){
-    ws {
-        unstash "${stashName}"
-        script{
-            def props = readProperties interpolate: true, file: "${metadataFile}"
-            deleteDir()
-            return props.Name
-        }
-    }
-}
 def startup(){
     def SONARQUBE_CREDENTIAL_ID = SONARQUBE_CREDENTIAL_ID
     parallel(
@@ -831,7 +746,7 @@ pipeline {
                             devpi.upload(
                                     server: DEVPI_CONFIG.server,
                                     credentialsId: DEVPI_CONFIG.credentialsId,
-                                    index: DEVPI_CONFIG.index,
+                                    index: DEVPI_CONFIG.stagingIndex,
                                     clientDir: './devpi'
                                 )
                         }
@@ -865,7 +780,7 @@ pipeline {
                                                 label: "mac && python${pythonVersion} && x86 && devpi-access"
                                             ],
                                             devpi: [
-                                                index: DEVPI_CONFIG.index,
+                                                index: DEVPI_CONFIG.stagingIndex,
                                                 server: DEVPI_CONFIG.server,
                                                 credentialsId: DEVPI_CONFIG.credentialsId,
                                                 devpiExec: 'venv/bin/devpi'
@@ -902,7 +817,7 @@ pipeline {
                                                 label: "mac && python${pythonVersion} && x86 && devpi-access"
                                             ],
                                             devpi: [
-                                                index: DEVPI_CONFIG.index,
+                                                index: DEVPI_CONFIG.stagingIndex,
                                                 server: DEVPI_CONFIG.server,
                                                 credentialsId: DEVPI_CONFIG.credentialsId,
                                                 devpiExec: 'venv/bin/devpi'
@@ -945,7 +860,11 @@ pipeline {
                                             ]
                                         ],
                                         retryTimes: 3,
-                                        devpi: DEVPI_CONFIG,
+                                        devpi: [
+                                            index: DEVPI_CONFIG.stagingIndex,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                        ],
                                         package:[
                                             name: props.Name,
                                             version: props.Version,
@@ -966,7 +885,11 @@ pipeline {
                                             ]
                                         ],
                                         retryTimes: 3,
-                                        devpi: DEVPI_CONFIG,
+                                        devpi: [
+                                            index: DEVPI_CONFIG.stagingIndex,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                        ],
                                         package:[
                                             name: props.Name,
                                             version: props.Version,
@@ -990,7 +913,11 @@ pipeline {
                                             ]
                                         ],
                                         retryTimes: 3,
-                                        devpi: DEVPI_CONFIG,
+                                        devpi: [
+                                            index: DEVPI_CONFIG.stagingIndex,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                        ],
                                         package:[
                                             name: props.Name,
                                             version: props.Version,
@@ -1011,7 +938,11 @@ pipeline {
                                             ]
                                         ],
                                         retryTimes: 3,
-                                        devpi: DEVPI_CONFIG,
+                                        devpi: [
+                                            index: DEVPI_CONFIG.stagingIndex,
+                                            server: DEVPI_CONFIG.server,
+                                            credentialsId: DEVPI_CONFIG.credentialsId,
+                                        ],
                                         package:[
                                             name: props.Name,
                                             version: props.Version,
@@ -1059,7 +990,7 @@ pipeline {
                                 pkgName: props.Name,
                                 pkgVersion: props.Version,
                                 server: DEVPI_CONFIG.server,
-                                indexSource: DEVPI_CONFIG.index,
+                                indexSource: DEVPI_CONFIG.stagingIndex,
                                 indexDestination: 'production/release',
                                 credentialsId: DEVPI_CONFIG.credentialsId
                             )
@@ -1079,7 +1010,7 @@ pipeline {
                                         pkgName: props.Name,
                                         pkgVersion: props.Version,
                                         server: DEVPI_CONFIG.server,
-                                        indexSource: DEVPI_CONFIG.index,
+                                        indexSource: DEVPI_CONFIG.stagingIndex,
                                         indexDestination: "DS_Jenkins/${env.BRANCH_NAME}",
                                         credentialsId: DEVPI_CONFIG.credentialsId
                                     )
@@ -1097,7 +1028,7 @@ pipeline {
                                 devpi.removePackage(
                                     pkgName: props.Name,
                                     pkgVersion: props.Version,
-                                    index: DEVPI_CONFIG.index,
+                                    index: DEVPI_CONFIG.stagingIndex,
                                     server: DEVPI_CONFIG.server,
                                     credentialsId: DEVPI_CONFIG.credentialsId,
                                 )
@@ -1132,7 +1063,7 @@ pipeline {
                         message 'Upload to pypi server?'
                         parameters {
                             choice(
-                                choices: PYPI_SERVERS,
+                                choices: getPypiConfig(),
                                 description: 'Url to the pypi index to upload python packages.',
                                 name: 'SERVER_URL'
                             )
