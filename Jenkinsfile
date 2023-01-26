@@ -7,26 +7,15 @@ SUPPORTED_MAC_VERSIONS = ['3.8', '3.9', '3.10', '3.11']
 SUPPORTED_LINUX_VERSIONS = [ '3.7', '3.8', '3.9', '3.10', '3.11']
 SUPPORTED_WINDOWS_VERSIONS = [ '3.7', '3.8', '3.9', '3.10', '3.11']
 
-PYPI_SERVERS = [
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_public/',
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python/',
-    'https://jenkins.library.illinois.edu/nexus/repository/uiuc_prescon_python_testing/'
-    ]
+def getPypiConfig() {
+    node(){
+        configFileProvider([configFile(fileId: 'pypi_config', variable: 'CONFIG_FILE')]) {
+            def config = readJSON( file: CONFIG_FILE)
+            return config['deployment']['indexes']
+        }
+    }
+}
 
-// def getDevPiStagingIndex(){
-//
-//     if (env.TAG_NAME?.trim()){
-//         return "tag_staging"
-//     } else{
-//         return "${env.BRANCH_NAME}_staging"
-//     }
-// }
-//
-// DEVPI_CONFIG = [
-//     index: getDevPiStagingIndex(),
-//     server: 'https://devpi.library.illinois.edu',
-//     credentialsId: 'DS_devpi',
-// ]
 def getDevpiConfig() {
     node(){
         configFileProvider([configFile(fileId: 'devpi_config', variable: 'CONFIG_FILE')]) {
@@ -1112,7 +1101,7 @@ pipeline {
                         message 'Upload to pypi server?'
                         parameters {
                             choice(
-                                choices: PYPI_SERVERS,
+                                choices: getPypiConfig(),
                                 description: 'Url to the pypi index to upload python packages.',
                                 name: 'SERVER_URL'
                             )
