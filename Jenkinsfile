@@ -635,10 +635,10 @@ pipeline {
                             SUPPORTED_LINUX_VERSIONS.each{ pythonVersion ->
                                 def architectures = ['x86']
                                 if(params.INCLUDE_ARM_LINUX == true){
-                                    architectures.add("arm")
+                                    architectures.add("arm64")
                                 }
                                 architectures.each{ processorArchitecture ->
-                                    linuxTests["Linux - Python ${pythonVersion}-${processorArchitecture}: sdist"] = {
+                                    linuxTests["Linux-${processorArchitecture} - Python ${pythonVersion}: sdist"] = {
                                         packages.testPkg(
                                             agent: [
                                                 dockerfile: [
@@ -656,7 +656,7 @@ pipeline {
                                             },
                                         )
                                     }
-                                    linuxTests["Linux - Python ${pythonVersion}-${processorArchitecture}: wheel"] = {
+                                    linuxTests["Linux-${processorArchitecture} - Python ${pythonVersion}: wheel"] = {
                                         packages.testPkg(
                                             agent: [
                                                 dockerfile: [
