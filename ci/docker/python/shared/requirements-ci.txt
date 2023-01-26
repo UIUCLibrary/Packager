@@ -6,7 +6,7 @@ flake8
 lxml
 mypy
 pydocstyle
-pykdu-compress>=0.1.7b2
+pykdu-compress>=0.1.8
 pylint
 pytest
 pytest-cov
