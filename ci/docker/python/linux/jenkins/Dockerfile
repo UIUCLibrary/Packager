@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.8
+ARG PYTHON_VERSION=3.11
 ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
@@ -61,5 +61,3 @@ RUN python -m pip install --upgrade pip && \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt
 ENV PIP_FIND_LINKS=/wheels/
-USER user
-WORKDIR /home/user
