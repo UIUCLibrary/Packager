@@ -310,6 +310,7 @@ pipeline {
                                             filename 'ci/docker/python/linux/jenkins/Dockerfile'
                                             label 'linux && docker && x86'
                                             additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
+                                            args '--mount source=sonar-cache-uiucprescon-packager,target=/home/user/.sonar/cache'
                                         }
                                     }
                                     stages{
@@ -335,7 +336,6 @@ pipeline {
                                                     post {
                                                         always {
                                                             junit "reports/pytest/junit-pytest.xml"
-                                                            stash includes: "reports/pytest/*.xml", name: 'PYTEST_REPORT'
                                                         }
                                                     }
                                                 }
@@ -396,7 +396,6 @@ pipeline {
                                                         }
                                                         always {
                                                             archiveArtifacts "reports/bandit-report.json"
-                                                            stash includes: "reports/bandit-report.json", name: 'BANDIT_REPORT'
                                                         }
                                                     }
                                                 }
@@ -420,7 +419,6 @@ pipeline {
                                                     }
                                                     post{
                                                         always{
-                                                            stash includes: "reports/pylint_issues.txt,reports/pylint.txt", name: 'PYLINT_REPORT'
                                                             archiveArtifacts allowEmptyArchive: true, artifacts: "reports/pylint.txt"
                                                             recordIssues(skipBlames: true, tools: [pyLint(pattern: 'reports/pylint.txt')])
                                                         }
@@ -456,7 +454,6 @@ pipeline {
                                                     post {
                                                         always {
                                                             recordIssues(tools: [flake8(name: 'Flake8', pattern: 'logs/flake8.log')])
-                                                            stash includes: "logs/flake8.log", name: 'FLAKE8_REPORT'
                                                         }
                                                     }
                                                 }
@@ -468,22 +465,55 @@ pipeline {
                                                                     coberturaAdapter('reports/coverage.xml')
                                                                     ],
                                                                 sourceFileResolver: sourceFiles('STORE_ALL_BUILD')
-                                                    stash includes: "reports/coverage.xml", name: 'COVERAGE_REPORT'
                                                 }
-                                                cleanup{
-                                                    cleanWs(
-                                                        deleteDirs: true,
-                                                        patterns: [
-                                                            [pattern: "dist/", type: 'INCLUDE'],
-                                                            [pattern: 'build/', type: 'INCLUDE'],
-                                                            [pattern: '.pytest_cache/', type: 'INCLUDE'],
-                                                            [pattern: '.mypy_cache/', type: 'INCLUDE'],
-                                                            [pattern: '.tox/', type: 'INCLUDE'],
-                                                            [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
-                                                            [pattern: 'reports/', type: 'INCLUDE'],
-                                                            [pattern: 'logs/', type: 'INCLUDE']
-                                                            ]
+                                            }
+                                        }
+                                        stage("Sonarcloud Analysis"){
+                                            options{
+                                                lock("uiucprescon.packager-sonarscanner")
+                                            }
+                                            when{
+                                                equals expected: true, actual: params.USE_SONARQUBE
+                                                beforeOptions true
+                                            }
+                                            steps{
+                                                script{
+                                                    withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
+                                                        if (env.CHANGE_ID){
+                                                            sh(
+                                                                label: "Running Sonar Scanner",
+                                                                script:"sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
+                                                                )
+                                                        } else {
+                                                            sh(
+                                                                label: "Running Sonar Scanner",
+                                                                script: "sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.branch.name=${env.BRANCH_NAME}"
+                                                                )
+                                                        }
+                                                    }
+                                                    timeout(time: 1, unit: 'HOURS') {
+                                                        def sonarqube_result = waitForQualityGate(abortPipeline: false)
+                                                        if (sonarqube_result.status != 'OK') {
+                                                            unstable "SonarQube quality gate: ${sonarqube_result.status}"
+                                                        }
+                                                        def outstandingIssues = get_sonarqube_unresolved_issues(".scannerwork/report-task.txt")
+                                                        writeJSON file: 'reports/sonar-report.json', json: outstandingIssues
+                                                    }
+                                                }
+                                            }
+                                            post {
+                                                always{
+                                                    archiveArtifacts(
+                                                        allowEmptyArchive: true,
+                                                        artifacts: ".scannerwork/report-task.txt"
                                                     )
+                                                    script{
+                                                        if(fileExists('reports/sonar-report.json')){
+                                                            stash includes: "reports/sonar-report.json", name: 'SONAR_REPORT'
+                                                            archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
+                                                            recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -493,73 +523,19 @@ pipeline {
                                             cleanWs(patterns: [
                                                     [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
                                                     [pattern: 'reports/coverage', type: 'INCLUDE'],
+                                                    [pattern: "dist/", type: 'INCLUDE'],
+                                                    [pattern: 'build/', type: 'INCLUDE'],
+                                                    [pattern: '.pytest_cache/', type: 'INCLUDE'],
+                                                    [pattern: '.mypy_cache/', type: 'INCLUDE'],
+                                                    [pattern: '.tox/', type: 'INCLUDE'],
+                                                    [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
+                                                    [pattern: 'reports/', type: 'INCLUDE'],
+                                                    [pattern: 'logs/', type: 'INCLUDE']
                                                 ])
                                         }
                                     }
                                 }
-                                stage("Sonarcloud Analysis"){
-                                    agent {
-                                        dockerfile {
-                                            filename 'ci/docker/python/linux/jenkins/Dockerfile'
-                                            label 'linux && docker && x86'
-                                            additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
-                                            args '--mount source=sonar-cache-uiucprescon-packager,target=/home/user/.sonar/cache'
-                                        }
-                                    }
-                                    options{
-                                        lock("uiucprescon.packager-sonarscanner")
-                                    }
-                                    when{
-                                        equals expected: true, actual: params.USE_SONARQUBE
-                                        beforeAgent true
-                                        beforeOptions true
-                                    }
-                                    steps{
-                                        unstash "COVERAGE_REPORT"
-                                        unstash "PYTEST_REPORT"
-                                        unstash "BANDIT_REPORT"
-                                        unstash "PYLINT_REPORT"
-                                        unstash "FLAKE8_REPORT"
-                                        script{
-                                            withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
-                                                if (env.CHANGE_ID){
-                                                    sh(
-                                                        label: "Running Sonar Scanner",
-                                                        script:"sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
-                                                        )
-                                                } else {
-                                                    sh(
-                                                        label: "Running Sonar Scanner",
-                                                        script: "sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.branch.name=${env.BRANCH_NAME}"
-                                                        )
-                                                }
-                                            }
-                                            timeout(time: 1, unit: 'HOURS') {
-                                                def sonarqube_result = waitForQualityGate(abortPipeline: false)
-                                                if (sonarqube_result.status != 'OK') {
-                                                    unstable "SonarQube quality gate: ${sonarqube_result.status}"
-                                                }
-                                                def outstandingIssues = get_sonarqube_unresolved_issues(".scannerwork/report-task.txt")
-                                                writeJSON file: 'reports/sonar-report.json', json: outstandingIssues
-                                            }
-                                        }
-                                    }
-                                    post {
-                                        always{
-                                            archiveArtifacts(
-                                                allowEmptyArchive: true,
-                                                artifacts: ".scannerwork/report-task.txt"
-                                            )
-                                            script{
-                                                if(fileExists('reports/sonar-report.json')){
-                                                    stash includes: "reports/sonar-report.json", name: 'SONAR_REPORT'
-                                                    archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
-                                                    recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+
                             }
                         }
                     }
