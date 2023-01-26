@@ -1,1 +1,1 @@
-py3exiv2bind>=0.1.9b1
+py3exiv2bind>=0.1.9
