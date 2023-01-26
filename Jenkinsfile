@@ -47,43 +47,7 @@ def get_sonarqube_unresolved_issues(report_task_file){
     }
 }
 
-def remove_from_devpi(devpiExecutable, pkgName, pkgVersion, devpiIndex, devpiUsername, devpiPassword){
-    script {
-                try {
-                    bat "${devpiExecutable} login ${devpiUsername} --password ${devpiPassword}"
-                    bat "${devpiExecutable} use ${devpiIndex}"
-                    bat "${devpiExecutable} remove -y ${pkgName}==${pkgVersion}"
-                } catch (Exception ex) {
-                    echo "Failed to remove ${pkgName}==${pkgVersion} from ${devpiIndex}"
-            }
 
-    }
-}
-
-
-
-
-def get_package_version(stashName, metadataFile){
-    ws {
-        unstash "${stashName}"
-        script{
-            def props = readProperties interpolate: true, file: "${metadataFile}"
-            deleteDir()
-            return props.Version
-        }
-    }
-}
-
-def get_package_name(stashName, metadataFile){
-    ws {
-        unstash "${stashName}"
-        script{
-            def props = readProperties interpolate: true, file: "${metadataFile}"
-            deleteDir()
-            return props.Name
-        }
-    }
-}
 def startup(){
     def SONARQUBE_CREDENTIAL_ID = SONARQUBE_CREDENTIAL_ID
     parallel(
