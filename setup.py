@@ -5,7 +5,6 @@ setup(
         'uiucprescon.packager',
         'uiucprescon.packager.packages',
     ],
-    namespace_packages=["uiucprescon"],
     test_suite="tests",
     setup_requires=['pytest-runner'],
     install_requires=['py3exiv2bind>=0.1.9b1'],
