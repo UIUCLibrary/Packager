@@ -10,11 +10,9 @@ pykdu-compress>=0.1.8
 pylint
 pytest
 pytest-cov
-pytest-bdd < 4.0
 pytest-runner
 rinohtype
 six==1.14.0
 sphinx
 sphinx-argparse
-tox
 twine
