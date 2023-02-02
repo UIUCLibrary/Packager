@@ -3,18 +3,20 @@ ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
 ARG SONAR_SCANNER_VERSION=4.6.2.2472
+ARG PIP_FIND_LINKS=/wheels/
 FROM python:${PYTHON_VERSION} as base_image
 
 FROM base_image as wheel_builder
 ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
+ARG PIP_FIND_LINKS
 COPY requirements /tmp/requirements
 COPY requirements.txt requirements-dev.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
 RUN python -m pip install --no-cache-dir --upgrade pip &&  \
     pip install --no-cache-dir setuptools --upgrade && \
     pip install --no-cache-dir wheel && \
-    pip wheel --no-cache-dir --wheel-dir=/wheels  \
+    pip wheel --no-cache-dir --wheel-dir=${PIP_FIND_LINKS}  \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt \
         -r /tmp/requirements-dev.txt \
@@ -50,17 +52,17 @@ RUN mkdir -p /home/user/.sonar/ && chmod -R 777 /home/user/
 ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
+ARG PIP_FIND_LINKS
 
-
-COPY --from=wheel_builder /wheels /wheels/
+COPY --from=wheel_builder ${PIP_FIND_LINKS}/* ${PIP_FIND_LINKS}/
 COPY requirements /tmp/requirements
 COPY requirements.txt requirements-dev.txt ci/docker/python/shared/requirements-ci.txt /tmp/
 
 RUN python -m pip install --no-cache-dir  --upgrade pip && \
     pip install --no-cache-dir wheel && \
     pip install --no-cache-dir setuptools --upgrade && \
-    pip install --no-cache-dir --no-index --find-links=/wheels \
+    pip install --no-cache-dir --no-index --find-links=${PIP_FIND_LINKS} \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt \
         -r /tmp/requirements-dev.txt
-ENV PIP_FIND_LINKS=/wheels/
+ENV PIP_FIND_LINKS=${PIP_FIND_LINKS}
