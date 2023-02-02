@@ -9,14 +9,15 @@ FROM base_image as wheel_builder
 ARG PIP_INDEX_URL
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_TRUSTED_HOST
-ADD requirements.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
+ADD requirements.txt requirements-dev.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
 RUN python -m pip install --upgrade pip &&  \
     pip install setuptools --upgrade && \
     pip install wheel && \
     pip wheel --wheel-dir=/wheels  \
         -r /tmp/requirements.txt \
-        -r /tmp/requirements-ci.txt && \
-    pip wheel --wheel-dir=/wheels -r /tmp/requirements-extra.txt && \
+        -r /tmp/requirements-ci.txt \
+        -r /tmp/requirements-dev.txt \
+        -r /tmp/requirements-extra.txt && \
     rm -rf  /root/.cache
 #==============================================================================
 FROM base_image as SONAR_BUILDER
@@ -51,12 +52,13 @@ ARG PIP_TRUSTED_HOST
 
 
 COPY --from=wheel_builder /wheels /wheels/
-ADD requirements.txt ci/docker/python/shared/requirements-ci.txt /tmp/
+ADD requirements.txt requirements-dev.txt ci/docker/python/shared/requirements-ci.txt /tmp/
 
 RUN python -m pip install --upgrade pip && \
     pip install wheel && \
     pip install setuptools --upgrade && \
     pip install --no-index --find-links=/wheels \
         -r /tmp/requirements.txt \
-        -r /tmp/requirements-ci.txt
+        -r /tmp/requirements-ci.txt \
+        -r /tmp/requirements-dev.txt
 ENV PIP_FIND_LINKS=/wheels/
