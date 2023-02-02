@@ -16,7 +16,7 @@ COPY requirements.txt requirements-dev.txt ci/docker/python/shared/requirements-
 RUN python -m pip install --no-cache-dir --upgrade pip &&  \
     pip install --no-cache-dir setuptools --upgrade && \
     pip install --no-cache-dir wheel && \
-    pip wheel --no-cache-dir --wheel-dir=${PIP_FIND_LINKS}  \
+    pip wheel --no-cache-dir --wheel-dir=${PIP_FIND_LINKS} \
         -r /tmp/requirements.txt \
         -r /tmp/requirements-ci.txt \
         -r /tmp/requirements-dev.txt \
