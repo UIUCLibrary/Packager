@@ -25,7 +25,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip &&  \
 #==============================================================================
 FROM base_image as SONAR_BUILDER
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y unzip=6.0-26+deb11u1
+    apt-get install --no-install-recommends -y unzip
 
 ARG SONAR_SCANNER_VERSION
 ARG SONAR_SCANNER_HOME=/opt/sonar/${SONAR_SCANNER_VERSION}-linux
