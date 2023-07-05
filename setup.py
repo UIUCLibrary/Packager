@@ -12,5 +12,5 @@ setup(
     extras_require={"kdu": ['pykdu-compress>=0.1.8']},
     tests_require=['pytest', 'pytest-bdd<4.0'],
     zip_safe=False,
-    python_requires='>=3.5',
+    python_requires='>=3.8',
 )
