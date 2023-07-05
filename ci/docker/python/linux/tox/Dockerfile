@@ -10,23 +10,6 @@ RUN apt-get update && \
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
-# ==============================================================================
-FROM wheel_builder_base as WHEEL_BUILDER_PY37
-ARG PIP_EXTRA_INDEX_URL
-ARG PIP_INDEX_URL
-
-COPY requirements.txt  requirements-dev.txt requirements-freeze.txt ci/docker/python/shared/requirements-ci.txt ci/docker/python/shared/requirements-extra.txt /tmp/
-COPY requirements /tmp/requirements
-ENV PYTHON=python3.7
-RUN $PYTHON -m venv venv && \
-    . ./venv/bin/activate && \
-    python -m pip install --no-cache-dir wheel==0.37.1 && \
-    python -m pip wheel -w /wheels --no-cache-dir  \
-        -r /tmp/requirements.txt \
-        -r /tmp/requirements-dev.txt  \
-        -r /tmp/requirements-ci.txt  \
-        -r /tmp/requirements-extra.txt && \
-    rm -rf venv
 
 # ==============================================================================
 FROM wheel_builder_base as WHEEL_BUILDER_PY38
@@ -110,7 +93,6 @@ RUN mkdir -p /.cache/pip && \
     chmod -R 777 /.cache
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
-COPY --from=WHEEL_BUILDER_PY37 /wheels/* /wheels/
 COPY --from=WHEEL_BUILDER_PY38 /wheels/* /wheels/
 COPY --from=WHEEL_BUILDER_PY39 /wheels/* /wheels/
 COPY --from=WHEEL_BUILDER_PY310 /wheels/* /wheels/
