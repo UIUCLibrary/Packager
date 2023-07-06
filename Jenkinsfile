@@ -480,6 +480,7 @@ pipeline {
                                                 label: 'linux && docker && x86',
                                                 dockerfile: 'ci/docker/python/linux/tox/Dockerfile',
                                                 dockerArgs: '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL',
+                                                dockerRunArgs: '-v pipcache_packager:/.cache/pip',
                                                 retry: 2
                                             )
                                     },
@@ -489,6 +490,7 @@ pipeline {
                                                 label: 'windows && docker && x86',
                                                 dockerfile: 'ci/docker/python/windows/tox/Dockerfile',
                                                 dockerArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
+                                                dockerRunArgs: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip',
                                                 retry: 2
                                             )
                                     },
@@ -646,7 +648,8 @@ pipeline {
                                                 dockerfile: [
                                                     label: "linux && docker && ${processorArchitecture}",
                                                     filename: 'ci/docker/python/linux/tox/Dockerfile',
-                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
+                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL',
+                                                    args: '-v pipcache_packager:/.cache/pip',
                                                 ]
                                             ],
                                             retryTimes: 3,
@@ -664,7 +667,8 @@ pipeline {
                                                 dockerfile: [
                                                     label: "linux && docker && ${processorArchitecture}",
                                                     filename: 'ci/docker/python/linux/tox/Dockerfile',
-                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL'
+                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL',
+                                                    args: '-v pipcache_packager:/.cache/pip',
                                                 ]
                                             ],
                                             retryTimes: 3,
@@ -686,7 +690,9 @@ pipeline {
                                                 dockerfile: [
                                                     label: 'windows && docker && x86',
                                                     filename: 'ci/docker/python/windows/tox/Dockerfile',
-                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE'
+                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
+                                                    args: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip'
+
                                                 ]
                                             ],
                                             retryTimes: 3,
@@ -704,7 +710,8 @@ pipeline {
                                                 dockerfile: [
                                                     label: 'windows && docker && x86',
                                                     filename: 'ci/docker/python/windows/tox/Dockerfile',
-                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE'
+                                                    additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
+                                                    args: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip'
                                                 ]
                                             ],
                                             retryTimes: 3,
@@ -880,7 +887,8 @@ pipeline {
                                             dockerfile: [
                                                 filename: 'ci/docker/python/windows/tox/Dockerfile',
                                                 additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
-                                                label: 'windows && docker && x86 && devpi-access'
+                                                label: 'windows && docker && x86 && devpi-access',
+                                                args: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip'
                                             ]
                                         ],
                                         retryTimes: 3,
@@ -905,7 +913,8 @@ pipeline {
                                             dockerfile: [
                                                 filename: 'ci/docker/python/windows/tox/Dockerfile',
                                                 additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE",
-                                                label: 'windows && docker && x86'
+                                                label: 'windows && docker && x86',
+                                                args: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip'
                                             ]
                                         ],
                                         retryTimes: 3,
@@ -933,7 +942,8 @@ pipeline {
                                             dockerfile: [
                                                 filename: 'ci/docker/python/linux/tox/Dockerfile',
                                                 additionalBuildArgs: "--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL",
-                                                label: 'linux && docker && x86 && devpi-access'
+                                                label: 'linux && docker && x86 && devpi-access',
+                                                args: '-v pipcache_packager:/.cache/pip',
                                             ]
                                         ],
                                         retryTimes: 3,
@@ -958,7 +968,8 @@ pipeline {
                                             dockerfile: [
                                                 filename: 'ci/docker/python/linux/tox/Dockerfile',
                                                 additionalBuildArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL',
-                                                label: 'linux && docker && x86 && devpi-access'
+                                                label: 'linux && docker && x86 && devpi-access',
+                                                args: '-v pipcache_packager:/.cache/pip',
                                             ]
                                         ],
                                         retryTimes: 3,
