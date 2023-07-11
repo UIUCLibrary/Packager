@@ -36,7 +36,6 @@ defaultParameterValues = [
 
 
 
-SONARQUBE_CREDENTIAL_ID = 'sonarcloud-uiucprescon.packager'
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
 
@@ -49,23 +48,9 @@ def get_sonarqube_unresolved_issues(report_task_file){
 
 
 def startup(){
-    def SONARQUBE_CREDENTIAL_ID = SONARQUBE_CREDENTIAL_ID
     parallel(
         [
             failFast: true,
-            "Checking sonarqube Settings": {
-                node(){
-                    try{
-                        withCredentials([string(credentialsId: SONARQUBE_CREDENTIAL_ID, variable: 'dddd')]) {
-                            echo 'Found credentials for sonarqube'
-                        }
-                        defaultParameterValues.USE_SONARQUBE = true
-                    } catch(e){
-                        echo "Setting defaultValue for USE_SONARQUBE to false. Reason: ${e}"
-                        defaultParameterValues.USE_SONARQUBE = false
-                    }
-                }
-            },
             'Loading Reference Build Information': {
                 node(){
                     checkout scm
@@ -122,6 +107,7 @@ pipeline {
         booleanParam(name: "TEST_RUN_TOX", defaultValue: false, description: "Run Tox Tests")
         booleanParam(name: "RUN_CHECKS", defaultValue: true, description: "Run checks on code")
         booleanParam(name: "USE_SONARQUBE", defaultValue: true, description: "Send data test data to SonarQube")
+        credentials(name: 'SONARCLOUD_TOKEN', credentialType: 'org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl', defaultValue: 'sonarcloud_token', required: false)
         booleanParam(name: "BUILD_PACKAGES", defaultValue: false, description: "Build Python packages")
         booleanParam(name: 'INCLUDE_ARM_LINUX', defaultValue: false, description: 'Include ARM architecture for Linux')
         booleanParam(name: 'INCLUDE_ARM_MACOS', defaultValue: false, description: 'Include ARM(m1) architecture for Mac')
@@ -390,12 +376,23 @@ pipeline {
                                                 lock("uiucprescon.packager-sonarscanner")
                                             }
                                             when{
-                                                equals expected: true, actual: params.USE_SONARQUBE
-                                                beforeOptions true
+                                                allOf{
+                                                    equals expected: true, actual: params.USE_SONARQUBE
+                                                    expression{
+                                                        try{
+                                                            withCredentials([string(credentialsId: params.SONARCLOUD_TOKEN, variable: 'dddd')]) {
+                                                                echo 'Found credentials for sonarqube'
+                                                            }
+                                                        } catch(e){
+                                                            return false
+                                                        }
+                                                        return true
+                                                    }
+                                                }
                                             }
                                             steps{
                                                 script{
-                                                    withSonarQubeEnv(installationName:"sonarcloud", credentialsId: 'sonarcloud-uiucprescon.packager') {
+                                                    withSonarQubeEnv(installationName:"sonarcloud", credentialsId: params.SONARCLOUD_TOKEN) {
                                                         if (env.CHANGE_ID){
                                                             sh(
                                                                 label: "Running Sonar Scanner",
