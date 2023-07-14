@@ -2,10 +2,11 @@
 
 ARG FROM_IMAGE=mcr.microsoft.com/dotnet/framework/sdk:4.8
 
-FROM ${FROM_IMAGE} as certsgen
+FROM ${FROM_IMAGE} AS base_image
+FROM base_image AS certsgen
 RUN certutil -generateSSTFromWU roots.sst
 
-FROM ${FROM_IMAGE} as BASE_BUILDER
+FROM base_image AS BASE_BUILDER
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
 
@@ -56,10 +57,12 @@ COPY --from=certsgen c:/roots.sst roots.sst
 RUN certutil -addstore -f root roots.sst ; `
     del roots.sst
 
+ARG PIP_EXTRA_INDEX_URL
+ARG PIP_INDEX_URL
 
-ENV PIP_FIND_LINKS=c:\wheels
-ADD requirements/requirements_tox.txt requirements_tox.txt
-COPY requirements requirements
-RUN python -m pip install pip --upgrade ; pip install -r requirements_tox.txt devpi-client
+COPY requirements-ci.txt c:/python_requirments/
+COPY requirements/ c:/python_requirments/requirements
+RUN python -m pip install pip --upgrade ; pip install --no-cache-dir -r c:/python_requirments/requirements-ci.txt
+
 WORKDIR C:/src
 CMD tox --workdir ${Env:TEMP}\tox\ -vv  --recreate

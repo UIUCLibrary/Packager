@@ -1,12 +1,2 @@
-mypy
-lxml
-wheel
-sphinx
-pytest
-build
-pytest-runner
-pytest-bdd >= 3.1.0,<4.0
+-r requirements/requirements.txt
 -r requirements/requirements_tox.txt
-behave
-flake8
-mypy

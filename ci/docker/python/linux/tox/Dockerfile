@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as wheel_builder_base
+FROM ubuntu:20.04 AS wheel_builder_base
 COPY ci/docker/python/linux/tox/apt-packages.txt /tmp/
 RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common && \
@@ -16,8 +16,9 @@ RUN mkdir -p /.cache/pip && \
     chmod -R 777 /.cache
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
-ENV PIP_FIND_LINKS=/wheels
-COPY requirements /tmp/
-RUN pip3 install -r /tmp/requirements_tox.txt devpi-client build
+COPY requirements/ /tmp/python_requirements/requirements/
+COPY requirements-ci.txt /tmp/python_requirements
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install -r /tmp/python_requirements/requirements-ci.txt
 WORKDIR /src
 CMD tox --workdir /tmp/tox --recreate
