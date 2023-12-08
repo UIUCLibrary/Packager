@@ -62,9 +62,9 @@ RUN certutil -addstore -f root roots.sst ; `
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 
-COPY requirements-ci.txt c:/python_requirments/
+COPY requirements-dev.txt c:/python_requirments/
 COPY requirements/ c:/python_requirments/requirements
-RUN python -m pip install pip --upgrade ; pip install --no-cache-dir -r c:/python_requirments/requirements-ci.txt
+RUN python -m pip install pip --upgrade ; pip install --no-cache-dir -r c:/python_requirments/requirements-dev.txt
 
 RUN py -3 -m pip install --no-cache-dir pipx ; `
     py -3 -m pipx ensurepath
