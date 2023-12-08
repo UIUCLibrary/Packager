@@ -1,11 +1,12 @@
 ARG PIPX_HOME=/pipx
-FROM ubuntu:20.04 AS wheel_builder_base
+FROM ubuntu:22.04 AS wheel_builder_base
 COPY ci/docker/python/linux/tox/apt-packages.txt /tmp/
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common && \
+    apt-get install -y software-properties-common gpg-agent --no-install-recommends && \
     add-apt-repository ppa:deadsnakes/ppa && \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata && \
     apt-get update && \
-    < /tmp/apt-packages.txt xargs apt-get install -y && \
+     < /tmp/apt-packages.txt xargs apt-get install -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 ARG PIP_EXTRA_INDEX_URL
@@ -18,9 +19,9 @@ RUN mkdir -p /.cache/pip && \
 ARG PIP_EXTRA_INDEX_URL
 ARG PIP_INDEX_URL
 COPY requirements/ /tmp/python_requirements/requirements/
-COPY requirements-ci.txt /tmp/python_requirements
+COPY requirements-dev.txt /tmp/python_requirements
 RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install -r /tmp/python_requirements/requirements-ci.txt
+    python3 -m pip install -r /tmp/python_requirements/requirements-dev.txt
 
 ARG PIPX_HOME
 ENV PIPX_HOME=${PIPX_HOME}
