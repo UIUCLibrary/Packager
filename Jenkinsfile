@@ -1133,7 +1133,8 @@ pipeline {
                         checkout scm
                         script{
                             if (!env.TAG_NAME?.trim()){
-                                docker.build('uiucpresconpackager:devpi','-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                                def dockerImage = docker.build('uiucpresconpackager:devpi','-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .')
+                                dockerImage.inside{
                                     def devpi = load('ci/jenkins/scripts/devpi.groovy')
                                     devpi.pushPackageToIndex(
                                         pkgName: props.Name,
@@ -1144,15 +1145,17 @@ pipeline {
                                         credentialsId: DEVPI_CONFIG.credentialsId
                                     )
                                 }
+                                sh script: "docker image rm --no-prune ${dockerImage.imageName()}"
                             }
                         }
                     }
                 }
                 cleanup{
                     node('linux && docker && devpi-access') {
-                       script{
+                        script{
                             checkout scm
-                            docker.build('uiucpresconpackager:devpi','-f ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .').inside{
+                            def dockerImage = docker.build('uiucpresconpackager:devpi','-f ./ci/docker/python/linux/tox/Dockerfile --build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL .')
+                            dockerImage.inside{
                                 def devpi = load('ci/jenkins/scripts/devpi.groovy')
                                 devpi.removePackage(
                                     pkgName: props.Name,
@@ -1162,7 +1165,8 @@ pipeline {
                                     credentialsId: DEVPI_CONFIG.credentialsId,
                                 )
                             }
-                       }
+                            sh script: "docker image rm --no-prune ${dockerImage.imageName()}"
+                        }
                     }
                 }
             }
