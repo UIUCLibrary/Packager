@@ -6,7 +6,6 @@ setup(
         'uiucprescon.packager.packages',
     ],
     test_suite="tests",
-    setup_requires=['pytest-runner'],
     install_requires=['py3exiv2bind>=0.1.9'],
     package_data={"uiucprescon.packager": ["py.typed"]},
     extras_require={"kdu": ['pykdu-compress>=0.1.8']},
