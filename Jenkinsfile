@@ -888,6 +888,7 @@ pipeline {
                                                     credentialsId: DEVPI_CONFIG.credentialsId,
                                                     devpiExec: 'venv/bin/devpi'
                                                 ],
+                                                retries: 3,
                                                 package:[
                                                     name: props.Name,
                                                     version: props.Version,
@@ -919,6 +920,7 @@ pipeline {
                                                 agent: [
                                                     label: "mac && python${pythonVersion} && ${processorArchitecture} && devpi-access"
                                                 ],
+                                                retries: 3,
                                                 devpi: [
                                                     index: DEVPI_CONFIG.stagingIndex,
                                                     server: DEVPI_CONFIG.server,
@@ -991,7 +993,7 @@ pipeline {
                                                     args: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip'
                                                 ]
                                             ],
-                                            retryTimes: 3,
+                                            retries: 3,
                                             devpi: [
                                                 index: DEVPI_CONFIG.stagingIndex,
                                                 server: DEVPI_CONFIG.server,
@@ -1029,7 +1031,7 @@ pipeline {
                                                     args: '-v pipcache_packager:/.cache/pip',
                                                 ]
                                             ],
-                                            retryTimes: 3,
+                                            retries: 3,
                                             devpi: [
                                                 index: DEVPI_CONFIG.stagingIndex,
                                                 server: DEVPI_CONFIG.server,
