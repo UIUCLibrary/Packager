@@ -407,6 +407,9 @@ pipeline {
                                     additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                                 }
                             }
+                            options {
+                                retry(conditions: [agent()], count: 2)
+                            }
                             steps {
                                 sh 'python setup.py build --build-lib build/lib --build-temp build/temp'
                             }
@@ -429,6 +432,9 @@ pipeline {
                                     label 'linux && docker && x86'
                                     additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                                 }
+                            }
+                            options {
+                                retry(conditions: [agent()], count: 2)
                             }
                             steps {
                                 sh(
