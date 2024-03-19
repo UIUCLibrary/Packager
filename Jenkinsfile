@@ -778,6 +778,9 @@ pipeline {
                             additionalBuildArgs '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL'
                         }
                     }
+                    options {
+                        retry(2)
+                    }
                     steps {
                         sh 'python3 -m build .'
                     }
