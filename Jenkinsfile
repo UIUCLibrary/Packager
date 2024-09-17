@@ -195,6 +195,7 @@ def testPackages(){
                             args: '-v pipcache_packager:/.cache/pip',
                         ]
                     ],
+                    retries: 3,
                     testSetup: {
                         checkout scm
                         unstash 'PYTHON_PACKAGES'
