@@ -707,36 +707,44 @@ pipeline {
                     when{
                         equals expected: true, actual: params.TEST_RUN_TOX
                     }
-                     steps {
-                        script{
-                            def windowsJobs = [:]
-                            def linuxJobs = [:]
-                            script{
-                                parallel(
-                                    'Linux': {
-                                        linuxJobs = getToxTestsParallel(
-                                                envNamePrefix: 'Tox Linux',
-                                                label: 'linux && docker && x86',
-                                                dockerfile: 'ci/docker/python/linux/tox/Dockerfile',
-                                                dockerArgs: '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL',
-                                                dockerRunArgs: '-v pipcache_packager:/.cache/pip',
-                                                retry: 2
-                                            )
-                                    },
-                                    'Windows': {
-                                        windowsJobs = getToxTestsParallel(
-                                                envNamePrefix: 'Tox Windows',
-                                                label: 'windows && docker && x86',
-                                                dockerfile: 'ci/docker/python/windows/tox/Dockerfile',
-                                                dockerArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
-                                                dockerRunArgs: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip',
-                                                retry: 2
-                                            )
-                                    },
-                                    failFast: true
-                                )
+                    parallel{
+                        stage('Linux'){
+                            when{
+                                expression {return nodesByLabel('linux && docker && x86').size() > 0}
                             }
-                            parallel(windowsJobs + linuxJobs)
+                            steps{
+                                script{
+                                    parallel(
+                                        getToxTestsParallel(
+                                            envNamePrefix: 'Tox Linux',
+                                            label: 'linux && docker && x86',
+                                            dockerfile: 'ci/docker/python/linux/tox/Dockerfile',
+                                            dockerArgs: '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL',
+                                            dockerRunArgs: '-v pipcache_packager:/.cache/pip',
+                                            retry: 2
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        stage('Windows'){
+                            when{
+                                expression {return nodesByLabel('windows && docker && x86').size() > 0}
+                            }
+                            steps{
+                                script{
+                                    parallel(
+                                        getToxTestsParallel(
+                                            envNamePrefix: 'Tox Windows',
+                                            label: 'windows && docker && x86',
+                                            dockerfile: 'ci/docker/python/windows/tox/Dockerfile',
+                                            dockerArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
+                                            dockerRunArgs: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip',
+                                            retry: 2
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
