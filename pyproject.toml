@@ -2,6 +2,43 @@
 requires = ["setuptools>=40.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "uiucprescon.packager"
+version = "0.2.16.dev0"
+dependencies = [
+    "py3exiv2bind>=0.1.9"
+]
+requires-python = ">=3.8"
+readme = "README.rst"
+license = {text = "University of Illinois/NCSA Open Source License"}
+authors = [
+    {name = "University Library at The University of Illinois at Urbana Champaign: Preservation Services", email = "prescons@library.illinois.edu"},
+]
+maintainers = [
+    {name = "Henry Borchers", email = "hborcher@illinois.edu"}
+]
+description = "Packager tools for DS library"
+classifiers = [
+    "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: University of Illinois/NCSA Open Source License",
+    "Topic :: System :: Archiving :: Packaging",
+]
+
+[project.urls]
+Documentation = "https://www.library.illinois.edu/dccdocs/packager"
+Download = "https://github.com/UIUCLibrary/packager"
+
+[tool.setuptools]
+zip-safe = true
+
+[tool.setuptools.packages.find]
+where = ["uiucprescon"]
+
+[tool.setuptools.package-data]
+"uiucprescon.packager" = ["py.typed"]
+[project.optional-dependencies]
+kdu = ['pykdu-compress>=0.1.8']
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--verbose -s --doctest-modules --doctest-continue-on-failure"
@@ -12,3 +49,6 @@ testpaths = [
 norecursedirs = ["features", "build"]
 bdd_features_base_dir = "tests/features/"
 junit_family="xunit1"
+
+[tool.mypy]
+ignore_missing_imports = true
