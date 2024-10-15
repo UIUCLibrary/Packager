@@ -304,49 +304,11 @@ def startup(){
                     discoverGitReferenceBuild(latestBuildIfNotFound: true)
                 }
             },
-            'Getting Distribution Info': {
-                node('linux && docker') {
-                    timeout(2){
-                        ws{
-                            checkout scm
-                            try{
-                                docker.image('python').inside {
-                                    sh(
-                                       label: 'Running setup.py with dist_info',
-                                       script: """python --version
-                                                  PIP_NO_CACHE_DIR=off python setup.py dist_info
-                                               """
-                                    )
-                                    stash includes: '*.dist-info/**', name: 'DIST-INFO'
-                                    archiveArtifacts artifacts: '*.dist-info/**'
-                                }
-                            } finally{
-                                deleteDir()
-                            }
-                        }
-                    }
-                }
-            }
         ]
     )
 }
-def get_props(){
-    stage('Reading Package Metadata'){
-        node(){
-            unstash 'DIST-INFO'
-            def metadataFile = findFiles( glob: '*.dist-info/METADATA')[0]
-            def metadata = readProperties(interpolate: true, file: metadataFile.path )
-            echo """Version = ${metadata.Version}
-Name = ${metadata.Name}
-"""
-            return metadata
-        }
-    }
-}
-
 
 startup()
-def props = get_props()
 
 pipeline {
     agent none
@@ -433,7 +395,8 @@ pipeline {
                                 success{
                                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/docs/html', reportFiles: 'index.html', reportName: 'Documentation', reportTitles: ''])
                                     script{
-                                        def DOC_ZIP_FILENAME = "${props.Name}-${props.Version}.doc.zip"
+                                        def props = readTOML( file: 'pyproject.toml')['project']
+                                        def DOC_ZIP_FILENAME = "${props.name}-${props.version}.doc.zip"
                                         zip archive: true, dir: "${WORKSPACE}/build/docs/html", glob: '', zipFile: "dist/${DOC_ZIP_FILENAME}"
                                         stash includes: "dist/${DOC_ZIP_FILENAME},build/docs/html/**", name: 'DOCS_ARCHIVE'
                                     }
@@ -642,15 +605,16 @@ pipeline {
                                             steps{
                                                 script{
                                                     withSonarQubeEnv(installationName:'sonarcloud', credentialsId: params.SONARCLOUD_TOKEN) {
+                                                        def props = readTOML( file: 'pyproject.toml')['project']
                                                         if (env.CHANGE_ID){
                                                             sh(
                                                                 label: 'Running Sonar Scanner',
-                                                                script:"sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
+                                                                script:"sonar-scanner -Dsonar.projectVersion=${props.version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
                                                                 )
                                                         } else {
                                                             sh(
                                                                 label: 'Running Sonar Scanner',
-                                                                script: "sonar-scanner -Dsonar.projectVersion=${props.Version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.branch.name=${env.BRANCH_NAME}"
+                                                                script: "sonar-scanner -Dsonar.projectVersion=${props.version} -Dsonar.buildString=\"${env.BUILD_TAG}\" -Dsonar.branch.name=${env.BRANCH_NAME}"
                                                                 )
                                                         }
                                                     }
