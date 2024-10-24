@@ -23,7 +23,31 @@ defaultParameterValues = [
     USE_SONARQUBE: false
 ]
 
-
+def installMSVCRuntime(cacheLocation){
+    def cachedFile = "${cacheLocation}\\vc_redist.x64.exe".replaceAll(/\\\\+/, '\\\\')
+    withEnv(
+        [
+            "CACHED_FILE=${cachedFile}",
+            "RUNTIME_DOWNLOAD_URL=https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        ]
+    ){
+        lock("${cachedFile}-${env.NODE_NAME}"){
+            powershell(
+                label: 'Ensuring vc_redist runtime installer is available',
+                script: '''if ([System.IO.File]::Exists("$Env:CACHED_FILE"))
+                           {
+                                Write-Host 'Found installer'
+                            } else {
+                                Write-Host 'No installer found'
+                                Write-Host 'Downloading runtime'
+                                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;Invoke-WebRequest "$Env:RUNTIME_DOWNLOAD_URL" -OutFile "$Env:CACHED_FILE"
+                           }
+                        '''
+            )
+        }
+        powershell(label: 'Install VC Runtime', script: 'Start-Process -filepath "$Env:CACHED_FILE" -ArgumentList "/install", "/passive", "/norestart" -Passthru | Wait-Process;')
+    }
+}
 
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
@@ -676,17 +700,74 @@ pipeline {
                             when{
                                 expression {return nodesByLabel('linux && docker && x86').size() > 0}
                             }
+                            environment{
+                                PIP_CACHE_DIR='/tmp/pipcache'
+                                UV_INDEX_STRATEGY='unsafe-best-match'
+                                UV_TOOL_DIR='/tmp/uvtools'
+                                UV_PYTHON_INSTALL_DIR='/tmp/uvpython'
+                                UV_CACHE_DIR='/tmp/uvcache'
+                            }
                             steps{
                                 script{
+                                    def envs = []
+                                    node('docker && linux'){
+                                        docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
+                                            try{
+                                                checkout scm
+                                                sh(script: 'python3 -m venv venv && venv/bin/pip install uv')
+                                                envs = sh(
+                                                    label: 'Get tox environments',
+                                                    script: './venv/bin/uvx --quiet --with tox-uv tox list -d --no-desc',
+                                                    returnStdout: true,
+                                                ).trim().split('\n')
+                                            } finally{
+                                                cleanWs(
+                                                    patterns: [
+                                                        [pattern: 'venv/', type: 'INCLUDE'],
+                                                        [pattern: '.tox', type: 'INCLUDE'],
+                                                        [pattern: '**/__pycache__/', type: 'INCLUDE'],
+                                                    ]
+                                                )
+                                            }
+                                        }
+                                    }
                                     parallel(
-                                        getToxTestsParallel(
-                                            envNamePrefix: 'Tox Linux',
-                                            label: 'linux && docker && x86',
-                                            dockerfile: 'ci/docker/python/linux/tox/Dockerfile',
-                                            dockerArgs: '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL',
-                                            dockerRunArgs: '-v pipcache_packager:/.cache/pip',
-                                            retry: 2
-                                        )
+                                        envs.collectEntries{toxEnv ->
+                                            def version = toxEnv.replaceAll(/py(\d)(\d+)/, '$1.$2')
+                                            [
+                                                "Tox Environment: ${toxEnv}",
+                                                {
+                                                    node('docker && linux'){
+                                                        docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
+                                                            checkout scm
+                                                            try{
+                                                                sh( label: 'Running Tox',
+                                                                    script: """python3 -m venv venv && venv/bin/pip install uv
+                                                                               . ./venv/bin/activate
+                                                                               uv python install cpython-${version}
+                                                                               uvx -p ${version} --with tox-uv tox run -e ${toxEnv}
+                                                                            """
+                                                                    )
+                                                            } catch(e) {
+                                                                sh(script: '''. ./venv/bin/activate
+                                                                      uv python list
+                                                                      '''
+                                                                        )
+                                                                throw e
+                                                            } finally{
+                                                                cleanWs(
+                                                                    patterns: [
+                                                                        [pattern: 'venv/', type: 'INCLUDE'],
+                                                                        [pattern: '.tox', type: 'INCLUDE'],
+                                                                        [pattern: '**/__pycache__/', type: 'INCLUDE'],
+                                                                    ]
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
                                     )
                                 }
                             }
@@ -695,22 +776,119 @@ pipeline {
                             when{
                                 expression {return nodesByLabel('windows && docker && x86').size() > 0}
                             }
+                            environment{
+                                UV_INDEX_STRATEGY='unsafe-best-match'
+                                PIP_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\pipcache'
+                                UV_TOOL_DIR='C:\\Users\\ContainerUser\\Documents\\uvtools'
+                                UV_PYTHON_INSTALL_DIR='C:\\Users\\ContainerUser\\Documents\\uvpython'
+                                UV_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\uvcache'
+                                VC_RUNTIME_INSTALLER_LOCATION='c:\\msvc_runtime\\'
+                            }
                             steps{
                                 script{
+                                    def envs = []
+                                    node('docker && windows'){
+                                        docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=C:\\Users\\ContainerUser\\Documents'){
+                                            try{
+                                                checkout scm
+                                                bat(script: 'python -m venv venv && venv\\Scripts\\pip install uv')
+                                                envs = bat(
+                                                    label: 'Get tox environments',
+                                                    script: '@.\\venv\\Scripts\\uvx --quiet --with tox-uv tox list -d --no-desc',
+                                                    returnStdout: true,
+                                                ).trim().split('\r\n')
+                                            } finally{
+                                                cleanWs(
+                                                    patterns: [
+                                                        [pattern: 'venv/', type: 'INCLUDE'],
+                                                        [pattern: '.tox', type: 'INCLUDE'],
+                                                        [pattern: '**/__pycache__/', type: 'INCLUDE'],
+                                                    ]
+                                                )
+                                            }
+                                        }
+                                    }
                                     parallel(
-                                        getToxTestsParallel(
-                                            envNamePrefix: 'Tox Windows',
-                                            label: 'windows && docker && x86',
-                                            dockerfile: 'ci/docker/python/windows/tox/Dockerfile',
-                                            dockerArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
-                                            dockerRunArgs: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip',
-                                            retry: 2
-                                        )
+                                        envs.collectEntries{toxEnv ->
+                                            def version = toxEnv.replaceAll(/py(\d)(\d+)/, '$1.$2')
+                                            [
+                                                "Tox Environment: ${toxEnv}",
+                                                {
+                                                    node('docker && windows'){
+                                                        docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=C:\\Users\\ContainerUser\\Documents --mount source=msvc-runtime,target=$VC_RUNTIME_INSTALLER_LOCATION'){
+                                                            checkout scm
+                                                            try{
+                                                                installMSVCRuntime(env.VC_RUNTIME_INSTALLER_LOCATION)
+                                                                bat(label: 'Install uv',
+                                                                    script: 'python -m venv venv && venv\\Scripts\\pip install uv'
+                                                                )
+                                                                retry(3){
+                                                                    bat(label: 'Running Tox',
+                                                                        script: """call venv\\Scripts\\activate.bat
+                                                                               uv python install cpython-${version}
+                                                                               uvx -p ${version} --with tox-uv tox run -e ${toxEnv}
+                                                                            """
+                                                                    )
+                                                                }
+                                                            } finally{
+                                                                cleanWs(
+                                                                    patterns: [
+                                                                        [pattern: 'venv/', type: 'INCLUDE'],
+                                                                        [pattern: '.tox', type: 'INCLUDE'],
+                                                                        [pattern: '**/__pycache__/', type: 'INCLUDE'],
+                                                                    ]
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
                                     )
                                 }
                             }
                         }
                     }
+//                    parallel{
+//                        stage('Linux'){
+//                            when{
+//                                expression {return nodesByLabel('linux && docker && x86').size() > 0}
+//                            }
+//                            steps{
+//                                script{
+//                                    parallel(
+//                                        getToxTestsParallel(
+//                                            envNamePrefix: 'Tox Linux',
+//                                            label: 'linux && docker && x86',
+//                                            dockerfile: 'ci/docker/python/linux/tox/Dockerfile',
+//                                            dockerArgs: '--build-arg PIP_INDEX_URL --build-arg PIP_EXTRA_INDEX_URL',
+//                                            dockerRunArgs: '-v pipcache_packager:/.cache/pip',
+//                                            retry: 2
+//                                        )
+//                                    )
+//                                }
+//                            }
+//                        }
+//                        stage('Windows'){
+//                            when{
+//                                expression {return nodesByLabel('windows && docker && x86').size() > 0}
+//                            }
+//                            steps{
+//                                script{
+//                                    parallel(
+//                                        getToxTestsParallel(
+//                                            envNamePrefix: 'Tox Windows',
+//                                            label: 'windows && docker && x86',
+//                                            dockerfile: 'ci/docker/python/windows/tox/Dockerfile',
+//                                            dockerArgs: '--build-arg PIP_EXTRA_INDEX_URL --build-arg PIP_INDEX_URL --build-arg CHOCOLATEY_SOURCE',
+//                                            dockerRunArgs: '-v pipcache_packager:c:/users/containeradministrator/appdata/local/pip',
+//                                            retry: 2
+//                                        )
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
         }
