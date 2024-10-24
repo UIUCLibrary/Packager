@@ -30,9 +30,7 @@ Download = "https://github.com/UIUCLibrary/packager"
 
 [tool.setuptools]
 zip-safe = true
-
-[tool.setuptools.packages.find]
-where = ["uiucprescon"]
+packages= ["uiucprescon.packager"]
 
 [tool.setuptools.package-data]
 "uiucprescon.packager" = ["py.typed"]
