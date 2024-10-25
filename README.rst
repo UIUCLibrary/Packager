@@ -14,8 +14,5 @@ Packager tools for DS library
     .. image:: https://img.shields.io/badge/License-UIUC%20License-green.svg?label="License"
         :target: https://otm.illinois.edu/disclose-protect/illinois-open-source-license
 
-    .. image:: https://jenkins.library.illinois.edu/buildStatus/icon?job=OpenSourceProjects/Packager/master
-        :target: https://jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master/
-    
-    .. image:: https://img.shields.io/jenkins/coverage/api/https/jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master   
-        :target: https://jenkins.library.illinois.edu/job/OpenSourceProjects/job/Packager/job/master/coverage/
+    .. image:: https://jenkins-prod.library.illinois.edu/buildStatus/icon?job=open+source%2Fuiucprescon.packager%2Fmaster
+        :target: https://jenkins-prod.library.illinois.edu/job/open%20source/job/uiucprescon.packager/job/master/
