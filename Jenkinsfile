@@ -1,3 +1,7 @@
+// NOTE: this pipeline is too big for normal Jenkins operations. You have to turn on script splitting by entering
+//       'org.jenkinsci.plugins.pipeline.modeldefinition.parser.RuntimeASTTransformer.SCRIPT_SPLITTING_TRANSFORMATION=true'
+//       into the the Script Console. (No quotes)
+
 library identifier: 'JenkinsPythonHelperLibrary@2024.1.2', retriever: modernSCM(
   [$class: 'GitSCMSource',
    remote: 'https://github.com/UIUCLibrary/JenkinsPythonHelperLibrary.git',
@@ -778,6 +782,7 @@ pipeline {
                                     cleanup{
                                         cleanWs(
                                             patterns: [
+                                                [pattern: '.tox/', type: 'INCLUDE'],
                                                 [pattern: 'dist/', type: 'INCLUDE'],
                                                 [pattern: 'venv/', type: 'INCLUDE'],
                                                 [pattern: '**/__pycache__/', type: 'INCLUDE'],
