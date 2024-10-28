@@ -514,6 +514,7 @@ pipeline {
                                                                                . ./venv/bin/activate
                                                                                uv python install cpython-${version}
                                                                                uvx -p ${version} --with tox-uv tox run -e ${toxEnv}
+                                                                               rm -rf ./.tox
                                                                             """
                                                                     )
                                                             } catch(e) {
@@ -595,6 +596,7 @@ pipeline {
                                                                         script: """call venv\\Scripts\\activate.bat
                                                                                uv python install cpython-${version}
                                                                                uvx -p ${version} --with tox-uv tox run -e ${toxEnv}
+                                                                               rmdir /s/q .tox
                                                                             """
                                                                     )
                                                                 }
@@ -657,7 +659,7 @@ pipeline {
                             stash includes: 'dist/*.*', name: 'PYTHON_PACKAGES'
                         }
                         success {
-                            archiveArtifacts artifacts: "dist/*.whl,dist/*.tar.gz,dist/*.zip", fingerprint: true
+                            archiveArtifacts artifacts: 'dist/*.whl,dist/*.tar.gz,dist/*.zip', fingerprint: true
                         }
                         cleanup{
                             cleanWs(
@@ -726,12 +728,6 @@ pipeline {
                                     expression{['linux', 'windows'].contains(OS)}
                                     beforeAgent true
                                 }
-                                environment{
-                                    PIP_CACHE_DIR="${isUnix() ? '/tmp/pipcache': 'C:\\Users\\ContainerUser\\Documents\\pipcache'}"
-                                    UV_TOOL_DIR="${isUnix() ? '/tmp/uvtools': 'C:\\Users\\ContainerUser\\Documents\\uvtools'}"
-                                    UV_PYTHON_INSTALL_DIR="${isUnix() ? '/tmp/uvpython': 'C:\\Users\\ContainerUser\\Documents\\uvpython'}"
-                                    UV_CACHE_DIR="${isUnix() ? '/tmp/uvcache': 'C:\\Users\\ContainerUser\\Documents\\uvcache'}"
-                                }
                                 agent {
                                     docker {
                                         image 'python'
@@ -746,32 +742,48 @@ pipeline {
                                             ["TOX_INSTALL_PKG=${findFiles(glob: PACKAGE_TYPE == 'wheel' ? 'dist/*.whl' : 'dist/*.tar.gz')[0].path}"]
                                             ) {
                                             if(isUnix()){
-                                                sh(
-                                                    label: 'Testing with tox',
-                                                    script: '''python3 -m venv venv
-                                                               . ./venv/bin/activate
-                                                               trap "rm -rf venv" EXIT
-                                                               pip install uv
-                                                               uvx --with tox-uv tox
-                                                            '''
-                                                )
+                                                withEnv([
+                                                    'PIP_CACHE_DIR=/tmp/pipcache',
+                                                    'UV_TOOL_DIR=/tmp/uvtools',
+                                                    'UV_PYTHON_INSTALL_DIR=/tmp/uvpython',
+                                                    'UV_CACHE_DIR=/tmp/uvcache'
+                                                ]){
+                                                    sh(
+                                                        label: 'Testing with tox',
+                                                        script: '''python3 -m venv venv
+                                                                   . ./venv/bin/activate
+                                                                   trap "rm -rf venv" EXIT
+                                                                   pip install uv
+                                                                   uvx --with tox-uv tox
+                                                                   rm -rf .tox
+                                                                '''
+                                                    )
+                                                }
                                             } else {
                                                 installMSVCRuntime('c:\\msvc_runtime\\')
-                                                bat(
-                                                    label: 'Install uv',
-                                                    script: '''python -m venv venv
-                                                               call venv\\Scripts\\activate.bat
-                                                               pip install uv
-                                                            '''
-                                                )
-                                                script{
-                                                    retry(3){
-                                                        bat(
-                                                            label: 'Testing with tox',
-                                                            script: '''call venv\\Scripts\\activate.bat
-                                                                       uvx --with tox-uv tox
-                                                                    '''
-                                                        )
+                                                withEnv([
+                                                    'PIP_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\pipcache',
+                                                    'UV_TOOL_DIR=C:\\Users\\ContainerUser\\Documents\\uvtools',
+                                                    'UV_PYTHON_INSTALL_DIR=C:\\Users\\ContainerUser\\Documents\\uvpython',
+                                                    'UV_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\uvcache'
+                                                ]){
+                                                    bat(
+                                                        label: 'Install uv',
+                                                        script: '''python -m venv venv
+                                                                   call venv\\Scripts\\activate.bat
+                                                                   pip install uv
+                                                                '''
+                                                    )
+                                                    script{
+                                                        retry(3){
+                                                            bat(
+                                                                label: 'Testing with tox',
+                                                                script: '''call venv\\Scripts\\activate.bat
+                                                                           uvx --with tox-uv tox
+                                                                           rmdir /s/q .tox
+                                                                        '''
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
