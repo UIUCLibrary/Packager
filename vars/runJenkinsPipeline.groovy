@@ -132,7 +132,7 @@ def call(){
                                         label: "Building docs on ${env.NODE_NAME}",
                                         script: '''python3 -m venv venv
                                                   trap "rm -rf venv" EXIT
-                                                  venv/bin/pip install uv
+                                                  venv/bin/pip install --disable-pip-version-check uv
                                                   . ./venv/bin/activate
                                                   mkdir -p logs
                                                   uvx --from sphinx --with-editable . --with-requirements requirements-dev.txt sphinx-build docs/source build/docs/html -d build/docs/.doctrees -v -w logs/build_sphinx.log'''
@@ -195,7 +195,7 @@ def call(){
                                                     sh(
                                                         label: 'Create virtual environment',
                                                         script: '''python3 -m venv bootstrap_uv
-                                                                   bootstrap_uv/bin/pip install uv
+                                                                   bootstrap_uv/bin/pip install --disable-pip-version-check uv
                                                                    bootstrap_uv/bin/uv venv venv
                                                                    . ./venv/bin/activate
                                                                    bootstrap_uv/bin/uv pip install uv
@@ -486,7 +486,7 @@ def call(){
                                             docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
                                                 try{
                                                     checkout scm
-                                                    sh(script: 'python3 -m venv venv && venv/bin/pip install uv')
+                                                    sh(script: 'python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv')
                                                     envs = sh(
                                                         label: 'Get tox environments',
                                                         script: './venv/bin/uvx --quiet --with tox-uv tox list -d --no-desc',
@@ -514,7 +514,7 @@ def call(){
                                                                 checkout scm
                                                                 try{
                                                                     sh( label: 'Running Tox',
-                                                                        script: """python3 -m venv venv && venv/bin/pip install uv
+                                                                        script: """python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv
                                                                                    . ./venv/bin/activate
                                                                                    uv python install cpython-${version}
                                                                                    uvx -p ${version} --with tox-uv tox run -e ${toxEnv}
@@ -564,7 +564,7 @@ def call(){
                                             docker.image('python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR}"){
                                                 try{
                                                     checkout scm
-                                                    bat(script: 'python -m venv venv && venv\\Scripts\\pip install uv')
+                                                    bat(script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv')
                                                     envs = bat(
                                                         label: 'Get tox environments',
                                                         script: '@.\\venv\\Scripts\\uvx --quiet --with tox-uv tox list -d --no-desc',
@@ -593,7 +593,7 @@ def call(){
                                                                 try{
                                                                     installMSVCRuntime(env.VC_RUNTIME_INSTALLER_LOCATION)
                                                                     bat(label: 'Install uv',
-                                                                        script: 'python -m venv venv && venv\\Scripts\\pip install uv'
+                                                                        script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv'
                                                                     )
                                                                     retry(3){
                                                                         bat(label: 'Running Tox',
@@ -651,7 +651,7 @@ def call(){
                         steps {
                             sh(
                                 label: 'Package',
-                                script: '''python3 -m venv venv && venv/bin/pip install uv
+                                script: '''python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv
                                            trap "rm -rf venv" EXIT
                                            . ./venv/bin/activate
                                            uv build
@@ -857,7 +857,7 @@ def call(){
                                         script: '''python3 -m venv venv
                                                    trap "rm -rf venv" EXIT
                                                    . ./venv/bin/activate
-                                                   pip install uv
+                                                   pip install --disable-pip-version-check uv
                                                    uvx --with-requirements=requirements-dev.txt twine --installpkg upload --disable-progress-bar --non-interactive dist/*
                                                 '''
                                     )
