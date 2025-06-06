@@ -6,9 +6,6 @@ include README.rst
 include ABOUT.rst
 include CHANGELOG.rst
 
-# Running requirements
-include requirements.txt
-
 # Development requirements
 include requirements-dev.txt
 
