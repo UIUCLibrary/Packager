@@ -153,14 +153,7 @@ def call(){
                                         }
                                     }
                                     cleanup{
-                                        cleanWs(
-                                            deleteDirs: true,
-                                            patterns: [
-                                                [pattern: 'build/', type: 'INCLUDE'],
-                                                [pattern: 'dist/', type: 'INCLUDE'],
-                                                [pattern: 'uiucprescon.packager.dist-info/', type: 'INCLUDE'],
-                                                ]
-                                            )
+                                        sh 'git clean -dfx'
                                     }
                                 }
                             }
@@ -444,18 +437,7 @@ def call(){
                                         }
                                         post{
                                             cleanup{
-                                                cleanWs(patterns: [
-                                                        [pattern: 'reports/coverage.xml', type: 'INCLUDE'],
-                                                        [pattern: 'reports/coverage', type: 'INCLUDE'],
-                                                        [pattern: 'dist/', type: 'INCLUDE'],
-                                                        [pattern: 'build/', type: 'INCLUDE'],
-                                                        [pattern: '.pytest_cache/', type: 'INCLUDE'],
-                                                        [pattern: '.mypy_cache/', type: 'INCLUDE'],
-                                                        [pattern: '.tox/', type: 'INCLUDE'],
-                                                        [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
-                                                        [pattern: 'reports/', type: 'INCLUDE'],
-                                                        [pattern: 'logs/', type: 'INCLUDE']
-                                                    ])
+                                                sh 'git clean -dfx'
                                             }
                                         }
                                     }
@@ -493,13 +475,7 @@ def call(){
                                                         returnStdout: true,
                                                     ).trim().split('\n')
                                                 } finally{
-                                                    cleanWs(
-                                                        patterns: [
-                                                            [pattern: 'venv/', type: 'INCLUDE'],
-                                                            [pattern: '.tox', type: 'INCLUDE'],
-                                                            [pattern: '**/__pycache__/', type: 'INCLUDE'],
-                                                        ]
-                                                    )
+                                                    sh 'git clean -dfx'
                                                 }
                                             }
                                         }
@@ -510,32 +486,28 @@ def call(){
                                                     "Tox Environment: ${toxEnv}",
                                                     {
                                                         node('docker && linux'){
-                                                            checkout scm
-                                                            docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
-                                                                try{
-                                                                    sh( label: 'Running Tox',
-                                                                        script: """python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv
-                                                                                   . ./venv/bin/activate
-                                                                                   uv python install cpython-${version}
-                                                                                   uvx -p ${version} --constraint=requirements-dev.txt --with tox-uv tox run -e ${toxEnv}
-                                                                                   rm -rf ./.tox
-                                                                                """
-                                                                        )
-                                                                } catch(e) {
-                                                                    sh(script: '''. ./venv/bin/activate
-                                                                          uv python list
-                                                                          '''
+                                                            try{
+                                                                checkout scm
+                                                                docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
+                                                                    try{
+                                                                        sh( label: 'Running Tox',
+                                                                            script: """python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv
+                                                                                       . ./venv/bin/activate
+                                                                                       uv python install cpython-${version}
+                                                                                       uvx -p ${version} --constraint=requirements-dev.txt --with tox-uv tox run -e ${toxEnv}
+                                                                                       rm -rf ./.tox
+                                                                                    """
                                                                             )
-                                                                    throw e
-                                                                } finally{
-                                                                    cleanWs(
-                                                                        patterns: [
-                                                                            [pattern: 'venv/', type: 'INCLUDE'],
-                                                                            [pattern: '.tox', type: 'INCLUDE'],
-                                                                            [pattern: '**/__pycache__/', type: 'INCLUDE'],
-                                                                        ]
-                                                                    )
+                                                                    } catch(e) {
+                                                                        sh(script: '''. ./venv/bin/activate
+                                                                              uv python list
+                                                                              '''
+                                                                                )
+                                                                        throw e
+                                                                    }
                                                                 }
+                                                            } finally{
+                                                                sh "${tool(name: 'Default', type: 'git')} clean -dfx"
                                                             }
                                                         }
                                                     }
@@ -562,23 +534,17 @@ def call(){
                                         def envs = []
                                         node('docker && windows'){
                                             checkout scm
-                                            docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR}"){
-                                                try{
+                                            try{
+                                                docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR}"){
                                                     bat(script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv')
                                                     envs = bat(
                                                         label: 'Get tox environments',
                                                         script: '@.\\venv\\Scripts\\uvx --quiet --constraint=requirements-dev.txt --with tox-uv tox list -d --no-desc',
                                                         returnStdout: true,
                                                     ).trim().split('\r\n')
-                                                } finally{
-                                                    cleanWs(
-                                                        patterns: [
-                                                            [pattern: 'venv/', type: 'INCLUDE'],
-                                                            [pattern: '.tox', type: 'INCLUDE'],
-                                                            [pattern: '**/__pycache__/', type: 'INCLUDE'],
-                                                        ]
-                                                    )
                                                 }
+                                            } finally{
+                                                bat "${tool(name: 'Default', type: 'git')} clean -dfx"
                                             }
                                         }
                                         parallel(
@@ -588,14 +554,14 @@ def call(){
                                                     "Tox Environment: ${toxEnv}",
                                                     {
                                                         node('docker && windows'){
-                                                            checkout scm
-                                                            docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR} --mount source=msvc-runtime,target=${env.VC_RUNTIME_INSTALLER_LOCATION}"){
+                                                            retry(3){
+                                                                checkout scm
                                                                 try{
-                                                                    installMSVCRuntime(env.VC_RUNTIME_INSTALLER_LOCATION)
-                                                                    bat(label: 'Install uv',
-                                                                        script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv'
-                                                                    )
-                                                                    retry(3){
+                                                                    docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR} --mount source=msvc-runtime,target=${env.VC_RUNTIME_INSTALLER_LOCATION}"){
+                                                                        installMSVCRuntime(env.VC_RUNTIME_INSTALLER_LOCATION)
+                                                                        bat(label: 'Install uv',
+                                                                            script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv'
+                                                                        )
                                                                         bat(label: 'Running Tox',
                                                                             script: """call venv\\Scripts\\activate.bat
                                                                                    uv python install cpython-${version}
@@ -605,13 +571,7 @@ def call(){
                                                                         )
                                                                     }
                                                                 } finally{
-                                                                    cleanWs(
-                                                                        patterns: [
-                                                                            [pattern: 'venv/', type: 'INCLUDE'],
-                                                                            [pattern: '.tox', type: 'INCLUDE'],
-                                                                            [pattern: '**/__pycache__/', type: 'INCLUDE'],
-                                                                        ]
-                                                                    )
+                                                                    bat "${tool(name: 'Default', type: 'git')} clean -dfx"
                                                                 }
                                                             }
                                                         }
@@ -666,14 +626,7 @@ def call(){
                                 archiveArtifacts artifacts: 'dist/*.whl,dist/*.tar.gz,dist/*.zip', fingerprint: true
                             }
                             cleanup{
-                                cleanWs(
-                                    deleteDirs: true,
-                                    patterns: [
-                                        [pattern: 'dist/', type: 'INCLUDE'],
-                                        [pattern: 'build/', type: 'INCLUDE'],
-                                        [pattern: 'uiucprescon.packager.egg-info/', type: 'INCLUDE'],
-                                    ]
-                                )
+                                sh 'git clean -dfx'
                             }
                         }
                     }
@@ -868,12 +821,7 @@ def call(){
                         }
                         post{
                             cleanup{
-                                cleanWs(
-                                    deleteDirs: true,
-                                    patterns: [
-                                            [pattern: 'dist/', type: 'INCLUDE']
-                                        ]
-                                )
+                                sh 'git clean -dfx'
                             }
                         }
                     }
