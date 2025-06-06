@@ -18,7 +18,7 @@ jobs:
       - name: Install requirements
         run: |
           pip install wheel
-          pip install -r requirements/requirements_tox.txt
+          pip install tox --constraint requirements-dev.txt
       - name: Run tox
         run: tox -e py -vvv
         env:
