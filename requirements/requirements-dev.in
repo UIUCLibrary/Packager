@@ -5,6 +5,7 @@ coverage
 flake8
 lxml
 mypy
+py3exiv2bind>=0.1.9
 pydocstyle
 pykdu-compress>=0.1.8
 pylint
@@ -14,5 +15,6 @@ pytest-bdd >= 3.1.0,<4.0
 rinohtype
 sphinx
 sphinx-argparse
+tox
 twine
 wheel
