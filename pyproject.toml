@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,8 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 readme = "README.rst"
-license = {text = "University of Illinois/NCSA Open Source License"}
+license = "NCSA"
+license-files = ["LICENSE"]
 authors = [
     {name = "University Library at The University of Illinois at Urbana Champaign: Preservation Services", email = "prescons@library.illinois.edu"},
 ]
@@ -20,7 +21,6 @@ maintainers = [
 description = "Packager tools for DS library"
 classifiers = [
     "Programming Language :: Python :: 3.7",
-    "License :: OSI Approved :: University of Illinois/NCSA Open Source License",
     "Topic :: System :: Archiving :: Packaging",
 ]
 
