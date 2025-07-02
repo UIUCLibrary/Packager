@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2019]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ${{ fromJson(needs.setup.outputs.tox_matrix) }}
       fail-fast: false
     name: Python ${{ matrix.python-version }} ${{ matrix.os }} build
