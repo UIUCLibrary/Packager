@@ -523,11 +523,11 @@ def call(){
                                 }
                                 environment{
                                     UV_INDEX_STRATEGY='unsafe-best-match'
-                                    PIP_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\pipcache'
-                                    UV_TOOL_DIR='C:\\Users\\ContainerUser\\Documents\\uvtools'
-                                    UV_PYTHON_INSTALL_DIR='C:\\Users\\ContainerUser\\Documents\\uvpython'
-                                    UV_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\uvcache'
-                                    VC_RUNTIME_INSTALLER_LOCATION='c:\\msvc_runtime\\'
+                                    PIP_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\cache\\pipcache'
+                                    UV_TOOL_DIR='C:\\Users\\ContainerUser\\Documents\\cache\\uvtools'
+                                    UV_PYTHON_INSTALL_DIR='C:\\Users\\ContainerUser\\Documents\\cache\\uvpython'
+                                    UV_CACHE_DIR='C:\\Users\\ContainerUser\\Documents\\cache\\uvcache'
+                                    VC_RUNTIME_INSTALLER_LOCATION='c:\\msvc_runtime'
                                 }
                                 steps{
                                     script{
@@ -535,7 +535,13 @@ def call(){
                                         node('docker && windows'){
                                             checkout scm
                                             try{
-                                                docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR}"){
+                                                docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
+                                                    .inside("\
+                                                        --mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR} \
+                                                        --mount type=volume,source=pipcache,target=${env.PIP_CACHE_DIR} \
+                                                        --mount type=volume,source=uv_cache_dir,target=${env.UV_CACHE_DIR}\
+                                                        "
+                                                    ){
                                                     bat(script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv')
                                                     envs = bat(
                                                         label: 'Get tox environments',
@@ -557,7 +563,14 @@ def call(){
                                                             retry(3){
                                                                 checkout scm
                                                                 try{
-                                                                    docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside("--mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR} --mount source=msvc-runtime,target=${env.VC_RUNTIME_INSTALLER_LOCATION}"){
+                                                                    docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
+                                                                        .inside("\
+                                                                            --mount type=volume,source=uv_python_install_dir,target=${env.UV_PYTHON_INSTALL_DIR} \
+                                                                            --mount type=volume,source=msvc-runtime,target=${env.VC_RUNTIME_INSTALLER_LOCATION} \
+                                                                            --mount type=volume,source=pipcache,target=${env.PIP_CACHE_DIR} \
+                                                                            --mount type=volume,source=uv_cache_dir,target=${env.UV_CACHE_DIR}\
+                                                                            "
+                                                                        ){
                                                                         installMSVCRuntime(env.VC_RUNTIME_INSTALLER_LOCATION)
                                                                         bat(label: 'Install uv',
                                                                             script: 'python -m venv venv && venv\\Scripts\\pip install --disable-pip-version-check uv'
@@ -679,7 +692,18 @@ def call(){
                                                         checkout scm
                                                         unstash 'PYTHON_PACKAGES'
                                                         if(['linux', 'windows'].contains(entry.OS) && params.containsKey("INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()) && params["INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()]){
-                                                            docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python').inside(isUnix() ? '': "--mount type=volume,source=uv_python_install_dir,target=C:\\Users\\ContainerUser\\Documents\\uvpython --mount source=msvc-runtime,target=c:\\msvc_runtime\\"){
+                                                            docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
+                                                                .inside(
+                                                                    isUnix() ?
+                                                                        '--mount source=python-tmp-uiucpreson-packager,target=/tmp'
+                                                                    :
+                                                                        "\
+                                                                            --mount type=volume,source=uv_python_install_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvpython \
+                                                                            --mount type=volume,source=msvc-runtime,target=c:\\msvc_runtime \
+                                                                            --mount type=volume,source=pipcache,target=C:\\Users\\ContainerUser\\Documents\\cache\\pipcache \
+                                                                            --mount type=volume,source=uv_cache_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvcache \
+                                                                        "
+                                                                ){
                                                                  if(isUnix()){
                                                                     withEnv([
                                                                         'PIP_CACHE_DIR=/tmp/pipcache',
@@ -698,10 +722,10 @@ def call(){
                                                                     }
                                                                  } else {
                                                                     withEnv([
-                                                                        'PIP_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\pipcache',
-                                                                        'UV_TOOL_DIR=C:\\Users\\ContainerUser\\Documents\\uvtools',
-                                                                        'UV_PYTHON_INSTALL_DIR=C:\\Users\\ContainerUser\\Documents\\uvpython',
-                                                                        'UV_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\uvcache',
+                                                                        'PIP_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\cache\\pipcache',
+                                                                        'UV_TOOL_DIR=C:\\Users\\ContainerUser\\Documents\\cache\\uvtools',
+                                                                        'UV_PYTHON_INSTALL_DIR=C:\\Users\\ContainerUser\\Documents\\cache\\uvpython',
+                                                                        'UV_CACHE_DIR=C:\\Users\\ContainerUser\\Documents\\cache\\uvcache',
                                                                     ]){
                                                                         installMSVCRuntime('c:\\msvc_runtime\\')
                                                                         bat(
