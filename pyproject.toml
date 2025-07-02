@@ -23,7 +23,25 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Topic :: System :: Archiving :: Packaging",
 ]
-
+[dependency-groups]
+dev = [
+    "bandit",
+    "behave",
+    "coverage",
+    "flake8",
+    "lxml",
+    "mypy",
+    "pydocstyle",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "pytest-bdd >= 3.1.0,<4.0",
+    "rinohtype",
+    "sphinx",
+    "sphinx-argparse",
+    "tox",
+    "twine",
+]
 [project.urls]
 Documentation = "https://www.library.illinois.edu/dccdocs/packager"
 Download = "https://github.com/UIUCLibrary/packager"
@@ -50,3 +68,8 @@ junit_family="xunit1"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[[tool.uv.index]]
+name = "internal-proxy"
+url = "https://nexus.library.illinois.edu/repository/uiuc_prescon_python/simple"
+default = false

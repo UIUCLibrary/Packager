@@ -189,17 +189,16 @@ def call(){
                                                         label: 'Create virtual environment',
                                                         script: '''python3 -m venv bootstrap_uv
                                                                    bootstrap_uv/bin/pip install --disable-pip-version-check uv
-                                                                   bootstrap_uv/bin/uv venv venv
-                                                                   . ./venv/bin/activate
-                                                                   bootstrap_uv/bin/uv pip install uv
+                                                                   bootstrap_uv/bin/uv sync --group=dev --extra=kdu
+                                                                   bootstrap_uv/bin/uv pip install uv --target .venv
                                                                    rm -rf bootstrap_uv
-                                                                   uv pip install -r requirements-dev.txt
                                                                    '''
                                                                )
                                                     sh(
                                                         label: 'Install package in development mode',
-                                                        script: '''. ./venv/bin/activate
+                                                        script: '''. ./.venv/bin/activate
                                                                    uv pip install -e .
+                                                                   uv pip list
                                                                 '''
                                                     )
                                                     sh(
@@ -217,7 +216,7 @@ def call(){
                                                 parallel {
                                                     stage('Run PyTest Unit Tests'){
                                                         steps{
-                                                            sh '''. ./venv/bin/activate
+                                                            sh '''. .venv/bin/activate
                                                                   coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml
                                                                '''
                                                         }
@@ -234,7 +233,7 @@ def call(){
                                                     }
                                                     stage('Run Doctest Tests'){
                                                         steps {
-                                                            sh '''. ./venv/bin/activate
+                                                            sh '''. .venv/bin/activate
                                                                   coverage run --parallel-mode --source uiucprescon -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log
                                                                '''
                                                         }
@@ -250,7 +249,7 @@ def call(){
                                                     stage('Run MyPy Static Analysis') {
                                                         steps{
                                                             catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
-                                                                sh '''. ./venv/bin/activate
+                                                                sh '''. .venv/bin/activate
                                                                       mypy -p uiucprescon --html-report reports/mypy/html/  | tee logs/mypy.log
                                                                    '''
                                                             }
@@ -267,7 +266,7 @@ def call(){
                                                             catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
                                                                 sh(
                                                                     label: 'Running bandit',
-                                                                    script: '''. ./venv/bin/activate
+                                                                    script: '''. .venv/bin/activate
                                                                                bandit --format json --output reports/bandit-report.json --recursive uiucprescon || bandit -f html --recursive uiucprescon --output reports/bandit-report.html
                                                                             '''
                                                                 )
@@ -300,7 +299,7 @@ def call(){
                                                                     tee('reports/pylint.txt'){
                                                                         sh(
                                                                             label: 'Running pylint',
-                                                                            script: '''. ./venv/bin/activate
+                                                                            script: '''. .venv/bin/activate
                                                                                        pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
                                                                                     '''
                                                                         )
@@ -309,7 +308,7 @@ def call(){
                                                                 sh(
                                                                     label: 'Running pylint for sonarqube',
                                                                     returnStatus: true,
-                                                                    script: '''. ./venv/bin/activate
+                                                                    script: '''. .venv/bin/activate
                                                                                pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt
                                                                             '''
                                                                 )
@@ -328,7 +327,7 @@ def call(){
                                                                 tee('reports/pydocstyle-report.txt'){
                                                                     sh(
                                                                         label: 'Run pydocstyle',
-                                                                        script: '''. ./venv/bin/activate
+                                                                        script: '''. .venv/bin/activate
                                                                                    pydocstyle uiucprescon/packager
                                                                                 '''
                                                                     )
@@ -345,7 +344,7 @@ def call(){
                                                         steps{
                                                             catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
                                                                 sh(label: 'Running Flake8',
-                                                                   script: '''. ./venv/bin/activate
+                                                                   script: '''. .venv/bin/activate
                                                                               mkdir -p logs
                                                                               flake8 uiucprescon --tee --output-file=logs/flake8.log
                                                                            '''
@@ -361,7 +360,7 @@ def call(){
                                                 }
                                                 post{
                                                     always{
-                                                        sh '''. ./venv/bin/activate
+                                                        sh '''. .venv/bin/activate
                                                               coverage combine && coverage xml -o reports/coverage.xml
                                                            '''
                                                         recordCoverage(tools: [[parser: 'COBERTURA', pattern: 'reports/coverage.xml']])
@@ -402,7 +401,7 @@ def call(){
                                                             }
                                                             sh(
                                                                 label: 'Running Sonar Scanner',
-                                                                script: """. ./venv/bin/activate
+                                                                script: """. .venv/bin/activate
                                                                             uv tool run pysonar-scanner -Dsonar.projectVersion=$VERSION -Dsonar.buildString=\"$BUILD_TAG\" ${sourceInstruction}
                                                                         """
                                                             )
