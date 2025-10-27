@@ -8,7 +8,7 @@ version = "0.2.16.dev0"
 dependencies = [
     "py3exiv2bind>=0.1.9"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.rst"
 license = "NCSA"
 license-files = ["LICENSE"]
@@ -20,7 +20,6 @@ maintainers = [
 ]
 description = "Packager tools for DS library"
 classifiers = [
-    "Programming Language :: Python :: 3.7",
     "Topic :: System :: Archiving :: Packaging",
 ]
 [dependency-groups]
