@@ -22,25 +22,42 @@ description = "Packager tools for DS library"
 classifiers = [
     "Topic :: System :: Archiving :: Packaging",
 ]
+
 [dependency-groups]
-dev = [
-    "bandit",
-    "behave",
-    "coverage",
-    "flake8",
+type_checking = [
     "lxml",
     "mypy",
+]
+lint = [
+    "bandit",
+    "flake8",
     "pydocstyle",
     "pylint",
+    {include-group = "type_checking"},
+]
+test = [
+    "behave",
+    "coverage",
     "pytest",
     "pytest-cov",
     "pytest-bdd >= 3.1.0,<4.0",
-    "rinohtype",
-    "sphinx",
-    "sphinx-argparse",
-    "tox",
-    "twine",
 ]
+tox = ['tox']
+docs = ["sphinx", "sphinx-argparse"]
+dev = [
+    "rinohtype",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "tox"},
+    {include-group = "test"},
+]
+release = ['twine']
+ci = [
+    "pysonar",
+    {include-group = "release"},
+    {include-group = "dev"},
+]
+
 [project.urls]
 Documentation = "https://www.library.illinois.edu/dccdocs/packager"
 Download = "https://github.com/UIUCLibrary/packager"
@@ -69,6 +86,14 @@ junit_family="xunit1"
 ignore_missing_imports = true
 
 [[tool.uv.index]]
-name = "internal-proxy"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "uiuc_prescon_python"
 url = "https://nexus.library.illinois.edu/repository/uiuc_prescon_python/simple"
-default = false
+explicit = true
+
+[tool.uv.sources]
+py3exiv2bind = {index = "uiuc_prescon_python"}
+pykdu-compress = {index = "uiuc_prescon_python"}
