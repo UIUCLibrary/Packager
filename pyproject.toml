@@ -64,10 +64,15 @@ Download = "https://github.com/UIUCLibrary/packager"
 
 [tool.setuptools]
 zip-safe = true
-packages= ["uiucprescon.packager"]
+packages= [
+    "uiucprescon.packager",
+    "uiucprescon.packager.packages",
+]
+package-dir = {"uiucprescon.packager" = "src/uiucprescon/packager"}
 
 [tool.setuptools.package-data]
 "uiucprescon.packager" = ["py.typed"]
+
 [project.optional-dependencies]
 kdu = ['pykdu-compress>=0.1.8']
 
@@ -84,6 +89,7 @@ junit_family="xunit1"
 
 [tool.mypy]
 ignore_missing_imports = true
+mypy_path = "src"
 
 [[tool.uv.index]]
 url = "https://pypi.org/simple"

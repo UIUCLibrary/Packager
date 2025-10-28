@@ -209,7 +209,7 @@ def call(){
                                                 parallel {
                                                     stage('Run PyTest Unit Tests'){
                                                         steps{
-                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source uiucprescon -m pytest --junitxml=reports/pytest/junit-pytest.xml'
+                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source src -m pytest --junitxml=reports/pytest/junit-pytest.xml'
                                                         }
                                                         post {
                                                             always {
@@ -219,12 +219,12 @@ def call(){
                                                     }
                                                     stage('Task Scanner'){
                                                         steps{
-                                                            recordIssues(tools: [taskScanner(highTags: 'FIXME', includePattern: 'uiucprescon/**/*.py', normalTags: 'TODO')])
+                                                            recordIssues(tools: [taskScanner(highTags: 'FIXME', includePattern: 'src/**/*.py', normalTags: 'TODO')])
                                                         }
                                                     }
                                                     stage('Run Doctest Tests'){
                                                         steps {
-                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source uiucprescon -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log'
+                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source src -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log'
                                                         }
                                                         post{
                                                             always {
@@ -238,7 +238,7 @@ def call(){
                                                     stage('Run MyPy Static Analysis') {
                                                         steps{
                                                             catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
-                                                                sh '.venv/bin/uv run mypy -p uiucprescon --html-report reports/mypy/html/  | tee logs/mypy.log'
+                                                                sh '.venv/bin/uv run mypy -p uiucprescon.packager --html-report reports/mypy/html/  | tee logs/mypy.log'
                                                             }
                                                         }
                                                         post {
@@ -253,7 +253,7 @@ def call(){
                                                             catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
                                                                 sh(
                                                                     label: 'Running bandit',
-                                                                    script: '.venv/bin/uv run bandit --format json --output reports/bandit-report.json --recursive uiucprescon || bandit -f html --recursive uiucprescon --output reports/bandit-report.html'
+                                                                    script: '.venv/bin/uv run bandit --format json --output reports/bandit-report.json --recursive src || .venv/bin/uv run bandit -f html --recursive src --output reports/bandit-report.html'
                                                                 )
                                                             }
                                                         }
@@ -284,14 +284,14 @@ def call(){
                                                                     tee('reports/pylint.txt'){
                                                                         sh(
                                                                             label: 'Running pylint',
-                                                                            script: '.venv/bin/uv run pylint uiucprescon/packager -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"'
+                                                                            script: '.venv/bin/uv run pylint src -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"'
                                                                         )
                                                                     }
                                                                 }
                                                                 sh(
                                                                     label: 'Running pylint for sonarqube',
                                                                     returnStatus: true,
-                                                                    script: '.venv/bin/uv run pylint uiucprescon/packager  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt'
+                                                                    script: '.venv/bin/uv run pylint src  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt'
                                                                 )
                                                             }
                                                         }
@@ -308,7 +308,7 @@ def call(){
                                                                 tee('reports/pydocstyle-report.txt'){
                                                                     sh(
                                                                         label: 'Run pydocstyle',
-                                                                        script: '.venv/bin/uv run pydocstyle uiucprescon/packager'
+                                                                        script: '.venv/bin/uv run pydocstyle src'
                                                                     )
                                                                 }
                                                             }
@@ -324,7 +324,7 @@ def call(){
                                                             catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
                                                                 sh(label: 'Running Flake8',
                                                                    script: '''mkdir -p logs
-                                                                              .venv/bin/uv run flake8 uiucprescon --tee --output-file=logs/flake8.log
+                                                                              .venv/bin/uv run flake8 src --tee --output-file=logs/flake8.log
                                                                            '''
                                                                    )
                                                             }
