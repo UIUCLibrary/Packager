@@ -8,7 +8,7 @@ version = "0.2.16.dev0"
 dependencies = [
     "py3exiv2bind>=0.1.9"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.rst"
 license = "NCSA"
 license-files = ["LICENSE"]
@@ -20,38 +20,59 @@ maintainers = [
 ]
 description = "Packager tools for DS library"
 classifiers = [
-    "Programming Language :: Python :: 3.7",
     "Topic :: System :: Archiving :: Packaging",
 ]
+
 [dependency-groups]
-dev = [
-    "bandit",
-    "behave",
-    "coverage",
-    "flake8",
+type_checking = [
     "lxml",
     "mypy",
+]
+lint = [
+    "bandit",
+    "flake8",
     "pydocstyle",
     "pylint",
+    {include-group = "type_checking"},
+]
+test = [
+    "behave",
+    "coverage",
     "pytest",
     "pytest-cov",
     "pytest-bdd >= 3.1.0,<4.0",
-    "rinohtype",
-    "sphinx",
-    "sphinx-argparse",
-    "tox",
-    "twine",
 ]
+tox = ['tox']
+docs = ["sphinx", "sphinx-argparse"]
+dev = [
+    "rinohtype",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "tox"},
+    {include-group = "test"},
+]
+release = ['twine']
+ci = [
+    "pysonar",
+    {include-group = "release"},
+    {include-group = "dev"},
+]
+
 [project.urls]
 Documentation = "https://www.library.illinois.edu/dccdocs/packager"
 Download = "https://github.com/UIUCLibrary/packager"
 
 [tool.setuptools]
 zip-safe = true
-packages= ["uiucprescon.packager"]
+packages= [
+    "uiucprescon.packager",
+    "uiucprescon.packager.packages",
+]
+package-dir = {"uiucprescon.packager" = "src/uiucprescon/packager"}
 
 [tool.setuptools.package-data]
 "uiucprescon.packager" = ["py.typed"]
+
 [project.optional-dependencies]
 kdu = ['pykdu-compress>=0.1.8']
 
@@ -68,8 +89,17 @@ junit_family="xunit1"
 
 [tool.mypy]
 ignore_missing_imports = true
+mypy_path = "src"
 
 [[tool.uv.index]]
-name = "internal-proxy"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "uiuc_prescon_python"
 url = "https://nexus.library.illinois.edu/repository/uiuc_prescon_python/simple"
-default = false
+explicit = true
+
+[tool.uv.sources]
+py3exiv2bind = {index = "uiuc_prescon_python"}
+pykdu-compress = {index = "uiuc_prescon_python"}
