@@ -41,9 +41,14 @@ def installMSVCRuntime(cacheLocation){
 
 def get_sonarqube_unresolved_issues(report_task_file){
     script{
-
-        def props = readProperties  file: '.scannerwork/report-task.txt'
-        def response = httpRequest url : props['serverUrl'] + "/api/issues/search?componentKeys=" + props['projectKey'] + "&resolved=no"
+        if(! fileExists(report_task_file)){
+            error "Could not find ${report_task_file}"
+        }
+        def props = readProperties  file: report_task_file
+        if(! props['serverUrl'] || ! props['projectKey']){
+            error "Could not find serverUrl or projectKey in ${report_task_file}"
+        }
+        def response = httpRequest url : props['serverUrl'] + '/api/issues/search?componentKeys=' + props['projectKey'] + '&resolved=no'
         def outstandingIssues = readJSON text: response.content
         return outstandingIssues
     }
