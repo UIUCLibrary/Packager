@@ -404,21 +404,6 @@ def call(){
                                                         }
                                                     }
                                                 }
-                                                post {
-                                                    always{
-                                                        archiveArtifacts(
-                                                            allowEmptyArchive: true,
-                                                            artifacts: '.scannerwork/report-task.txt'
-                                                        )
-                                                        script{
-                                                            if(fileExists('reports/sonar-report.json')){
-                                                                stash includes: 'reports/sonar-report.json', name: 'SONAR_REPORT'
-                                                                archiveArtifacts allowEmptyArchive: true, artifacts: 'reports/sonar-report.json'
-                                                                recordIssues(tools: [sonarQube(pattern: 'reports/sonar-report.json')])
-                                                            }
-                                                        }
-                                                    }
-                                                }
                                             }
                                         }
                                         post{
