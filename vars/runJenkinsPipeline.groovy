@@ -219,6 +219,13 @@ def call(){
                                                             recordIssues(tools: [taskScanner(highTags: 'FIXME', includePattern: 'src/**/*.py', normalTags: 'TODO')])
                                                         }
                                                     }
+                                                    stage('Audit Lockfile Dependencies'){
+                                                        steps{
+                                                            catchError(buildResult: 'UNSTABLE', message: 'uv-secure found issues', stageResult: 'UNSTABLE') {
+                                                                sh 'uv run --only-group=audit-dependencies --frozen --isolated uv-secure --disable-cache uv.lock'
+                                                            }
+                                                        }
+                                                    }
                                                     stage('Run Doctest Tests'){
                                                         steps {
                                                             sh 'uv run coverage run --parallel-mode --source src -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log'
