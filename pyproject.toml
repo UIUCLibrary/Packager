@@ -43,6 +43,10 @@ test = [
     "pytest-bdd >= 3.1.0,<4.0",
 ]
 tox = ['tox']
+tox-uv = [
+    {include-group = "tox"},
+    "tox-uv-bare"
+]
 docs = ["sphinx", "sphinx-argparse"]
 dev = [
     "rinohtype",
