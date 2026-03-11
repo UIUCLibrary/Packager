@@ -1,9 +1,9 @@
 Feature: Transform package objects
   Scenario Outline: package containing 2 objects and want to transform them into a another type of package
-    Given A package containing 2 objects
-    And We have another path to save the objects to
-    When we transform all the packages found into the new package format
-    Then the newly transformed package should contain the same files but in the new format
+    Given A package containing 2 objects of <source_package_type>
+    And We have another path to save the objects to <new_package_type>
+    When we transform all the packages found into the new <new_package_type> package format
+    Then the newly transformed package should contain the same files but in the <new_package_type> format
     Examples:
       | source_package_type | new_package_type  |
       | CaptureOnePackage   | HathiTiff         |

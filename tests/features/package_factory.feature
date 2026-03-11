@@ -3,10 +3,11 @@ Feature: Build package objects
   # You should easily be able to build a new package object using the package factory
 
   Scenario Outline: Loading session containing 2 objects
-    Given We have a object created by contains files that belong to two groups
+    Given We have a <package_type> object created by contains files that belong to two groups
     Then resulting packages should be 2
-    And the first object should contain everything from the first group
-    And the second object should contain everything from the second group
+    And the first <package_type> object should contain everything from the first group
+    And the second <package_type> object should contain everything from the second group
+
     Examples:
       | package_type             |
       | CaptureOnePackage        |
