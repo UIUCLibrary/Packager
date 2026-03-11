@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 [dependency-groups]
+audit-dependencies = ["uv-secure"]
 type_checking = [
     "lxml",
     "mypy",
@@ -40,9 +41,13 @@ test = [
     "coverage",
     "pytest",
     "pytest-cov",
-    "pytest-bdd >= 3.1.0,<4.0",
+    "pytest-bdd >= 4,<9.0",
 ]
 tox = ['tox']
+tox-uv = [
+    {include-group = "tox"},
+    "tox-uv-bare"
+]
 docs = ["sphinx", "sphinx-argparse"]
 dev = [
     "rinohtype",
