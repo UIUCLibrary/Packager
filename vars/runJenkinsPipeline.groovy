@@ -116,7 +116,7 @@ def call(){
                             stage('Sphinx Documentation'){
                                 agent {
                                     docker{
-                                        image 'python'
+                                        image 'ghcr.io/astral-sh/uv:debian'
                                         label 'docker && linux && x86_64' // needed for pysonar-scanner which is x86_64 only as of 0.2.0.520
                                         args '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec'
                                     }
@@ -135,11 +135,8 @@ def call(){
                                 steps {
                                     sh(
                                         label: "Building docs on ${env.NODE_NAME}",
-                                        script: '''python3 -m venv venv
-                                                   trap "rm -rf venv" EXIT
-                                                   venv/bin/pip install --disable-pip-version-check uv
-                                                   mkdir -p logs
-                                                   ./venv/bin/uv run --group docs --no-dev sphinx-build docs/source build/docs/html -d build/docs/.doctrees -v -w logs/build_sphinx.log
+                                        script: '''mkdir -p logs
+                                                   uv run --group docs --no-dev sphinx-build docs/source build/docs/html -d build/docs/.doctrees -v -w logs/build_sphinx.log
                                                 '''
                                     )
                                 }
@@ -174,9 +171,9 @@ def call(){
                                     stage('Test') {
                                         agent {
                                             docker{
-                                                image 'python'
+                                                image 'ghcr.io/astral-sh/uv:debian'
                                                 label 'docker && linux && x86_64' // needed for pysonar-scanner which is x86_64 only as of 0.2.0.520
-                                                args '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec'
+                                                args '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.config'
                                             }
                                         }
                                         environment{
@@ -192,13 +189,8 @@ def call(){
                                                 steps{
                                                     sh(
                                                         label: 'Create virtual environment',
-                                                        script: '''python3 -m venv bootstrap_uv
-                                                                   bootstrap_uv/bin/pip install --disable-pip-version-check uv
-                                                                   bootstrap_uv/bin/uv sync --group=ci --extra=kdu
-                                                                   bootstrap_uv/bin/uv pip install uv --target .venv
-                                                                   rm -rf bootstrap_uv
-                                                                   '''
-                                                               )
+                                                        script: 'uv sync --group=ci --extra=kdu'
+                                                    )
                                                     sh(
                                                         label: 'Creating logging and report directories',
                                                         script: """
@@ -214,7 +206,7 @@ def call(){
                                                 parallel {
                                                     stage('Run PyTest Unit Tests'){
                                                         steps{
-                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source src -m pytest --junitxml=reports/pytest/junit-pytest.xml'
+                                                            sh 'uv run coverage run --parallel-mode --source src -m pytest --junitxml=reports/pytest/junit-pytest.xml'
                                                         }
                                                         post {
                                                             always {
@@ -229,7 +221,7 @@ def call(){
                                                     }
                                                     stage('Run Doctest Tests'){
                                                         steps {
-                                                            sh '.venv/bin/uv run coverage run --parallel-mode --source src -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log'
+                                                            sh 'uv run coverage run --parallel-mode --source src -m sphinx -b doctest -d build/docs/doctrees docs/source reports/doctest -w logs/doctest.log'
                                                         }
                                                         post{
                                                             always {
@@ -243,7 +235,7 @@ def call(){
                                                     stage('Run MyPy Static Analysis') {
                                                         steps{
                                                             catchError(buildResult: 'SUCCESS', message: 'mypy found issues', stageResult: 'UNSTABLE') {
-                                                                sh '.venv/bin/uv run mypy -p uiucprescon.packager --html-report reports/mypy/html/  | tee logs/mypy.log'
+                                                                sh 'uv run mypy -p uiucprescon.packager --html-report reports/mypy/html/  | tee logs/mypy.log'
                                                             }
                                                         }
                                                         post {
@@ -258,7 +250,7 @@ def call(){
                                                             catchError(buildResult: 'SUCCESS', message: 'Bandit found issues', stageResult: 'UNSTABLE') {
                                                                 sh(
                                                                     label: 'Running bandit',
-                                                                    script: '.venv/bin/uv run bandit --format json --output reports/bandit-report.json --recursive src || .venv/bin/uv run bandit -f html --recursive src --output reports/bandit-report.html'
+                                                                    script: 'uv run bandit --format json --output reports/bandit-report.json --recursive src || uv run bandit -f html --recursive src --output reports/bandit-report.html'
                                                                 )
                                                             }
                                                         }
@@ -289,14 +281,14 @@ def call(){
                                                                     tee('reports/pylint.txt'){
                                                                         sh(
                                                                             label: 'Running pylint',
-                                                                            script: '.venv/bin/uv run pylint src -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"'
+                                                                            script: 'uv run pylint src -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"'
                                                                         )
                                                                     }
                                                                 }
                                                                 sh(
                                                                     label: 'Running pylint for sonarqube',
                                                                     returnStatus: true,
-                                                                    script: '.venv/bin/uv run pylint src  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt'
+                                                                    script: 'uv run pylint src  -r n --msg-template="{path}:{module}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > reports/pylint_issues.txt'
                                                                 )
                                                             }
                                                         }
@@ -313,7 +305,7 @@ def call(){
                                                                 tee('reports/pydocstyle-report.txt'){
                                                                     sh(
                                                                         label: 'Run pydocstyle',
-                                                                        script: '.venv/bin/uv run pydocstyle src'
+                                                                        script: 'uv run pydocstyle src'
                                                                     )
                                                                 }
                                                             }
@@ -328,9 +320,7 @@ def call(){
                                                         steps{
                                                             catchError(buildResult: 'SUCCESS', message: 'Flake8 found issues', stageResult: 'UNSTABLE') {
                                                                 sh(label: 'Running Flake8',
-                                                                   script: '''mkdir -p logs
-                                                                              .venv/bin/uv run flake8 src --tee --output-file=logs/flake8.log
-                                                                           '''
+                                                                   script: 'uv run flake8 src --tee --output-file=logs/flake8.log'
                                                                    )
                                                             }
                                                         }
@@ -343,8 +333,8 @@ def call(){
                                                 }
                                                 post{
                                                     always{
-                                                        sh '''.venv/bin/uv run coverage combine
-                                                              .venv/bin/uv run coverage xml -o reports/coverage.xml
+                                                        sh '''uv run coverage combine
+                                                              uv run coverage xml -o reports/coverage.xml
                                                            '''
                                                         recordCoverage(tools: [[parser: 'COBERTURA', pattern: 'reports/coverage.xml']])
                                                     }
@@ -386,7 +376,7 @@ def call(){
                                                             withCredentials([string(credentialsId: params.SONARCLOUD_TOKEN, variable: 'token')]) {
                                                                 sh(
                                                                     label: 'Running Sonar Scanner',
-                                                                    script: " .venv/bin/uv run pysonar -t \$token -Dsonar.projectVersion=$VERSION -Dsonar.buildString=\"$BUILD_TAG\" ${sourceInstruction}"
+                                                                    script: "uv run pysonar -t \$token -Dsonar.projectVersion=$VERSION -Dsonar.buildString=\"$BUILD_TAG\" ${sourceInstruction}"
                                                                 )
                                                             }
                                                         }
@@ -436,12 +426,11 @@ def call(){
                                         def envs = []
                                         node('docker && linux'){
                                             checkout scm
-                                            docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
+                                            docker.image('ghcr.io/astral-sh/uv:debian').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
                                                 try{
-                                                    sh(script: 'python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv')
                                                     envs = sh(
                                                         label: 'Get tox environments',
-                                                        script: './venv/bin/uv run --quiet --only-group=tox --isolated tox list -d --no-desc',
+                                                        script: 'uv run --quiet --only-group=tox --isolated tox list -d --no-desc',
                                                         returnStdout: true,
                                                     ).trim().split('\n')
                                                 } finally{
@@ -458,17 +447,13 @@ def call(){
                                                         node('docker && linux'){
                                                             try{
                                                                 checkout scm
-                                                                docker.image('python').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec'){
+                                                                docker.image('ghcr.io/astral-sh/uv:debian').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec'){
                                                                     try{
                                                                         sh( label: 'Running Tox',
-                                                                            script: """python3 -m venv venv && venv/bin/pip install --disable-pip-version-check uv
-                                                                                       ./venv/bin/uv python install cpython-${version}
-                                                                                       TOX_UV_PATH=$WORKSPACE/venv/bin/uv ./venv/bin/uv run --only-group=tox-uv --isolated tox run -e ${toxEnv} --runner uv-venv-lock-runner -vvv
-                                                                                       rm -rf ./.tox
-                                                                                    """
+                                                                            script: "uv run --only-group=tox-uv --isolated tox run -e ${toxEnv} --runner uv-venv-lock-runner"
                                                                             )
                                                                     } catch(e) {
-                                                                        sh(script: './venv/bin/uv python list')
+                                                                        sh(script: 'uv python list')
                                                                         throw e
                                                                     }
                                                                 }
@@ -665,7 +650,7 @@ def call(){
                                                         checkout scm
                                                         unstash 'PYTHON_PACKAGES'
                                                         if(['linux', 'windows'].contains(entry.OS) && params.containsKey("INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()) && params["INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()]){
-                                                            docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
+                                                            docker.image(isUnix() ? 'ghcr.io/astral-sh/uv:debian': 'python')
                                                                 .inside(
                                                                     isUnix() ?
                                                                         '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec'
@@ -686,11 +671,7 @@ def call(){
                                                                     ]){
                                                                          sh(
                                                                             label: 'Testing with tox',
-                                                                            script: """python3 -m venv venv
-                                                                                       ./venv/bin/pip install --disable-pip-version-check uv
-                                                                                       ./venv/bin/uv python install cpython-${entry.PYTHON_VERSION}
-                                                                                       TOX_UV_PATH=${WORKSPACE}/venv/bin/uv ./venv/bin/uv run --only-group=tox-uv --isolated tox --installpkg ${findFiles(glob: entry.PACKAGE_TYPE == 'wheel' ? 'dist/*.whl' : 'dist/*.tar.gz')[0].path} -e py${entry.PYTHON_VERSION.replace('.', '')}
-                                                                                    """
+                                                                            script: "uv run --only-group=tox-uv --isolated tox --installpkg ${findFiles(glob: entry.PACKAGE_TYPE == 'wheel' ? 'dist/*.whl' : 'dist/*.tar.gz')[0].path} -e py${entry.PYTHON_VERSION.replace('.', '')}"
                                                                         )
                                                                     }
                                                                  } else {
@@ -762,7 +743,7 @@ def call(){
                         }
                         agent {
                             docker{
-                                image 'python'
+                                image 'ghcr.io/astral-sh/uv:debian'
                                 label 'docker && linux'
                                 args '--mount source=python-tmp-uiucpreson-packager,target=/tmp'
                             }
@@ -802,11 +783,7 @@ def call(){
                                 ){
                                     sh(
                                         label: 'Uploading to pypi',
-                                        script: '''python3 -m venv venv
-                                                   trap "rm -rf venv" EXIT
-                                                   ./venv/bin/pip install --disable-pip-version-check uv
-                                                   ./venv/bin/uv run --only-group release twine --installpkg upload --disable-progress-bar --non-interactive dist/*
-                                                '''
+                                        script: 'uv run --only-group release twine --installpkg upload --disable-progress-bar --non-interactive dist/*'
                                     )
                                 }
                             }
