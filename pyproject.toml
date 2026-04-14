@@ -51,6 +51,7 @@ tox-uv = [
 docs = ["sphinx", "sphinx-argparse"]
 dev = [
     "rinohtype",
+    {include-group = "audit-dependencies"},
     {include-group = "docs"},
     {include-group = "lint"},
     {include-group = "tox"},

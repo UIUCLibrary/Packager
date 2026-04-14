@@ -2194,6 +2194,7 @@ ci = [
     { name = "sphinx-argparse" },
     { name = "tox" },
     { name = "twine" },
+    { name = "uv-secure" },
 ]
 dev = [
     { name = "bandit" },
@@ -2212,6 +2213,7 @@ dev = [
     { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-argparse" },
     { name = "tox" },
+    { name = "uv-secure" },
 ]
 docs = [
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -2275,6 +2277,7 @@ ci = [
     { name = "sphinx-argparse" },
     { name = "tox" },
     { name = "twine" },
+    { name = "uv-secure" },
 ]
 dev = [
     { name = "bandit" },
@@ -2292,6 +2295,7 @@ dev = [
     { name = "sphinx" },
     { name = "sphinx-argparse" },
     { name = "tox" },
+    { name = "uv-secure" },
 ]
 docs = [
     { name = "sphinx" },
