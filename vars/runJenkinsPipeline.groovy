@@ -118,7 +118,7 @@ def call(){
                                     docker{
                                         image 'ghcr.io/astral-sh/uv:debian'
                                         label 'docker && linux && x86_64' // needed for pysonar-scanner which is x86_64 only as of 0.2.0.520
-                                        args '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec'
+                                        args "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec"
                                     }
                                 }
                                 environment{
@@ -173,7 +173,7 @@ def call(){
                                             docker{
                                                 image 'ghcr.io/astral-sh/uv:debian'
                                                 label 'docker && linux && x86_64' // needed for pysonar-scanner which is x86_64 only as of 0.2.0.520
-                                                args '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.config'
+                                                args "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.config"
                                             }
                                         }
                                         environment{
@@ -433,7 +433,9 @@ def call(){
                                         def envs = []
                                         node('docker && linux'){
                                             checkout scm
-                                            docker.image('ghcr.io/astral-sh/uv:debian').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp'){
+                                            docker.image('ghcr.io/astral-sh/uv:debian').inside(
+                                                "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp"
+                                            ){
                                                 try{
                                                     envs = sh(
                                                         label: 'Get tox environments',
@@ -454,7 +456,9 @@ def call(){
                                                         node('docker && linux'){
                                                             try{
                                                                 checkout scm
-                                                                docker.image('ghcr.io/astral-sh/uv:debian').inside('--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec'){
+                                                                docker.image('ghcr.io/astral-sh/uv:debian').inside(
+                                                                    "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec"
+                                                                ){
                                                                     try{
                                                                         sh( label: 'Running Tox',
                                                                             script: "uv run --only-group=tox-uv --isolated tox run -e ${toxEnv} --runner uv-venv-lock-runner"
@@ -494,6 +498,7 @@ def call(){
                                             try{
                                                 docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
                                                     .inside("\
+                                                        --label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" \
                                                         --mount type=volume,source=uv_python_cache_dir,target=${env.UV_PYTHON_CACHE_DIR} \
                                                         --mount type=volume,source=pipcache,target=${env.PIP_CACHE_DIR} \
                                                         --mount type=volume,source=uv_cache_dir,target=${env.UV_CACHE_DIR}\
@@ -521,6 +526,7 @@ def call(){
                                                             try{
                                                                 docker.image(env.DEFAULT_PYTHON_DOCKER_IMAGE ? env.DEFAULT_PYTHON_DOCKER_IMAGE: 'python')
                                                                     .inside("\
+                                                                        --label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" \
                                                                         --mount type=volume,source=uv_python_cache_dir,target=${env.UV_PYTHON_CACHE_DIR} \
                                                                         --mount type=volume,source=msvc-runtime,target=${env.VC_RUNTIME_INSTALLER_LOCATION} \
                                                                         --mount type=volume,source=pipcache,target=${env.PIP_CACHE_DIR} \
@@ -580,7 +586,7 @@ def call(){
                             docker{
                                 image 'python'
                                 label 'linux && docker'
-                                args '--mount source=python-tmp-uiucpreson-packager,target=/tmp'
+                                args "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp"
                               }
                         }
                         options{
@@ -658,16 +664,18 @@ def call(){
                                                         unstash 'PYTHON_PACKAGES'
                                                         if(['linux', 'windows'].contains(entry.OS) && params.containsKey("INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()) && params["INCLUDE_${entry.OS}-${entry.ARCHITECTURE}".toUpperCase()]){
                                                             docker.image(isUnix() ? 'ghcr.io/astral-sh/uv:debian': 'python')
-                                                                .inside(
-                                                                    isUnix() ?
-                                                                        '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec'
-                                                                    :
-                                                                        "\
-                                                                            --mount type=volume,source=uv_python_cache_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvpython \
-                                                                            --mount type=volume,source=msvc-runtime,target=c:\\msvc_runtime \
-                                                                            --mount type=volume,source=pipcache,target=C:\\Users\\ContainerUser\\Documents\\cache\\pipcache \
-                                                                            --mount type=volume,source=uv_cache_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvcache \
-                                                                        "
+                                                                .inside("--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" " +
+                                                                    (
+                                                                        isUnix() ?
+                                                                            '--mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.local/bin:exec'
+                                                                        :
+                                                                            "\
+                                                                                --mount type=volume,source=uv_python_cache_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvpython \
+                                                                                --mount type=volume,source=msvc-runtime,target=c:\\msvc_runtime \
+                                                                                --mount type=volume,source=pipcache,target=C:\\Users\\ContainerUser\\Documents\\cache\\pipcache \
+                                                                                --mount type=volume,source=uv_cache_dir,target=C:\\Users\\ContainerUser\\Documents\\cache\\uvcache \
+                                                                            "
+                                                                    )
                                                                 ){
                                                                  if(isUnix()){
                                                                     withEnv([
