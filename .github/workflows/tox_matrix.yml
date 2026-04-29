@@ -41,8 +41,7 @@ jobs:
           cache: 'pip' # caching pip dependencies
       - name: Install requirements
         run: |
-          pip install wheel
-          pip install tox --constraint requirements-dev.txt
+          pip install uv
       - uses: actions/github-script@v7
         id: tox-env
         with:
@@ -50,6 +49,4 @@ jobs:
           script: |
             return "py${{matrix.python-version}}".replace('.','')
       - name: Run tox
-        run: tox -e ${{steps.tox-env.outputs.result}} -vvv
-        env:
-          PIP_EXTRA_INDEX_URL: ${{vars.PIP_EXTRA_INDEX_URL}}
+        run: uv run --only-group=tox-uv --frozen tox -e ${{steps.tox-env.outputs.result}} --runner uv-venv-lock-runner -vvv
