@@ -24,7 +24,6 @@ classifiers = [
 ]
 
 [dependency-groups]
-audit-dependencies = ["uv-secure"]
 type_checking = [
     "lxml",
     "mypy",
@@ -51,7 +50,6 @@ tox-uv = [
 docs = ["sphinx", "sphinx-argparse"]
 dev = [
     "rinohtype",
-    {include-group = "audit-dependencies"},
     {include-group = "docs"},
     {include-group = "lint"},
     {include-group = "tox"},
