@@ -209,7 +209,7 @@ def call(){
                                             docker{
                                                 image 'ghcr.io/astral-sh/uv:debian'
                                                 label 'docker && linux && x86_64' // needed for pysonar-scanner which is x86_64 only as of 0.2.0.520
-                                                args "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.config"
+                                                args "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp --tmpfs /.local/share:exec --tmpfs /.config --tmpfs /.tree-sitter:exec"
                                             }
                                         }
                                         environment{
