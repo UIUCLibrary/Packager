@@ -431,19 +431,21 @@ def call(){
                                 steps{
                                     script{
                                         def envs = []
-                                        node('docker && linux'){
-                                            checkout scm
-                                            docker.image('ghcr.io/astral-sh/uv:debian').inside(
-                                                "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp"
-                                            ){
-                                                try{
-                                                    envs = sh(
-                                                        label: 'Get tox environments',
-                                                        script: 'uv run --quiet --only-group=tox --isolated tox list -d --no-desc',
-                                                        returnStdout: true,
-                                                    ).trim().split('\n')
-                                                } finally{
-                                                    sh 'git clean -dfx'
+                                        retry(conditions: [agent()], count: 3) {
+                                            node('docker && linux'){
+                                                checkout scm
+                                                docker.image('ghcr.io/astral-sh/uv:debian').inside(
+                                                    "--label=purpose=ci --label \"JOB_NAME=\$JOB_NAME\" --label \"absoluteUrl=${currentBuild.absoluteUrl}\" --label \"BUILD_NUMBER=${currentBuild.number}\" --mount source=python-tmp-uiucpreson-packager,target=/tmp"
+                                                ){
+                                                    try{
+                                                        envs = sh(
+                                                            label: 'Get tox environments',
+                                                            script: 'uv run --quiet --only-group=tox --isolated tox list -d --no-desc',
+                                                            returnStdout: true,
+                                                        ).trim().split('\n')
+                                                    } finally{
+                                                        sh 'git clean -dfx'
+                                                    }
                                                 }
                                             }
                                         }
