@@ -238,6 +238,11 @@ def call(){
                                                         """
                                                     )
                                                 }
+                                                post {
+                                                    failure {
+                                                        sh 'uv --version'
+                                                    }
+                                                }
                                             }
                                             stage('Running Tests'){
                                                 parallel {
