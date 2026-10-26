@@ -8,7 +8,7 @@ version = "0.2.16.dev0"
 dependencies = [
     "py3exiv2bind>=0.1.9"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.rst"
 license = "NCSA"
 license-files = ["LICENSE"]

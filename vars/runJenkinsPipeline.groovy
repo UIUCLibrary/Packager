@@ -785,7 +785,7 @@ def call(){
                                                                                        .\\venv\\Scripts\\uv python install cpython-${entry.PYTHON_VERSION}
                                                                                     """
                                                                                 def attempt = 0
-                                                                                retry(2){
+                                                                                retry(3){
                                                                                     attempt += 1
                                                                                     withEnv([(attempt == 1) ? "UV_OFFLINE=1" : 'UV_OFFLINE=0']){
                                                                                         bat(
