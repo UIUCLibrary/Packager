@@ -38,9 +38,9 @@ lint = [
 test = [
     "behave",
     "coverage",
-    "pytest",
+    "pytest<9.2",
     "pytest-cov",
-    "pytest-bdd >= 4,<9.0",
+    "pytest-bdd",
 ]
 tox = ['tox']
 tox-uv = [
